@@ -1,0 +1,99 @@
+<div class="admin-dashboard">
+  <div class="page-header">
+    <h2>Panel de Administración</h2>
+    <p>Resumen general de la sucursal</p>
+  </div>
+
+  <div class="kpi-grid">
+    <mat-card class="kpi-card">
+      <mat-card-content>
+        <mat-icon color="primary">people</mat-icon>
+        <span class="kpi-num">{{ alumnosActivos() }}</span>
+        <span class="kpi-label">Alumnos activos</span>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="kpi-card">
+      <mat-card-content>
+        <mat-icon color="accent">badge</mat-icon>
+        <span class="kpi-num">{{ instructores().length }}</span>
+        <span class="kpi-label">Instructores</span>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="kpi-card">
+      <mat-card-content>
+        <mat-icon>today</mat-icon>
+        <span class="kpi-num">{{ clasesHoy() }}</span>
+        <span class="kpi-label">Clases hoy</span>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="kpi-card warn">
+      <mat-card-content>
+        <mat-icon>pending_actions</mat-icon>
+        <span class="kpi-num">{{ pendientesConfirmacion() }}</span>
+        <span class="kpi-label">Pendientes confirmación</span>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Alertas -->
+  <div class="alertas-grid">
+    @if (alumnosBloqueados() > 0) {
+      <div class="alerta error">
+        <mat-icon>block</mat-icon>
+        <div>
+          <strong>{{ alumnosBloqueados() }} alumno(s) bloqueado(s)</strong>
+          <span>Requieren atención</span>
+        </div>
+        <a routerLink="/admin/excepciones" mat-stroked-button color="warn">Ver</a>
+      </div>
+    }
+    @if (alumnosSinClases() > 0) {
+      <div class="alerta warn">
+        <mat-icon>warning</mat-icon>
+        <div>
+          <strong>{{ alumnosSinClases() }} alumno(s) sin saldo</strong>
+          <span>Sin clases disponibles</span>
+        </div>
+        <a routerLink="/admin/alumnos" mat-stroked-button>Ver alumnos</a>
+      </div>
+    }
+    @if (pendientesConfirmacion() > 0) {
+      <div class="alerta info">
+        <mat-icon>schedule</mat-icon>
+        <div>
+          <strong>{{ pendientesConfirmacion() }} solicitud(es) esperando confirmación</strong>
+          <span>Instructores deben confirmar</span>
+        </div>
+        <a routerLink="/admin/turnos" mat-stroked-button color="primary">Ver turnos</a>
+      </div>
+    }
+  </div>
+
+  <!-- Accesos rápidos -->
+  <div class="actions-grid">
+    <mat-card class="action-card" routerLink="/admin/alumnos">
+      <mat-card-content>
+        <mat-icon>people</mat-icon>
+        <span>Gestionar alumnos</span>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="action-card" routerLink="/admin/turnos">
+      <mat-card-content>
+        <mat-icon>calendar_month</mat-icon>
+        <span>Ver turnos</span>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="action-card" routerLink="/admin/reportes">
+      <mat-card-content>
+        <mat-icon>bar_chart</mat-icon>
+        <span>Reportes</span>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="action-card" routerLink="/admin/ausencias">
+      <mat-card-content>
+        <mat-icon>event_busy</mat-icon>
+        <span>Ausencias</span>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

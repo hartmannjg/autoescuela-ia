@@ -1,0 +1,138 @@
+<div class="dashboard">
+
+  <!-- Alertas -->
+  @for (alerta of alertas(); track alerta.mensaje) {
+    <div class="alerta" [class]="'alerta-' + alerta.tipo">
+      <mat-icon>{{ alerta.tipo === 'error' ? 'block' : alerta.tipo === 'warn' ? 'warning' : 'info' }}</mat-icon>
+      <span>{{ alerta.mensaje }}</span>
+      @if (alerta.tipo === 'warn' && clasesDisponibles() === 0) {
+        <a routerLink="/alumno/mi-saldo" mat-button color="warn">Comprar clases</a>
+      }
+    </div>
+  }
+
+  <!-- Header -->
+  <div class="page-header">
+    <h2>Hola, {{ (user()?.nombre?.split(' ') ?? [''])[0] }} 👋</h2>
+    <p>Aquí está el resumen de tu cuenta</p>
+  </div>
+
+  <!-- Tarjetas de saldo -->
+  <div class="cards-grid">
+
+    <!-- Plan contratado -->
+    @if (planContratado(); as plan) {
+      <mat-card class="saldo-card plan-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>school</mat-icon>
+          <mat-card-title>Plan {{ plan.nombre }}</mat-card-title>
+          <mat-card-subtitle>{{ plan.duracionClaseMinutos }} min por clase</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="clases-count">
+            <span class="number">{{ plan.clasesRestantes }}</span>
+            <span class="label">clases restantes</span>
+          </div>
+          <mat-progress-bar
+            [value]="progresoClases()"
+            color="primary"
+            class="progreso-bar" />
+          <div class="progreso-info">
+            <span>{{ plan.clasesTomadas }} tomadas</span>
+            <span>{{ plan.clasesTotales }} totales</span>
+          </div>
+          <div class="vencimiento">
+            <mat-icon>schedule</mat-icon>
+            Vence: {{ plan.fechaFin | fechaHora: 'fecha' }}
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Crédito individual -->
+    @if (creditoIndividual(); as credito) {
+      <mat-card class="saldo-card credito-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>account_balance_wallet</mat-icon>
+          <mat-card-title>Crédito Individual</mat-card-title>
+          <mat-card-subtitle>Clases sueltas</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="clases-count">
+            <span class="number">{{ credito.clasesDisponibles }}</span>
+            <span class="label">clases disponibles</span>
+          </div>
+          <button mat-stroked-button color="primary" routerLink="/alumno/mi-saldo">
+            <mat-icon>add</mat-icon> Comprar más
+          </button>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Acción rápida -->
+    <mat-card class="saldo-card action-card" routerLink="/alumno/calendario">
+      <mat-card-content class="action-content">
+        <mat-icon class="action-icon">calendar_month</mat-icon>
+        <h3>Agendar clase</h3>
+        <p>Seleccioná fecha, hora e instructor</p>
+        <button mat-raised-button color="accent" [disabled]="bloqueado() || clasesDisponibles() === 0">
+          <mat-icon>add</mat-icon> Nueva clase
+        </button>
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+
+  <!-- Próximas clases -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>event_upcoming</mat-icon>
+        Próximas clases
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (proximosTurnos().length === 0) {
+        <div class="empty-state">
+          <mat-icon>event_busy</mat-icon>
+          <p>No tenés clases agendadas próximamente</p>
+          <a routerLink="/alumno/calendario" mat-raised-button color="primary">Agendar una clase</a>
+        </div>
+      } @else {
+        <div class="turnos-list">
+          @for (turno of proximosTurnos(); track turno.id) {
+            <div class="turno-item">
+              <div class="turno-fecha">
+                <mat-icon>calendar_today</mat-icon>
+                <span>{{ turno.fecha | fechaHora: 'fecha' }}</span>
+              </div>
+              <div class="turno-hora">
+                <mat-icon>schedule</mat-icon>
+                <span>{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
+              </div>
+              <span class="chip chip-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+            </div>
+          }
+        </div>
+        <a routerLink="/alumno/mis-turnos" mat-button color="primary">Ver todos →</a>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Feedback pendiente -->
+  @if (pendientesFeedback().length > 0) {
+    <mat-card class="section-card feedback-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon color="warn">star</mat-icon>
+          Clases para calificar ({{ pendientesFeedback().length }})
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Tenés clases pendientes de calificación. Tu opinión es importante.</p>
+        <a routerLink="/alumno/feedback" mat-raised-button color="warn">Calificar ahora</a>
+      </mat-card-content>
+    </mat-card>
+  }
+
+</div>

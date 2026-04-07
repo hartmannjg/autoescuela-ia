@@ -1,0 +1,90 @@
+<div class="register-container">
+  <mat-card class="register-card">
+    <mat-card-header>
+      <div class="logo-section">
+        <mat-icon class="logo-icon">directions_car</mat-icon>
+        <h1>AutoEscuela IA</h1>
+        <p>Creá tu cuenta de alumno</p>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nombre completo</mat-label>
+          <input matInput formControlName="nombre" placeholder="Juan Pérez" />
+          <mat-icon matPrefix>person</mat-icon>
+          @if (form.get('nombre')?.hasError('required') && form.get('nombre')?.touched) {
+            <mat-error>El nombre es requerido</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" />
+          <mat-icon matPrefix>email</mat-icon>
+          @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
+            <mat-error>Email inválido</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Teléfono (opcional)</mat-label>
+          <input matInput formControlName="telefono" placeholder="+54 9 11 1234-5678" />
+          <mat-icon matPrefix>phone</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Sucursal</mat-label>
+          <mat-select formControlName="sucursalId">
+            @for (s of sucursales(); track s.id) {
+              <mat-option [value]="s.id">{{ s.nombre }}</mat-option>
+            }
+          </mat-select>
+          <mat-icon matPrefix>location_on</mat-icon>
+          @if (form.get('sucursalId')?.hasError('required') && form.get('sucursalId')?.touched) {
+            <mat-error>Seleccioná una sucursal</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Contraseña</mat-label>
+          <input matInput [type]="showPassword() ? 'text' : 'password'" formControlName="password" />
+          <mat-icon matPrefix>lock</mat-icon>
+          <button mat-icon-button matSuffix type="button" (click)="showPassword.set(!showPassword())">
+            <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (form.get('password')?.hasError('minlength') && form.get('password')?.touched) {
+            <mat-error>Mínimo 8 caracteres</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Confirmar contraseña</mat-label>
+          <input matInput type="password" formControlName="confirmPassword" />
+          <mat-icon matPrefix>lock_outline</mat-icon>
+          @if (form.hasError('passwordMismatch') && form.get('confirmPassword')?.touched) {
+            <mat-error>Las contraseñas no coinciden</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          class="full-width submit-btn"
+          [disabled]="loading() || form.invalid">
+          @if (loading()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            Crear cuenta
+          }
+        </button>
+      </form>
+
+      <div class="links">
+        <span>¿Ya tenés cuenta? <a routerLink="/login">Iniciá sesión</a></span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

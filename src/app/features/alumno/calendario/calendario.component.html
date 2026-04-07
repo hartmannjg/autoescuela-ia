@@ -1,0 +1,134 @@
+<div class="calendario-page">
+  <div class="page-header">
+    <h2>Agendar clase</h2>
+    <p>Seleccioná un instructor, luego elegí día y horario</p>
+  </div>
+
+  <mat-card class="step-card">
+    <mat-card-header>
+      <mat-card-title>
+        <span class="step-num">1</span>
+        Elegí un instructor
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="instructores-grid">
+        @for (instructor of instructores(); track instructor.uid) {
+          <div class="instructor-card"
+            [class.selected]="instructorSeleccionado()?.uid === instructor.uid"
+            (click)="seleccionarInstructor(instructor)">
+            <div class="instructor-avatar">{{ instructor.nombre.charAt(0) }}</div>
+            <div class="instructor-info">
+              <strong>{{ instructor.nombre }}</strong>
+              @if (instructor.instructorData?.valoracionPromedio) {
+                <span class="rating">⭐ {{ instructor.instructorData!.valoracionPromedio | number:'1.1-1' }}</span>
+              }
+              @if (instructor.instructorData?.especialidad) {
+                <small>{{ instructor.instructorData!.especialidad }}</small>
+              }
+            </div>
+            @if (instructorSeleccionado()?.uid === instructor.uid) {
+              <mat-icon class="check-icon">check_circle</mat-icon>
+            }
+          </div>
+        }
+        @if (instructores().length === 0) {
+          <p class="empty-msg">No hay instructores disponibles en este momento.</p>
+        }
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  @if (instructorSeleccionado()) {
+    <mat-card class="step-card">
+      <mat-card-header>
+        <mat-card-title>
+          <span class="step-num">2</span>
+          Elegí un día
+        </mat-card-title>
+        <div class="semana-nav">
+          <button mat-icon-button (click)="semanaOffset.update(v => v - 1)" [disabled]="semanaOffset() === 0">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <span>{{ semanaLabel() }}</span>
+          <button mat-icon-button (click)="semanaOffset.update(v => v + 1)">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="dias-grid">
+          @for (dia of diasSemana(); track dia.fechaStr) {
+            <button
+              class="dia-btn"
+              [class.today]="dia.esHoy"
+              [class.selected]="fechaSeleccionada() === dia.fechaStr"
+              [class.disabled]="dia.esPasado || !dia.esLaborable"
+              (click)="seleccionarDia(dia)"
+              [disabled]="dia.esPasado || !dia.esLaborable">
+              <span class="dia-nombre">{{ dia.fecha | date:'EEE':'':'es-AR' }}</span>
+              <span class="dia-num">{{ dia.fecha | date:'d' }}</span>
+              @if (!dia.esLaborable) { <span class="dia-tag">No lab.</span> }
+            </button>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (fechaSeleccionada()) {
+    <mat-card class="step-card">
+      <mat-card-header>
+        <mat-card-title>
+          <span class="step-num">3</span>
+          Elegí un horario ({{ duracionClase() }} min)
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (loadingSlots()) {
+          <div class="loading-center"><mat-spinner diameter="40" /></div>
+        } @else {
+          <div class="leyenda">
+            <span class="leyenda-item libre">Disponible</span>
+            <span class="leyenda-item ocupado">Ocupado</span>
+            <span class="leyenda-item seleccionado">Seleccionado</span>
+          </div>
+          <div class="slots-grid">
+            @for (slot of slotsDelDia(); track slot.horaInicio) {
+              <button
+                class="slot-btn"
+                [class.disponible]="slot.disponible"
+                [class.ocupado]="!slot.disponible"
+                [class.seleccionado]="slotSeleccionado()?.horaInicio === slot.horaInicio"
+                [disabled]="!slot.disponible"
+                (click)="slotSeleccionado.set(slot)">
+                {{ slot.horaInicio }}
+              </button>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (slotSeleccionado()) {
+    <mat-card class="confirm-card">
+      <mat-card-content>
+        <div class="confirm-info">
+          <mat-icon>event</mat-icon>
+          <div>
+            <strong>{{ fechaSeleccionada() | date:'EEEE d \'de\' MMMM':'':'es-AR' }}</strong>
+            <span>{{ slotSeleccionado()!.horaInicio }} - {{ slotSeleccionado()!.horaFin }}</span>
+          </div>
+          <div>
+            <strong>{{ instructorSeleccionado()!.nombre }}</strong>
+            <span>{{ duracionClase() }} minutos</span>
+          </div>
+        </div>
+        <button mat-raised-button color="primary" (click)="confirmarTurno()" [disabled]="loading()">
+          @if (loading()) { <mat-spinner diameter="20" /> } @else { Confirmar clase }
+        </button>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

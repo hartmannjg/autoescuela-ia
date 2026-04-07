@@ -1,0 +1,15 @@
+.saldo-page { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.page-header { h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #1a237e; } p { margin: 4px 0 0; color: #666; } }
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.info-card { border-radius: 12px !important; mat-icon[mat-card-avatar] { width: 40px; height: 40px; font-size: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; } }
+.plan-card mat-icon[mat-card-avatar] { background: #e3f2fd; color: #1976d2; }
+.credito-card mat-icon[mat-card-avatar] { background: #e8f5e9; color: #2e7d32; }
+.big-number { display: flex; align-items: baseline; gap: 8px; margin: 16px 0 8px; .num { font-size: 3.5rem; font-weight: 700; line-height: 1; color: #1a237e; } .label { color: #666; font-size: 0.9rem; } }
+mat-progress-bar { margin-bottom: 4px; border-radius: 4px; }
+.progress-labels { display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; margin-bottom: 16px; }
+.plan-details { padding-top: 12px; display: flex; flex-direction: column; gap: 8px; div { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #555; mat-icon { font-size: 18px; width: 18px; height: 18px; color: #1a237e; } } }
+.last-buy { font-size: 0.8rem; color: #888; margin: 8px 0; }
+.paquetes-card { border-radius: 12px !important; mat-card-title { display: flex; align-items: center; gap: 8px; mat-icon { color: #1a237e; } } }
+.paquetes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; padding-top: 8px; }
+.paquete-option { border: 2px solid #e0e0e0; border-radius: 12px; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; transition: border-color 0.2s; &:hover { border-color: #1a237e; } .paq-clases { font-size: 2.5rem; font-weight: 700; color: #1a237e; line-height: 1; } .paq-label { font-size: 0.85rem; color: #666; } .paq-precio { font-size: 1.1rem; font-weight: 600; color: #333; } }
+@media (max-width: 599px) { .cards-grid { grid-template-columns: 1fr; } }

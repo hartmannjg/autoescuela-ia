@@ -1,0 +1,92 @@
+<div class="historial-page">
+  <div class="page-header">
+    <h2>Historial de Clases</h2>
+    <p>{{ historial().length }} clases completadas</p>
+  </div>
+
+  @if (historial().length === 0) {
+    <div class="empty-state">
+      <mat-icon>history</mat-icon>
+      <p>Aún no tenés clases completadas</p>
+    </div>
+  }
+
+  <mat-accordion>
+    @for (item of historial(); track item.turno.id) {
+      <mat-expansion-panel class="clase-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon>calendar_today</mat-icon>
+            {{ item.turno.fecha | fechaHora: 'fecha' }} · {{ item.turno.horaInicio }} - {{ item.turno.horaFin }}
+          </mat-panel-title>
+          <mat-panel-description>
+            @if (item.turno.temaClase) { <mat-chip>{{ item.turno.temaClase }}</mat-chip> }
+            @if (item.feedback?.instructorFeedback?.nivelAlumno; as nivel) {
+              <span class="nivel-badge">Nivel {{ nivel }}/5</span>
+            }
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <div class="clase-detalle">
+          @if (item.turno.descripcionClase) {
+            <div class="seccion">
+              <h4><mat-icon>description</mat-icon> Descripción</h4>
+              <p>{{ item.turno.descripcionClase }}</p>
+            </div>
+          }
+          @if (item.turno.objetivosCumplidos?.length) {
+            <div class="seccion">
+              <h4><mat-icon>check_circle</mat-icon> Objetivos cumplidos</h4>
+              <ul>@for (obj of item.turno.objetivosCumplidos!; track obj) { <li>{{ obj }}</li> }</ul>
+            </div>
+          }
+          @if (item.feedback?.instructorFeedback; as fb) {
+            <mat-divider />
+            <div class="seccion feedback-seccion">
+              <h4><mat-icon>school</mat-icon> Evaluación del instructor</h4>
+              <div class="nivel-visual">
+                @for (star of getEstrellas(fb.nivelAlumno); track $index) {
+                  <mat-icon [class.filled]="star">star</mat-icon>
+                }
+                <span>Nivel {{ fb.nivelAlumno }}/5</span>
+              </div>
+              @if (fb.fortalezas?.length) {
+                <div class="tag-group">
+                  <strong>Fortalezas:</strong>
+                  @for (f of fb.fortalezas; track f) { <mat-chip color="primary">{{ f }}</mat-chip> }
+                </div>
+              }
+              @if (fb.areasMejora?.length) {
+                <div class="tag-group">
+                  <strong>Áreas de mejora:</strong>
+                  @for (a of fb.areasMejora; track a) { <mat-chip>{{ a }}</mat-chip> }
+                </div>
+              }
+              @if (fb.comentario) { <p class="comentario">{{ fb.comentario }}</p> }
+              @if (fb.aptoParaExamen !== undefined) {
+                <div class="examen-status" [class.apto]="fb.aptoParaExamen">
+                  <mat-icon>{{ fb.aptoParaExamen ? 'verified' : 'pending' }}</mat-icon>
+                  {{ fb.aptoParaExamen ? '¡Apto para el examen!' : 'Necesitás más práctica' }}
+                  @if (!fb.aptoParaExamen && fb.clasesRecomendadas) {
+                    ({{ fb.clasesRecomendadas }} clases recomendadas)
+                  }
+                </div>
+              }
+            </div>
+          }
+          @if (item.feedback?.alumnoFeedback; as af) {
+            <div class="seccion">
+              <h4><mat-icon>rate_review</mat-icon> Tu calificación</h4>
+              <div class="nivel-visual">
+                @for (star of getEstrellas(af.puntuacion); track $index) {
+                  <mat-icon [class.filled]="star">star</mat-icon>
+                }
+              </div>
+              @if (af.comentario) { <p class="comentario">{{ af.comentario }}</p> }
+            </div>
+          }
+        </div>
+      </mat-expansion-panel>
+    }
+  </mat-accordion>
+</div>

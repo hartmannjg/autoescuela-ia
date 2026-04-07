@@ -1,0 +1,84 @@
+<div class="detalle-page">
+  <div class="page-header">
+    <a mat-icon-button routerLink="/admin/alumnos"><mat-icon>arrow_back</mat-icon></a>
+    <h2>Detalle del alumno</h2>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-center"><mat-spinner /></div>
+  } @else if (alumno(); as a) {
+    <div class="detalle-grid">
+      <!-- Perfil -->
+      <mat-card class="perfil-card">
+        <mat-card-content>
+          <div class="avatar-grande">{{ a.nombre.charAt(0) }}</div>
+          <h3>{{ a.nombre }}</h3>
+          <p>{{ a.email }}</p>
+          @if (a.telefono) { <p>{{ a.telefono }}</p> }
+          <div class="estado-chips">
+            @if (a.alumnoData?.bloqueado) {
+              <mat-chip color="warn" selected>Bloqueado</mat-chip>
+            } @else {
+              <mat-chip color="primary" selected>{{ a.activo ? 'Activo' : 'Inactivo' }}</mat-chip>
+            }
+          </div>
+          <p class="desde">Desde: {{ a.fechaAlta | fechaHora: 'fecha' }}</p>
+
+          <mat-divider />
+
+          <div class="saldo-section">
+            <div class="saldo-item">
+              <span class="saldo-num">{{ getSaldoTotal() }}</span>
+              <span class="saldo-label">clases disponibles</span>
+            </div>
+            @if (a.alumnoData?.planContratado; as plan) {
+              <div class="plan-info">
+                <strong>{{ plan.nombre }}</strong>
+                <mat-progress-bar [value]="(plan.clasesTomadas / plan.clasesTotales) * 100" />
+                <span>{{ plan.clasesTomadas }}/{{ plan.clasesTotales }} tomadas</span>
+              </div>
+            }
+          </div>
+
+          <div class="acciones">
+            <button mat-raised-button color="primary" (click)="recargarCredito()">
+              <mat-icon>add_circle</mat-icon> Recargar
+            </button>
+            <button mat-stroked-button [color]="a.alumnoData?.bloqueado ? 'primary' : 'warn'" (click)="toggleBloqueo()">
+              <mat-icon>{{ a.alumnoData?.bloqueado ? 'lock_open' : 'block' }}</mat-icon>
+              {{ a.alumnoData?.bloqueado ? 'Desbloquear' : 'Bloquear' }}
+            </button>
+          </div>
+
+          @if (a.alumnoData?.bloqueado && a.alumnoData?.motivoBloqueo) {
+            <div class="motivo-bloqueo">
+              <mat-icon>info</mat-icon>
+              {{ a.alumnoData!.motivoBloqueo }}
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Historial de turnos -->
+      <mat-card class="historial-card">
+        <mat-card-header>
+          <mat-card-title>Historial de clases ({{ turnos().length }})</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (turnos().length === 0) {
+            <div class="empty-state"><mat-icon>history</mat-icon><p>Sin clases registradas</p></div>
+          }
+          @for (turno of turnos(); track turno.id) {
+            <div class="turno-row">
+              <div>
+                <strong>{{ turno.fecha | fechaHora: 'fecha' }}</strong>
+                <span>{{ turno.horaInicio }} · {{ turno.duracionMinutos }}min</span>
+              </div>
+              <mat-chip [color]="turno.estado | estadoTurno: 'color'" selected>{{ turno.estado | estadoTurno }}</mat-chip>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+</div>

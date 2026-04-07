@@ -1,0 +1,6 @@
+.turnos-page { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.page-header { h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #37474f; } p { margin: 4px 0 0; color: #666; } }
+.filters-card mat-card-content { display: flex; gap: 16px; flex-wrap: wrap; }
+mat-form-field { min-width: 240px; }
+.turno-row { display: flex; align-items: center; gap: 16px; padding: 10px; border-radius: 8px; background: #f8f9fa; margin-bottom: 8px; flex-wrap: wrap; .turno-info { flex: 1; display: flex; gap: 12px; strong { font-size: 0.9rem; } span { font-size: 0.85rem; color: #666; } } }
+.empty-state { display: flex; flex-direction: column; align-items: center; padding: 48px; gap: 8px; color: #aaa; mat-icon { font-size: 48px; width: 48px; height: 48px; } }

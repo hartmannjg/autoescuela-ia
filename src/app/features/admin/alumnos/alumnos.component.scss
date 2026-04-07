@@ -1,0 +1,8 @@
+.alumnos-page { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #37474f; } p { margin: 4px 0 0; color: #666; } }
+.filters-card { border-radius: 10px !important; mat-card-content { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; } }
+mat-form-field { min-width: 280px; }
+.filtro-chips { display: flex; gap: 8px; }
+.full-width { width: 100%; }
+.alumno-cell { display: flex; align-items: center; gap: 10px; .avatar { width: 36px; height: 36px; border-radius: 50%; background: #37474f; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; } div { display: flex; flex-direction: column; strong { font-size: 0.9rem; } span { font-size: 0.75rem; color: #888; } } }
+.empty-state { display: flex; flex-direction: column; align-items: center; padding: 48px; gap: 12px; color: #aaa; mat-icon { font-size: 48px; width: 48px; height: 48px; } }

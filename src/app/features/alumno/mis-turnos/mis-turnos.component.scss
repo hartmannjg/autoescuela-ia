@@ -1,0 +1,14 @@
+.mis-turnos-page { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.page-header { h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #1a237e; } p { margin: 4px 0 0; color: #666; } }
+.tab-content { display: flex; flex-direction: column; gap: 16px; padding: 24px 0; }
+.turno-card { border-radius: 10px !important; }
+.turno-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
+  .turno-fecha { display: flex; align-items: center; gap: 10px; mat-icon { color: #1a237e; } strong { display: block; font-size: 0.95rem; } span { font-size: 0.85rem; color: #666; } }
+}
+.turno-meta { display: flex; gap: 16px; margin: 12px 0; flex-wrap: wrap; font-size: 0.85rem; color: #666;
+  span { display: flex; align-items: center; gap: 4px; mat-icon { font-size: 16px; width: 16px; height: 16px; } }
+  .rechazo { color: #c62828; }
+}
+.turno-tema { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 0.9rem; mat-icon { color: #1a237e; font-size: 18px; width: 18px; height: 18px; } }
+.turno-actions { margin-top: 12px; display: flex; gap: 8px; }
+.empty-state { display: flex; flex-direction: column; align-items: center; padding: 48px 16px; gap: 12px; color: #888; mat-icon { font-size: 48px; width: 48px; height: 48px; } }

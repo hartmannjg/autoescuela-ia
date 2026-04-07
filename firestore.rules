@@ -1,0 +1,191 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Funciones helper ─────────────────────────────────────────────────────
+
+    function isLoggedIn() {
+      return request.auth != null;
+    }
+
+    function getUser() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isRole(role) {
+      return isLoggedIn() && getUser().rol == role;
+    }
+
+    function isAdmin() {
+      return isLoggedIn() && (getUser().rol == 'admin' || getUser().rol == 'super-admin');
+    }
+
+    function isSuperAdmin() {
+      return isLoggedIn() && getUser().rol == 'super-admin';
+    }
+
+    function isInstructor() {
+      return isLoggedIn() && getUser().rol == 'instructor';
+    }
+
+    function isAlumno() {
+      return isLoggedIn() && getUser().rol == 'alumno';
+    }
+
+    function sameSucursal(sucursalId) {
+      return getUser().sucursalId == sucursalId;
+    }
+
+    // ─── Colección: users ─────────────────────────────────────────────────────
+    match /users/{userId} {
+      // Un usuario puede leer su propio perfil
+      allow read: if isLoggedIn() && (
+        request.auth.uid == userId ||
+        isAdmin() ||
+        isInstructor()  // instructores ven datos básicos de alumnos de su sucursal
+      );
+
+      // Solo el propio usuario puede crear su perfil (al registrarse)
+      allow create: if request.auth.uid == userId;
+
+      // Actualización propia (datos básicos) o admin
+      allow update: if (
+        request.auth.uid == userId &&
+        // El alumno/instructor solo puede cambiar campos no críticos
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['rol', 'sucursalId', 'alumnoData.bloqueado', 'alumnoData.planContratado'])
+      ) || isAdmin();
+
+      allow delete: if isSuperAdmin();
+    }
+
+    // ─── Colección: turnos ────────────────────────────────────────────────────
+    match /turnos/{turnoId} {
+      // Lectura: el propio alumno, el instructor asignado, o admin
+      allow read: if isLoggedIn() && (
+        resource.data.alumnoUid == request.auth.uid ||
+        resource.data.instructorUid == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Creación: solo el alumno puede crear (y solo para sí mismo)
+      allow create: if isAlumno() &&
+        request.resource.data.alumnoUid == request.auth.uid &&
+        request.resource.data.estado == 'PENDIENTE_CONFIRMACION';
+
+      // Actualización:
+      // - Alumno: solo puede cancelar sus propios turnos
+      // - Instructor: puede confirmar/rechazar/marcar asistencia/registrar contenido
+      // - Admin: puede todo
+      allow update: if (
+        // Alumno cancela su turno
+        (isAlumno() &&
+          resource.data.alumnoUid == request.auth.uid &&
+          request.resource.data.estado == 'CANCELADA') ||
+
+        // Instructor gestiona sus turnos
+        (isInstructor() &&
+          resource.data.instructorUid == request.auth.uid &&
+          request.resource.data.alumnoUid == resource.data.alumnoUid) ||
+
+        // Admin
+        isAdmin()
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // ─── Colección: feedbacks ─────────────────────────────────────────────────
+    match /feedbacks/{feedbackId} {
+      allow read: if isLoggedIn() && (
+        resource.data.alumnoUid == request.auth.uid ||
+        resource.data.instructorUid == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow create: if isLoggedIn() && (
+        isAdmin() ||
+        // La Cloud Function crea feedbacks, pero también permitimos al instructor
+        (isInstructor() && request.resource.data.instructorUid == request.auth.uid)
+      );
+
+      allow update: if isLoggedIn() && (
+        // Alumno califica (solo su propio feedback)
+        (isAlumno() &&
+          resource.data.alumnoUid == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['alumnoFeedback'])) ||
+
+        // Instructor evalúa (solo sus feedbacks)
+        (isInstructor() &&
+          resource.data.instructorUid == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['instructorFeedback'])) ||
+
+        isAdmin()
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // ─── Colección: sucursales ────────────────────────────────────────────────
+    match /sucursales/{sucursalId} {
+      allow read: if isLoggedIn();
+      allow write: if isSuperAdmin();
+    }
+
+    // ─── Colección: notificaciones ────────────────────────────────────────────
+    match /notificaciones/{notifId} {
+      // Solo el destinatario puede leer sus notificaciones
+      allow read: if isLoggedIn() && resource.data.userId == request.auth.uid;
+
+      // Solo el destinatario puede marcarlas como leídas
+      allow update: if isLoggedIn() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['leida']);
+
+      // Solo Cloud Functions crean notificaciones (y admins)
+      allow create: if isAdmin();
+      allow delete: if isLoggedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // ─── Colección: ausencias ─────────────────────────────────────────────────
+    match /ausencias/{ausenciaId} {
+      allow read: if isLoggedIn() && (
+        resource.data.instructorUid == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Instructor registra su propia ausencia
+      allow create: if isInstructor() &&
+        request.resource.data.instructorUid == request.auth.uid;
+
+      // Admin aprueba/rechaza/asigna reemplazo
+      allow update: if isAdmin() || (
+        isInstructor() &&
+        resource.data.instructorUid == request.auth.uid &&
+        resource.data.estado == 'pendiente'
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // ─── Colección: feriados ──────────────────────────────────────────────────
+    match /feriados/{feriadoId} {
+      allow read: if isLoggedIn();
+      allow write: if isAdmin();
+    }
+
+    // ─── Colección: configuracion ─────────────────────────────────────────────
+    match /configuracion/{docId} {
+      allow read: if isLoggedIn();
+      allow write: if isAdmin();
+    }
+
+    // ─── Colección: mail (Trigger Email extension) ────────────────────────────
+    match /mail/{mailId} {
+      allow read: if false;       // Nadie desde el cliente
+      allow create: if false;     // Solo Cloud Functions
+      allow update, delete: if false;
+    }
+  }
+}

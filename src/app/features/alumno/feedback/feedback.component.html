@@ -1,0 +1,70 @@
+<div class="feedback-page">
+  <div class="page-header">
+    <h2>Calificar Clases</h2>
+    <p>{{ pendientes().length }} clase(s) pendientes de calificación</p>
+  </div>
+
+  @if (pendientes().length === 0) {
+    <div class="empty-state">
+      <mat-icon>star</mat-icon>
+      <p>¡Todo al día! No tenés clases pendientes de calificar.</p>
+    </div>
+  }
+
+  @if (!feedbackActivo()) {
+    <div class="pendientes-list">
+      @for (item of pendientes(); track item.id) {
+        <mat-card class="pendiente-card" (click)="seleccionarPendiente(item)">
+          <mat-card-content>
+            <mat-icon>calendar_today</mat-icon>
+            <div>
+              <strong>Clase del {{ item.fechaClase | fechaHora: 'fecha' }}</strong>
+              <span>Hacé click para calificar</span>
+            </div>
+            <mat-icon class="arrow">chevron_right</mat-icon>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  }
+
+  @if (feedbackActivo(); as fb) {
+    <mat-card class="calificar-card">
+      <mat-card-header>
+        <mat-card-title>Calificar clase del {{ fb.fechaClase | fechaHora: 'fecha' }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="form" (ngSubmit)="enviarFeedback()">
+          <div class="estrellas-section">
+            <h3>¿Cómo fue la clase?</h3>
+            <div class="estrellas">
+              @for (n of getEstrellas(); track n) {
+                <mat-icon class="estrella" [class.activa]="n <= puntuacionSeleccionada()" (click)="seleccionarEstrella(n)">
+                  {{ n <= puntuacionSeleccionada() ? 'star' : 'star_border' }}
+                </mat-icon>
+              }
+            </div>
+            @if (!puntuacionSeleccionada()) { <p class="hint">Seleccioná una calificación</p> }
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Comentario</mat-label>
+            <textarea matInput formControlName="comentario" rows="4" placeholder="Contanos cómo fue tu experiencia..."></textarea>
+            @if (form.get('comentario')?.hasError('required') && form.get('comentario')?.touched) {
+              <mat-error>El comentario es requerido</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-checkbox formControlName="instructorRecomendado">Recomendaría a este instructor</mat-checkbox>
+
+          <div class="actions">
+            <button mat-button type="button" (click)="feedbackActivo.set(null)">Cancelar</button>
+            <button mat-raised-button color="primary" type="submit" [disabled]="loading() || form.invalid || !puntuacionSeleccionada()">
+              @if (loading()) { <mat-spinner diameter="20" /> } @else { Enviar calificación }
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

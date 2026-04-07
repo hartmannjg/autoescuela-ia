@@ -1,0 +1,80 @@
+<div class="disponibilidad-page">
+  <div class="page-header">
+    <h2>Mi Disponibilidad</h2>
+    <p>Registrá tus ausencias para que el sistema bloquee esos horarios</p>
+  </div>
+
+  <div class="content-grid">
+    <!-- Formulario nueva ausencia -->
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title><mat-icon>event_busy</mat-icon> Registrar ausencia</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="form" (ngSubmit)="registrarAusencia()">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tipo de ausencia</mat-label>
+            <mat-select formControlName="tipo">
+              @for (t of tiposAusencia; track t.value) {
+                <mat-option [value]="t.value">{{ t.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <div class="fecha-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Desde</mat-label>
+              <input matInput [matDatepicker]="pickerDesde" formControlName="fechaInicio" />
+              <mat-datepicker-toggle matIconSuffix [for]="pickerDesde" />
+              <mat-datepicker #pickerDesde />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Hasta</mat-label>
+              <input matInput [matDatepicker]="pickerHasta" formControlName="fechaFin" />
+              <mat-datepicker-toggle matIconSuffix [for]="pickerHasta" />
+              <mat-datepicker #pickerHasta />
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Motivo</mat-label>
+            <textarea matInput formControlName="motivo" rows="2" placeholder="Describí brevemente el motivo..."></textarea>
+          </mat-form-field>
+
+          <div class="checkboxes">
+            <mat-checkbox formControlName="diaCompleto">Día completo</mat-checkbox>
+            <mat-checkbox formControlName="notificarAlumnos">Notificar alumnos afectados</mat-checkbox>
+          </div>
+
+          <button mat-raised-button color="primary" type="submit" class="full-width" [disabled]="form.invalid || loading()">
+            Registrar ausencia
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Listado de ausencias -->
+    <mat-card class="list-card">
+      <mat-card-header>
+        <mat-card-title><mat-icon>list</mat-icon> Mis ausencias</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (ausencias().length === 0) {
+          <div class="empty-state"><mat-icon>event_available</mat-icon><p>Sin ausencias registradas</p></div>
+        }
+        @for (aus of ausencias(); track aus.id) {
+          <div class="ausencia-item" [class]="'estado-' + aus.estado">
+            <div class="aus-info">
+              <strong>{{ aus.tipo | titlecase }}</strong>
+              <span>{{ aus.fechaInicio | fechaHora: 'fecha' }} → {{ aus.fechaFin | fechaHora: 'fecha' }}</span>
+              <small>{{ aus.motivo }}</small>
+            </div>
+            <mat-chip [color]="aus.estado === 'aprobado' ? 'primary' : aus.estado === 'rechazado' ? 'warn' : ''">
+              {{ aus.estado | titlecase }}
+            </mat-chip>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

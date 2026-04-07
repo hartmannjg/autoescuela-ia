@@ -1,0 +1,15 @@
+.historial-page { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.page-header { h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #1a237e; } p { margin: 4px 0 0; color: #666; } }
+.empty-state { display: flex; flex-direction: column; align-items: center; padding: 64px 16px; gap: 16px; color: #888; mat-icon { font-size: 64px; width: 64px; height: 64px; } }
+.clase-panel { border-radius: 8px !important; margin-bottom: 8px;
+  mat-panel-title { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; mat-icon { font-size: 18px; width: 18px; height: 18px; color: #1a237e; } }
+  mat-panel-description { display: flex; align-items: center; gap: 8px; }
+  .nivel-badge { background: #e8eaf6; color: #1a237e; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+}
+.clase-detalle { padding: 8px 0; display: flex; flex-direction: column; gap: 16px; }
+.seccion { h4 { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; font-size: 0.9rem; color: #1a237e; mat-icon { font-size: 18px; width: 18px; height: 18px; } } p, ul li { font-size: 0.9rem; color: #555; } ul { margin: 0; padding-left: 20px; } }
+.feedback-seccion { background: #f8f9fa; padding: 16px; border-radius: 8px; }
+.nivel-visual { display: flex; align-items: center; gap: 4px; margin-bottom: 12px; mat-icon { color: #e0e0e0; font-size: 22px; width: 22px; height: 22px; &.filled { color: #f57c00; } } span { font-size: 0.85rem; color: #666; margin-left: 4px; } }
+.tag-group { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; strong { font-size: 0.85rem; } }
+.comentario { font-style: italic; color: #555; font-size: 0.9rem; margin: 8px 0 0; }
+.examen-status { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; margin-top: 8px; background: #ffebee; color: #c62828; mat-icon { font-size: 20px; width: 20px; height: 20px; } &.apto { background: #e8f5e9; color: #2e7d32; } }

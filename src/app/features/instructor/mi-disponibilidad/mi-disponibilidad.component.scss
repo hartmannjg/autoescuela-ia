@@ -1,0 +1,15 @@
+.disponibilidad-page { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.page-header { h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #1b5e20; } p { margin: 4px 0 0; color: #666; } }
+.content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+mat-card { border-radius: 12px !important; mat-card-title { display: flex; align-items: center; gap: 8px; } }
+form { display: flex; flex-direction: column; gap: 16px; }
+.full-width { width: 100%; }
+.fecha-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.checkboxes { display: flex; flex-direction: column; gap: 8px; }
+.ausencia-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: #f8f9fa; margin-bottom: 8px; flex-wrap: wrap;
+  .aus-info { flex: 1; display: flex; flex-direction: column; gap: 2px; strong { font-size: 0.9rem; } span { font-size: 0.8rem; color: #666; } small { font-size: 0.75rem; color: #aaa; } }
+  &.estado-aprobado { background: #e8f5e9; }
+  &.estado-rechazado { background: #ffebee; }
+}
+.empty-state { display: flex; flex-direction: column; align-items: center; padding: 32px; gap: 8px; color: #aaa; mat-icon { font-size: 40px; width: 40px; height: 40px; } }
+@media (max-width: 768px) { .content-grid { grid-template-columns: 1fr; } }

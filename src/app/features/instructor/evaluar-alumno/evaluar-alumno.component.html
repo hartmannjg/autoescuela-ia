@@ -1,0 +1,120 @@
+<div class="evaluar-page">
+  <div class="page-header">
+    <h2>Registrar clase</h2>
+    @if (turno()) {
+      <p>{{ turno()!.fecha | fechaHora: 'fecha' }} · {{ turno()!.horaInicio }} - {{ turno()!.horaFin }}</p>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="loading-center"><mat-spinner /></div>
+  } @else if (turno()) {
+
+    <!-- Sección 1: Contenido de la clase -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title><mat-icon>school</mat-icon> Contenido de la clase</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="contenidoForm" class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Tema principal</mat-label>
+            <mat-select formControlName="temaClase">
+              @for (tema of temas; track tema) {
+                <mat-option [value]="tema">{{ tema }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Descripción detallada</mat-label>
+            <textarea matInput formControlName="descripcionClase" rows="3" placeholder="¿Qué trabajaron hoy?"></textarea>
+          </mat-form-field>
+
+          <div class="nivel-section">
+            <label>Nivel del alumno: <strong>{{ nivelAlumno() }}/5</strong></label>
+            <div class="estrellas">
+              @for (n of [1,2,3,4,5]; track n) {
+                <mat-icon class="estrella" [class.activa]="n <= nivelAlumno()" (click)="nivelAlumno.set(n)">star</mat-icon>
+              }
+            </div>
+          </div>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Tarea para casa (opcional)</mat-label>
+            <input matInput formControlName="tareaParaCasa" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Recomendación para próxima clase</mat-label>
+            <textarea matInput formControlName="recomendacionProximaClase" rows="2"></textarea>
+          </mat-form-field>
+
+          <button mat-raised-button color="primary" (click)="guardarContenido()" [disabled]="contenidoForm.invalid || guardando()">
+            @if (guardando()) { <mat-spinner diameter="20" /> } @else { Guardar contenido }
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-divider />
+
+    <!-- Sección 2: Evaluación del alumno -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title><mat-icon>rate_review</mat-icon> Evaluación del alumno</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="evaluacionForm" class="form-grid">
+
+          <div class="chips-section full">
+            <label>Fortalezas</label>
+            <div class="tag-selector">
+              @for (a of areasMejoraOpciones; track a) {
+                <button type="button" class="tag-btn"
+                  [class.selected-primary]="fortalezasSeleccionadas().includes(a)"
+                  (click)="toggleFortaleza(a)">
+                  {{ a }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="chips-section full">
+            <label>Áreas de mejora</label>
+            <div class="tag-selector">
+              @for (a of areasMejoraOpciones; track a) {
+                <button type="button" class="tag-btn"
+                  [class.selected-warn]="areasMejoraSeleccionadas().includes(a)"
+                  (click)="toggleAreaMejora(a)">
+                  {{ a }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Comentario general</mat-label>
+            <textarea matInput formControlName="comentario" rows="3" placeholder="Evaluación general del alumno..."></textarea>
+          </mat-form-field>
+
+          <div class="checkbox-row">
+            <mat-checkbox formControlName="necesitaMasClases">Necesita más clases</mat-checkbox>
+            <mat-checkbox formControlName="aptoParaExamen">Apto para rendir el examen</mat-checkbox>
+          </div>
+
+          @if (evaluacionForm.get('necesitaMasClases')?.value) {
+            <mat-form-field appearance="outline">
+              <mat-label>¿Cuántas clases recomienda?</mat-label>
+              <input matInput type="number" formControlName="clasesRecomendadas" min="1" max="30" />
+            </mat-form-field>
+          }
+
+          <button mat-raised-button color="accent" class="full" (click)="guardarEvaluacion()" [disabled]="evaluacionForm.invalid || guardando()">
+            @if (guardando()) { <mat-spinner diameter="20" /> } @else { Guardar evaluación completa }
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

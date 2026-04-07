@@ -1,0 +1,15 @@
+.feedback-page { max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.page-header { h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #1a237e; } p { margin: 4px 0 0; color: #666; } }
+.empty-state { display: flex; flex-direction: column; align-items: center; padding: 64px; gap: 16px; color: #888; mat-icon { font-size: 64px; width: 64px; height: 64px; color: #ffd54f; } }
+.pendientes-list { display: flex; flex-direction: column; gap: 12px; }
+.pendiente-card { border-radius: 10px !important; cursor: pointer; transition: box-shadow 0.2s; &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1) !important; }
+  mat-card-content { display: flex; align-items: center; gap: 12px; mat-icon:first-child { color: #1a237e; } div { flex: 1; strong { display: block; } span { font-size: 0.8rem; color: #888; } } .arrow { color: #ccc; } }
+}
+.calificar-card { border-radius: 12px !important; }
+.estrellas-section { text-align: center; margin-bottom: 24px; h3 { margin: 0 0 16px; color: #333; }
+  .estrellas { display: flex; justify-content: center; gap: 8px; }
+  .estrella { font-size: 40px; width: 40px; height: 40px; cursor: pointer; color: #e0e0e0; transition: color 0.15s; &.activa { color: #ffd54f; } &:hover { color: #ffca28; } }
+  .hint { font-size: 0.85rem; color: #888; margin-top: 8px; }
+}
+.full-width { width: 100%; }
+.actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }

@@ -1,0 +1,72 @@
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav
+    #sidenav
+    [mode]="isMobile() ? 'over' : 'side'"
+    [opened]="isMobile() ? false : sidenavOpened()"
+    class="sidenav">
+
+    <div class="sidenav-header">
+      <mat-icon class="brand-icon">directions_car</mat-icon>
+      <span class="brand-name">AutoEscuela IA</span>
+    </div>
+
+    <div class="user-info">
+      <div class="avatar">{{ user()?.nombre?.charAt(0)?.toUpperCase() }}</div>
+      <div class="user-details">
+        <span class="user-name">{{ user()?.nombre }}</span>
+        <span class="user-role">Instructor</span>
+      </div>
+    </div>
+
+    <mat-divider />
+
+    <mat-nav-list>
+      @for (item of navItems; track item.route) {
+        <a mat-list-item [routerLink]="item.route" routerLinkActive="active-link"
+          (click)="isMobile() && sidenav.close()">
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      }
+    </mat-nav-list>
+
+    <div class="sidenav-footer">
+      <mat-divider />
+      <a mat-list-item (click)="logout()" class="logout-item">
+        <mat-icon matListItemIcon color="warn">logout</mat-icon>
+        <span matListItemTitle>Cerrar sesión</span>
+      </a>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar color="primary" class="toolbar">
+      <button mat-icon-button (click)="isMobile() ? sidenav.toggle() : toggleSidenav()">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <span class="toolbar-spacer"></span>
+      <button mat-icon-button
+        [matBadge]="notifCount() || null" matBadgeColor="warn" matBadgeSize="small">
+        <mat-icon>notifications</mat-icon>
+      </button>
+      <button mat-icon-button [matMenuTriggerFor]="userMenu">
+        <div class="avatar-small">{{ user()?.nombre?.charAt(0)?.toUpperCase() }}</div>
+      </button>
+      <mat-menu #userMenu="matMenu">
+        <div class="menu-user-info">
+          <strong>{{ user()?.nombre }}</strong>
+          <small>{{ user()?.email }}</small>
+        </div>
+        <mat-divider />
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          Cerrar sesión
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <div class="content">
+      <router-outlet />
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

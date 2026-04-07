@@ -1,0 +1,83 @@
+<div class="mis-turnos-page">
+  <div class="page-header">
+    <h2>Mis Turnos</h2>
+    <p>Gestioná tus clases programadas</p>
+  </div>
+
+  <mat-tab-group>
+    <mat-tab label="Próximas ({{ proximos().length }})">
+      <div class="tab-content">
+        @if (proximos().length === 0) {
+          <div class="empty-state">
+            <mat-icon>event_available</mat-icon>
+            <p>No tenés clases próximas agendadas</p>
+          </div>
+        }
+        @for (turno of proximos(); track turno.id) {
+          <mat-card class="turno-card">
+            <mat-card-content>
+              <div class="turno-header">
+                <div class="turno-fecha">
+                  <mat-icon>calendar_today</mat-icon>
+                  <div>
+                    <strong>{{ turno.fecha | fechaHora: 'fecha' }}</strong>
+                    <span>{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
+                  </div>
+                </div>
+                <span class="chip chip-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+              </div>
+              <mat-divider />
+              <div class="turno-meta">
+                <span><mat-icon>schedule</mat-icon>{{ turno.duracionMinutos }} min</span>
+                <span><mat-icon>badge</mat-icon>{{ turno.tipoClase | titlecase }}</span>
+                @if (turno.motivoRechazo) {
+                  <span class="rechazo"><mat-icon>info</mat-icon>{{ turno.motivoRechazo }}</span>
+                }
+              </div>
+              @if (['PENDIENTE_CONFIRMACION', 'CONFIRMADA'].includes(turno.estado)) {
+                <div class="turno-actions">
+                  <button mat-stroked-button color="warn" (click)="cancelar(turno)" [disabled]="loading()">
+                    <mat-icon>cancel</mat-icon> Cancelar
+                  </button>
+                </div>
+              }
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Historial ({{ pasados().length }})">
+      <div class="tab-content">
+        @if (pasados().length === 0) {
+          <div class="empty-state">
+            <mat-icon>history</mat-icon>
+            <p>No tenés clases en el historial</p>
+          </div>
+        }
+        @for (turno of pasados(); track turno.id) {
+          <mat-card class="turno-card">
+            <mat-card-content>
+              <div class="turno-header">
+                <div class="turno-fecha">
+                  <mat-icon>history</mat-icon>
+                  <div>
+                    <strong>{{ turno.fecha | fechaHora: 'fecha' }}</strong>
+                    <span>{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
+                  </div>
+                </div>
+                <span class="chip chip-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+              </div>
+              @if (turno.temaClase) {
+                <div class="turno-tema">
+                  <mat-icon>school</mat-icon>
+                  <span>{{ turno.temaClase }}</span>
+                </div>
+              }
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

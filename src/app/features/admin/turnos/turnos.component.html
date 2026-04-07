@@ -1,0 +1,36 @@
+<div class="turnos-page">
+  <div class="page-header">
+    <h2>Gestión de Turnos</h2>
+    <p>{{ turnosFiltrados().length }} turnos en el período</p>
+  </div>
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <mat-form-field appearance="outline">
+        <mat-label>Filtrar por instructor</mat-label>
+        <mat-select [(ngModel)]="filtroInstructor" (ngModelChange)="filtroInstructor.set($event)">
+          <mat-option value="">Todos</mat-option>
+          @for (inst of instructores(); track inst.uid) {
+            <mat-option [value]="inst.uid">{{ inst.nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-content>
+      @for (turno of turnosFiltrados(); track turno.id) {
+        <div class="turno-row">
+          <div class="turno-info">
+            <strong>{{ turno.fechaStr }}</strong>
+            <span>{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
+            <span>{{ turno.duracionMinutos }} min</span>
+          </div>
+          <mat-chip [color]="turno.estado | estadoTurno: 'color'" selected>{{ turno.estado | estadoTurno }}</mat-chip>
+        </div>
+      }
+      @if (turnosFiltrados().length === 0) {
+        <div class="empty-state"><mat-icon>calendar_today</mat-icon><p>Sin turnos en este período</p></div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

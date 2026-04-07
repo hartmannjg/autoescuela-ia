@@ -1,0 +1,60 @@
+<div class="mis-clases-page">
+  <div class="page-header">
+    <h2>Mis Clases</h2>
+    <p>Calendario de todas tus clases</p>
+  </div>
+
+  <mat-tab-group>
+    <mat-tab label="Próximas ({{ proximas().length }})">
+      <div class="tab-content">
+        @if (proximas().length === 0) {
+          <div class="empty-state"><mat-icon>event</mat-icon><p>No tenés clases próximas</p></div>
+        }
+        @for (grupo of agrupadoPorFecha(); track grupo[0]) {
+          <div class="fecha-grupo">
+            <h3 class="fecha-label">{{ grupo[0] | date:'EEEE d \'de\' MMMM':'':'es-AR' | titlecase }}</h3>
+            @for (turno of grupo[1]; track turno.id) {
+              <div class="turno-item">
+                <div class="turno-hora">
+                  <strong>{{ turno.horaInicio }}</strong>
+                  <span>{{ turno.horaFin }}</span>
+                </div>
+                <div class="turno-info">
+                  <span>{{ turno.duracionMinutos }} min · {{ turno.tipoClase }}</span>
+                </div>
+                <mat-chip [color]="turno.estado | estadoTurno: 'color'" selected>
+                  {{ turno.estado | estadoTurno }}
+                </mat-chip>
+                @if (turno.estado === 'CONFIRMADA') {
+                  <a mat-icon-button [routerLink]="['/instructor/evaluar-alumno', turno.id]" color="primary">
+                    <mat-icon>edit_note</mat-icon>
+                  </a>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Historial ({{ historial().length }})">
+      <div class="tab-content">
+        @for (turno of historial(); track turno.id) {
+          <div class="turno-item">
+            <div class="turno-hora">
+              <strong>{{ turno.fecha | fechaHora: 'fecha' }}</strong>
+              <span>{{ turno.horaInicio }}</span>
+            </div>
+            <div class="turno-info"><span>{{ turno.duracionMinutos }} min</span></div>
+            <mat-chip [color]="turno.estado | estadoTurno: 'color'" selected>{{ turno.estado | estadoTurno }}</mat-chip>
+            @if (turno.estado === 'COMPLETADA') {
+              <a mat-icon-button [routerLink]="['/instructor/evaluar-alumno', turno.id]">
+                <mat-icon>visibility</mat-icon>
+              </a>
+            }
+          </div>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

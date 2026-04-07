@@ -1,0 +1,17 @@
+.detalle-page { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.page-header { display: flex; align-items: center; gap: 8px; h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #37474f; } }
+.loading-center { display: flex; justify-content: center; padding: 80px; }
+.detalle-grid { display: grid; grid-template-columns: 320px 1fr; gap: 24px; }
+.perfil-card { border-radius: 12px !important; mat-card-content { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; } }
+.avatar-grande { width: 80px; height: 80px; border-radius: 50%; background: #37474f; color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; }
+.estado-chips { display: flex; gap: 8px; justify-content: center; }
+.desde { font-size: 0.8rem; color: #888; margin: 0; }
+.saldo-section { width: 100%; .saldo-item { display: flex; align-items: baseline; gap: 6px; justify-content: center; margin-bottom: 8px; .saldo-num { font-size: 2.5rem; font-weight: 700; color: #1a237e; } .saldo-label { color: #666; font-size: 0.85rem; } }
+  .plan-info { width: 100%; text-align: left; font-size: 0.8rem; strong { display: block; margin-bottom: 4px; } span { color: #888; } }
+}
+.acciones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.motivo-bloqueo { background: #ffebee; color: #c62828; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; mat-icon { font-size: 16px; width: 16px; height: 16px; } }
+.historial-card { border-radius: 12px !important; }
+.turno-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; div { display: flex; flex-direction: column; gap: 2px; strong { font-size: 0.9rem; } span { font-size: 0.8rem; color: #888; } } }
+.empty-state { display: flex; flex-direction: column; align-items: center; padding: 32px; gap: 8px; color: #aaa; mat-icon { font-size: 40px; width: 40px; height: 40px; } }
+@media (max-width: 768px) { .detalle-grid { grid-template-columns: 1fr; } }

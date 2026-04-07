@@ -1,0 +1,91 @@
+<div class="alumnos-page">
+  <div class="page-header">
+    <div>
+      <h2>Alumnos</h2>
+      <p>{{ alumnosFiltrados().length }} de {{ alumnos().length }} alumnos</p>
+    </div>
+  </div>
+
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <mat-form-field appearance="outline">
+        <mat-label>Buscar</mat-label>
+        <input matInput [(ngModel)]="filtro" (ngModelChange)="filtro.set($event)" placeholder="Nombre o email..." />
+        <mat-icon matPrefix>search</mat-icon>
+      </mat-form-field>
+      <div class="filtro-chips">
+        <button class="filter-btn" [class.active]="filtroBloqueado() === null" (click)="filtroBloqueado.set(null)">Todos</button>
+        <button class="filter-btn active-primary" [class.active]="filtroBloqueado() === false" (click)="filtroBloqueado.set(false)">Activos</button>
+        <button class="filter-btn active-warn" [class.active]="filtroBloqueado() === true" (click)="filtroBloqueado.set(true)">Bloqueados</button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card>
+    <mat-card-content>
+      <table mat-table [dataSource]="alumnosFiltrados()" class="full-width">
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef>Alumno</th>
+          <td mat-cell *matCellDef="let a">
+            <div class="alumno-cell">
+              <div class="avatar">{{ a.nombre.charAt(0) }}</div>
+              <div><strong>{{ a.nombre }}</strong><span>{{ a.email }}</span></div>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef>Teléfono</th>
+          <td mat-cell *matCellDef="let a">{{ a.telefono || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="plan">
+          <th mat-header-cell *matHeaderCellDef>Plan</th>
+          <td mat-cell *matCellDef="let a">{{ a.alumnoData?.planContratado?.nombre || a.alumnoData?.tipoAlumno || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="saldo">
+          <th mat-header-cell *matHeaderCellDef>Saldo</th>
+          <td mat-cell *matCellDef="let a">
+            <span class="chip chip-{{ getSaldoTotal(a) === 0 ? 'warn' : 'primary' }}">{{ getSaldoTotal(a) }} clases</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let a">
+            @if (a.alumnoData?.bloqueado) {
+              <span class="chip chip-warn">Bloqueado</span>
+            } @else if (!a.activo) {
+              <span class="chip chip-default">Inactivo</span>
+            } @else {
+              <span class="chip chip-primary">Activo</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef>Acciones</th>
+          <td mat-cell *matCellDef="let a">
+            <a mat-icon-button [routerLink]="['/admin/alumnos', a.uid]" matTooltip="Ver detalle">
+              <mat-icon>visibility</mat-icon>
+            </a>
+            <button mat-icon-button (click)="recargarCredito(a)" matTooltip="Recargar crédito">
+              <mat-icon>add_circle</mat-icon>
+            </button>
+            <button mat-icon-button (click)="toggleBloqueo(a)" [matTooltip]="a.alumnoData?.bloqueado ? 'Desbloquear' : 'Bloquear'">
+              <mat-icon [color]="a.alumnoData?.bloqueado ? 'warn' : ''">{{ a.alumnoData?.bloqueado ? 'lock_open' : 'block' }}</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+        <tr mat-row *matRowDef="let row; columns: columnas;"></tr>
+      </table>
+
+      @if (alumnosFiltrados().length === 0) {
+        <div class="empty-state"><mat-icon>people</mat-icon><p>No se encontraron alumnos</p></div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

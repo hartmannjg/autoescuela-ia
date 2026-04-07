@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx @angular/cli new autoescuela-ia --directory . --skip-git --routing=true --style=scss --standalone=true --ssr=false)",
+      "Bash(npm install:*)",
+      "Bash(npm show:*)"
+    ]
+  }
+}
