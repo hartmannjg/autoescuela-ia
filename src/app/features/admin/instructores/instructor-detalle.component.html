@@ -1,0 +1,177 @@
+<div class="detalle-page">
+  @if (loading()) {
+    <div class="loading-center"><mat-spinner /></div>
+  } @else if (instructor()) {
+    <div class="page-header">
+      <a routerLink="/admin/instructores" mat-button>
+        <mat-icon>arrow_back</mat-icon> Instructores
+      </a>
+      <div class="header-info">
+        <div class="avatar">{{ instructor()!.nombre.charAt(0).toUpperCase() }}</div>
+        <div>
+          <h2>{{ instructor()!.nombre }}</h2>
+          <p>{{ instructor()!.email }} · {{ instructor()!.telefono ?? 'Sin teléfono' }}</p>
+        </div>
+        <span class="chip" [class.chip-success]="instructor()!.activo" [class.chip-warn]="!instructor()!.activo">
+          {{ instructor()!.activo ? 'Activo' : 'Inactivo' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Stats rápidas -->
+    <div class="stats-row">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon color="primary">school</mat-icon>
+          <span class="num">{{ instructor()!.instructorData?.clasesDictadas ?? 0 }}</span>
+          <span class="lbl">Clases dictadas</span>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon color="accent">star</mat-icon>
+          <span class="num">{{ (instructor()!.instructorData?.valoracionPromedio ?? 0) | number:'1.1-1' }}</span>
+          <span class="lbl">Valoración</span>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon>today</mat-icon>
+          <span class="num">{{ instructor()!.instructorData?.limiteDiario ?? 6 }}</span>
+          <span class="lbl">Límite diario</span>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon color="warn">event_busy</mat-icon>
+          <span class="num">{{ ausencias().length }}</span>
+          <span class="lbl">Ausencias</span>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Horarios disponibles -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title><mat-icon>schedule</mat-icon> Horarios disponibles</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="horariosForm">
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Especialidad</mat-label>
+              <input matInput formControlName="especialidad" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Límite diario de clases</mat-label>
+              <input matInput type="number" formControlName="limiteDiario" min="1" max="20" />
+            </mat-form-field>
+          </div>
+
+          <mat-divider />
+
+          <div class="horarios-list" formArrayName="horarios">
+            @for (h of horariosArray.controls; track $index; let i = $index) {
+              <div [formGroupName]="i" class="horario-row">
+                <mat-form-field appearance="outline" class="dia-field">
+                  <mat-label>Día</mat-label>
+                  <mat-select formControlName="dia">
+                    @for (d of diasSemana; track d) {
+                      <mat-option [value]="d">{{ DIAS[d] }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Desde</mat-label>
+                  <mat-select formControlName="horaInicio">
+                    @for (h of HORAS; track h) {
+                      <mat-option [value]="h">{{ h }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Hasta</mat-label>
+                  <mat-select formControlName="horaFin">
+                    @for (h of HORAS; track h) {
+                      <mat-option [value]="h">{{ h }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <button mat-icon-button color="warn" type="button" (click)="quitarHorario(i)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+
+          <div class="horarios-actions">
+            <button mat-stroked-button type="button" (click)="agregarHorario()">
+              <mat-icon>add</mat-icon> Agregar horario
+            </button>
+            <button mat-raised-button color="primary" type="button" (click)="guardarHorarios()" [disabled]="horariosForm.invalid || guardando()">
+              @if (guardando()) { <mat-spinner diameter="18" /> } @else { Guardar horarios }
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Ausencias pendientes -->
+    @if (ausencias().length > 0) {
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title><mat-icon color="warn">event_busy</mat-icon> Ausencias / Licencias</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="ausencias-list">
+            @for (a of ausencias(); track a.id) {
+              <div class="ausencia-item">
+                <div class="ausencia-info">
+                  <strong>{{ a.tipo | titlecase }}</strong>
+                  <span>{{ a.fechaInicio | fechaHora:'fecha' }} — {{ a.fechaFin | fechaHora:'fecha' }}</span>
+                  <span class="motivo">{{ a.motivo }}</span>
+                </div>
+                <div class="ausencia-estado">
+                  <span class="chip"
+                    [class.chip-warn]="a.estado === 'pendiente'"
+                    [class.chip-success]="a.estado === 'aprobado'"
+                    [class.chip-error]="a.estado === 'rechazado'">
+                    {{ a.estado | titlecase }}
+                  </span>
+                  @if (a.estado === 'pendiente') {
+                    <button mat-stroked-button color="primary" (click)="aprobarAusencia(a)">Aprobar</button>
+                    <button mat-stroked-button color="warn" (click)="rechazarAusencia(a)">Rechazar</button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Últimas clases -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title><mat-icon>history</mat-icon> Últimas clases</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (turnos().length === 0) {
+          <div class="empty-state">
+            <mat-icon>event_available</mat-icon>
+            <p>Sin clases registradas</p>
+          </div>
+        }
+        <div class="turnos-list">
+          @for (t of turnos().slice(0, 10); track t.id) {
+            <div class="turno-item">
+              <span>{{ t.fecha | fechaHora:'fecha' }}</span>
+              <span>{{ t.horaInicio }} - {{ t.horaFin }}</span>
+              <span class="chip chip-{{ t.estado | estadoTurno:'color' }}">{{ t.estado | estadoTurno }}</span>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

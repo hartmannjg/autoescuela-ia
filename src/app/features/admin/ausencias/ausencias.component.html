@@ -1,1 +1,96 @@
-<div class="page"><div class="page-header"><h2>Ausencias</h2><p>Módulo en desarrollo</p></div></div>
+<div class="ausencias-page">
+  <div class="page-header">
+    <div>
+      <h2>Ausencias de instructores</h2>
+      <p>Gestión de licencias y reemplazos</p>
+    </div>
+    @if (pendientesCount() > 0) {
+      <span class="badge-pendientes">{{ pendientesCount() }} pendiente{{ pendientesCount() > 1 ? 's' : '' }}</span>
+    }
+  </div>
+
+  <!-- Filtro -->
+  <mat-card class="filter-card">
+    <mat-form-field appearance="outline">
+      <mat-label>Filtrar por estado</mat-label>
+      <mat-select [ngModel]="filtroEstado()" (ngModelChange)="filtroEstado.set($event)">
+        <mat-option value="todos">Todos</mat-option>
+        <mat-option value="pendiente">Pendientes</mat-option>
+        <mat-option value="aprobado">Aprobados</mat-option>
+        <mat-option value="rechazado">Rechazados</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </mat-card>
+
+  <!-- Lista de ausencias -->
+  @if (ausenciasFiltradas().length === 0) {
+    <mat-card class="empty-card">
+      <mat-card-content class="empty-state">
+        <mat-icon>event_available</mat-icon>
+        <p>No hay ausencias {{ filtroEstado() !== 'todos' ? 'con estado "' + filtroEstado() + '"' : 'registradas' }}</p>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @for (a of ausenciasFiltradas(); track a.id) {
+    <mat-card class="ausencia-card" [class.pendiente]="a.estado === 'pendiente'">
+      <mat-card-content>
+        <div class="ausencia-header">
+          <div class="instructor-info">
+            <mat-icon class="tipo-icon">{{ getTipoIcon(a.tipo) }}</mat-icon>
+            <div>
+              <div class="instructor-nombre">{{ getNombreInstructor(a.instructorUid) }}</div>
+              <div class="tipo-label">{{ a.tipo | titlecase }}</div>
+            </div>
+          </div>
+          <span class="chip"
+            [class.chip-warn]="a.estado === 'pendiente'"
+            [class.chip-success]="a.estado === 'aprobado'"
+            [class.chip-error]="a.estado === 'rechazado'">
+            {{ a.estado | titlecase }}
+          </span>
+        </div>
+
+        <mat-divider />
+
+        <div class="ausencia-detalles">
+          <div class="detalle-row">
+            <mat-icon>date_range</mat-icon>
+            <span>{{ a.fechaInicio | fechaHora:'fecha' }} — {{ a.fechaFin | fechaHora:'fecha' }}</span>
+            @if (a.diaCompleto) { <span class="chip chip-muted">Día completo</span> }
+          </div>
+          <div class="detalle-row">
+            <mat-icon>notes</mat-icon>
+            <span>{{ a.motivo }}</span>
+          </div>
+          @if (a.instructorReemplazoUid) {
+            <div class="detalle-row">
+              <mat-icon color="primary">swap_horiz</mat-icon>
+              <span>Reemplazo: <strong>{{ getNombreInstructor(a.instructorReemplazoUid) }}</strong></span>
+            </div>
+          }
+          @if (a.notificarAlumnos) {
+            <div class="detalle-row">
+              <mat-icon color="accent">notifications</mat-icon>
+              <span>Alumnos serán notificados</span>
+            </div>
+          }
+        </div>
+
+        @if (a.estado === 'pendiente') {
+          <div class="ausencia-actions">
+            <button mat-stroked-button (click)="asignarReemplazo(a)" matTooltip="Asignar reemplazo">
+              <mat-icon>swap_horiz</mat-icon> Reemplazo
+            </button>
+            <button mat-stroked-button color="warn" (click)="rechazar(a)">
+              <mat-icon>close</mat-icon> Rechazar
+            </button>
+            <button mat-raised-button color="primary" (click)="aprobar(a)">
+              <mat-icon>check</mat-icon> Aprobar
+            </button>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

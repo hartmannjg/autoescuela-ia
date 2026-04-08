@@ -1,0 +1,146 @@
+<div class="instructores-page">
+  <div class="page-header">
+    <div>
+      <h2>Instructores</h2>
+      <p>Gestión del equipo docente</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="abrirFormulario()">
+      <mat-icon>person_add</mat-icon> Nuevo instructor
+    </button>
+  </div>
+
+  <!-- Filtro -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <mat-form-field appearance="outline">
+        <mat-label>Buscar</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [ngModel]="filtro()" (ngModelChange)="filtro.set($event)" placeholder="Nombre o email..." />
+      </mat-form-field>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Formulario edición -->
+  @if (mostrarFormulario()) {
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>{{ instructorEditando() ? 'edit' : 'person_add' }}</mat-icon>
+          {{ instructorEditando() ? 'Editar instructor' : 'Nuevo instructor' }}
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="form" class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Nombre completo</mat-label>
+            <input matInput formControlName="nombre" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput formControlName="email" type="email" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Teléfono</mat-label>
+            <input matInput formControlName="telefono" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Especialidad</mat-label>
+            <input matInput formControlName="especialidad" placeholder="ej: Manejo defensivo" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Límite diario de clases</mat-label>
+            <input matInput type="number" formControlName="limiteDiario" min="1" max="20" />
+          </mat-form-field>
+        </form>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button (click)="cancelar()">Cancelar</button>
+        <button mat-raised-button color="primary" (click)="guardar()" [disabled]="form.invalid || guardando()">
+          @if (guardando()) { <mat-spinner diameter="18" /> } @else { Guardar }
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  }
+
+  <!-- Tabla -->
+  <mat-card class="table-card">
+    <table mat-table [dataSource]="instructoresFiltrados()" class="instructores-table">
+
+      <ng-container matColumnDef="nombre">
+        <th mat-header-cell *matHeaderCellDef>Nombre</th>
+        <td mat-cell *matCellDef="let i">
+          <div class="nombre-cell">
+            <div class="avatar">{{ i.nombre.charAt(0).toUpperCase() }}</div>
+            <div>
+              <div class="nombre">{{ i.nombre }}</div>
+              <div class="email">{{ i.email }}</div>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>Teléfono</th>
+        <td mat-cell *matCellDef="let i">{{ i.telefono ?? '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="especialidad">
+        <th mat-header-cell *matHeaderCellDef>Especialidad</th>
+        <td mat-cell *matCellDef="let i">{{ i.instructorData?.especialidad ?? '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="clases">
+        <th mat-header-cell *matHeaderCellDef>Clases</th>
+        <td mat-cell *matCellDef="let i">{{ i.instructorData?.clasesDictadas ?? 0 }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="valoracion">
+        <th mat-header-cell *matHeaderCellDef>Valoración</th>
+        <td mat-cell *matCellDef="let i">
+          <span class="estrellas" [matTooltip]="(i.instructorData?.valoracionPromedio ?? 0) + '/5'">
+            {{ getEstrellas(i.instructorData?.valoracionPromedio ?? 0) }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="estado">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let i">
+          <span class="chip" [class.chip-success]="i.activo" [class.chip-warn]="!i.activo">
+            {{ i.activo ? 'Activo' : 'Inactivo' }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let i">
+          <button mat-icon-button color="primary" [routerLink]="['/admin/instructores', i.uid]" matTooltip="Ver detalle">
+            <mat-icon>visibility</mat-icon>
+          </button>
+          <button mat-icon-button (click)="abrirFormulario(i)" matTooltip="Editar">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button [color]="i.activo ? 'warn' : 'accent'" (click)="toggleActivo(i)"
+            [matTooltip]="i.activo ? 'Desactivar' : 'Activar'">
+            <mat-icon>{{ i.activo ? 'person_off' : 'person' }}</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnas;"></tr>
+    </table>
+
+    @if (instructoresFiltrados().length === 0) {
+      <div class="empty-state">
+        <mat-icon>group_off</mat-icon>
+        <p>No se encontraron instructores</p>
+      </div>
+    }
+  </mat-card>
+</div>

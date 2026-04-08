@@ -4,17 +4,14 @@ import {
   collection,
   doc,
   getDoc,
-  getDocs,
-  setDoc,
   updateDoc,
   query,
   where,
-  orderBy,
   onSnapshot,
   serverTimestamp,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
-import { User, AlumnoData, InstructorData } from '../../shared/models';
+import { User, AlumnoData } from '../../shared/models';
 
 @Injectable({ providedIn: 'root' })
 export class UsuarioService {
@@ -34,16 +31,18 @@ export class UsuarioService {
     return snap.exists() ? (snap.data() as User) : null;
   }
 
+  // Sin orderBy — evita índices compuestos, ordenamos en el cliente
   alumnosPorSucursal$(sucursalId: string): Observable<User[]> {
     return new Observable(observer => {
       const q = query(
         this.colRef(),
         where('sucursalId', '==', sucursalId),
-        where('rol', '==', 'alumno'),
-        orderBy('nombre', 'asc')
+        where('rol', '==', 'alumno')
       );
       return onSnapshot(q, snap => {
-        observer.next(snap.docs.map(d => d.data() as User));
+        const users = snap.docs.map(d => d.data() as User)
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+        observer.next(users);
       }, err => observer.error(err));
     });
   }
@@ -53,11 +52,12 @@ export class UsuarioService {
       const q = query(
         this.colRef(),
         where('sucursalId', '==', sucursalId),
-        where('rol', '==', 'instructor'),
-        orderBy('nombre', 'asc')
+        where('rol', '==', 'instructor')
       );
       return onSnapshot(q, snap => {
-        observer.next(snap.docs.map(d => d.data() as User));
+        const users = snap.docs.map(d => d.data() as User)
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+        observer.next(users);
       }, err => observer.error(err));
     });
   }
@@ -67,11 +67,13 @@ export class UsuarioService {
       const q = query(
         this.colRef(),
         where('sucursalId', '==', sucursalId),
-        where('rol', '==', 'instructor'),
-        where('instructorData.activo', '==', true)
+        where('rol', '==', 'instructor')
       );
       return onSnapshot(q, snap => {
-        observer.next(snap.docs.map(d => d.data() as User));
+        const users = snap.docs.map(d => d.data() as User)
+          .filter(u => u.instructorData?.activo)
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+        observer.next(users);
       }, err => observer.error(err));
     });
   }
@@ -114,7 +116,6 @@ export class UsuarioService {
     const user = snap.data() as User;
     const credito = user.alumnoData?.creditoIndividual;
     if (!credito) throw new Error('El alumno no tiene crédito individual');
-
     await this.actualizarAlumnoData(uid, {
       creditoIndividual: {
         ...credito,

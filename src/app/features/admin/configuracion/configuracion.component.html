@@ -1,1 +1,152 @@
-<div class="page"><div class="page-header"><h2>Configuración</h2><p>Módulo en desarrollo</p></div></div>
+<div class="config-page">
+  <div class="page-header">
+    <div>
+      <h2>Configuración global</h2>
+      <p>Límites, precios y notificaciones del sistema</p>
+    </div>
+  </div>
+
+  @if (cargando()) {
+    <div class="loading-center"><mat-spinner /></div>
+  } @else {
+    <form [formGroup]="form">
+
+      <!-- Límites operativos -->
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title><mat-icon>tune</mat-icon> Límites operativos</mat-card-title>
+        </mat-card-header>
+        <mat-card-content formGroupName="limites">
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Máx. clases por semana</mat-label>
+              <input matInput type="number" formControlName="maxClasesPorSemana" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Mín. clases por semana</mat-label>
+              <input matInput type="number" formControlName="minClasesPorSemana" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Semanas sin clase para bloqueo</mat-label>
+              <input matInput type="number" formControlName="semanasSinClaseParaBloqueo" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Horas antes para cancelar</mat-label>
+              <input matInput type="number" formControlName="horasAntesParaCancelar" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Minutos validez QR (antes y después)</mat-label>
+              <input matInput type="number" formControlName="minutosQrValidez" />
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Notificaciones -->
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title><mat-icon>notifications</mat-icon> Notificaciones automáticas</mat-card-title>
+        </mat-card-header>
+        <mat-card-content formGroupName="notificaciones">
+          <div class="toggles-grid">
+            <div class="toggle-row">
+              <mat-slide-toggle formControlName="recordatorio24hs">Recordatorio 24hs antes de la clase</mat-slide-toggle>
+            </div>
+            <div class="toggle-row">
+              <mat-slide-toggle formControlName="recordatorio2hs">Recordatorio 2hs antes de la clase</mat-slide-toggle>
+            </div>
+            <div class="toggle-row">
+              <mat-slide-toggle formControlName="confirmacionTurno">Email de confirmación al reservar turno</mat-slide-toggle>
+            </div>
+            <div class="toggle-row">
+              <mat-slide-toggle formControlName="alertaSaldoBajo">Alerta cuando el saldo llega a 1 clase</mat-slide-toggle>
+            </div>
+            <div class="toggle-row">
+              <mat-slide-toggle formControlName="alertaVencimientoPlan">Alerta de vencimiento de plan (7 días antes)</mat-slide-toggle>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Planes -->
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title><mat-icon>card_membership</mat-icon> Planes de suscripción</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div formArrayName="planes">
+            @for (plan of planesArray.controls; track $index; let i = $index) {
+              <div [formGroupName]="i" class="precio-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Nombre del plan</mat-label>
+                  <input matInput formControlName="nombre" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Duración (min)</mat-label>
+                  <mat-select formControlName="duracionMinutos">
+                    <mat-option [value]="30">30 min</mat-option>
+                    <mat-option [value]="45">45 min</mat-option>
+                    <mat-option [value]="60">60 min</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Cantidad de clases</mat-label>
+                  <input matInput type="number" formControlName="cantidadClases" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Precio ($)</mat-label>
+                  <input matInput type="number" formControlName="precio" />
+                </mat-form-field>
+                <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
+                <button mat-icon-button color="warn" type="button" (click)="quitarPlan(i)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+          <button mat-stroked-button type="button" (click)="agregarPlan()">
+            <mat-icon>add</mat-icon> Agregar plan
+          </button>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Paquetes de crédito -->
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title><mat-icon>account_balance_wallet</mat-icon> Paquetes de crédito individual</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div formArrayName="paquetes">
+            @for (paq of paquetesArray.controls; track $index; let i = $index) {
+              <div [formGroupName]="i" class="precio-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Cantidad de clases</mat-label>
+                  <input matInput type="number" formControlName="cantidadClases" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Precio ($)</mat-label>
+                  <input matInput type="number" formControlName="precio" />
+                </mat-form-field>
+                <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
+                <button mat-icon-button color="warn" type="button" (click)="quitarPaquete(i)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+          <button mat-stroked-button type="button" (click)="agregarPaquete()">
+            <mat-icon>add</mat-icon> Agregar paquete
+          </button>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Guardar -->
+      <div class="save-row">
+        <button mat-raised-button color="primary" type="button" (click)="guardar()" [disabled]="form.invalid || guardando()">
+          @if (guardando()) { <mat-spinner diameter="20" /> } @else { <ng-container><mat-icon>save</mat-icon> Guardar configuración</ng-container> }
+        </button>
+      </div>
+
+    </form>
+  }
+</div>

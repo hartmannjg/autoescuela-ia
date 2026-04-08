@@ -12,11 +12,7 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent),
     canActivate: [guestGuard],
   },
-  {
-    path: 'register',
-    loadComponent: () => import('./features/auth/register/register.component').then(m => m.RegisterComponent),
-    canActivate: [guestGuard],
-  },
+  { path: 'register', redirectTo: 'login', pathMatch: 'full' },
 
   // Alumno
   {

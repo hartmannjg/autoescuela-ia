@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "Bash(netstat -ano)",
+      "Bash(start cmd:*)"
     ]
   }
 }

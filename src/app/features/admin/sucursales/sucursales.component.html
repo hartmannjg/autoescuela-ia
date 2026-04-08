@@ -1,1 +1,141 @@
-<div class="page"><div class="page-header"><h2>Sucursales</h2><p>Módulo en desarrollo</p></div></div>
+<div class="sucursales-page">
+  <div class="page-header">
+    <div>
+      <h2>Sucursales</h2>
+      <p>Gestión de sedes de la academia</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="abrirFormulario()">
+      <mat-icon>add_business</mat-icon> Nueva sucursal
+    </button>
+  </div>
+
+  @if (mostrarFormulario()) {
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>{{ editandoId() ? 'edit' : 'add_business' }}</mat-icon>
+          {{ editandoId() ? 'Editar sucursal' : 'Nueva sucursal' }}
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="form">
+          <div class="form-section">
+            <h4>Datos generales</h4>
+            <div class="form-grid">
+              <mat-form-field appearance="outline" class="full">
+                <mat-label>Nombre</mat-label>
+                <input matInput formControlName="nombre" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="full">
+                <mat-label>Dirección</mat-label>
+                <input matInput formControlName="direccion" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Teléfono</mat-label>
+                <input matInput formControlName="telefono" />
+              </mat-form-field>
+            </div>
+          </div>
+
+          <mat-divider />
+
+          <div class="form-section">
+            <h4>Ubicación geográfica</h4>
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Latitud</mat-label>
+                <input matInput type="number" formControlName="lat" step="0.000001" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Longitud</mat-label>
+                <input matInput type="number" formControlName="lng" step="0.000001" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Radio permitido (metros)</mat-label>
+                <input matInput type="number" formControlName="radioPermitido" />
+              </mat-form-field>
+            </div>
+          </div>
+
+          <mat-divider />
+
+          <div class="form-section">
+            <h4>Horarios y capacidad</h4>
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Hora apertura</mat-label>
+                <input matInput type="time" formControlName="horarioApertura" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Hora cierre</mat-label>
+                <input matInput type="time" formControlName="horarioCierre" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Capacidad máxima diaria</mat-label>
+                <input matInput type="number" formControlName="capacidadMaximaDiaria" />
+              </mat-form-field>
+            </div>
+          </div>
+        </form>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button (click)="cancelar()">Cancelar</button>
+        <button mat-raised-button color="primary" (click)="guardar()" [disabled]="form.invalid || guardando()">
+          @if (guardando()) { <mat-spinner diameter="18" /> } @else { Guardar }
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  }
+
+  <div class="sucursales-grid">
+    @for (s of sucursales(); track s.id) {
+      <mat-card class="sucursal-card" [class.inactiva]="!s.activo">
+        <mat-card-header>
+          <mat-icon mat-card-avatar color="primary">store</mat-icon>
+          <mat-card-title>{{ s.nombre }}</mat-card-title>
+          <mat-card-subtitle>{{ s.direccion }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="sucursal-info">
+            <div class="info-row">
+              <mat-icon>phone</mat-icon>
+              <span>{{ s.telefono }}</span>
+            </div>
+            <div class="info-row">
+              <mat-icon>schedule</mat-icon>
+              <span>{{ s.configuracionHorarios.horarioApertura }} — {{ s.configuracionHorarios.horarioCierre }}</span>
+            </div>
+            <div class="info-row">
+              <mat-icon>people</mat-icon>
+              <span>Máx. {{ s.configuracionHorarios.capacidadMaximaDiaria }} clases/día</span>
+            </div>
+            <div class="info-row">
+              <mat-icon>location_on</mat-icon>
+              <span>Radio QR: {{ s.ubicacion.radioPermitido }}m</span>
+            </div>
+          </div>
+        </mat-card-content>
+        <mat-card-actions>
+          <span class="chip" [class.chip-success]="s.activo" [class.chip-warn]="!s.activo">
+            {{ s.activo ? 'Activa' : 'Inactiva' }}
+          </span>
+          <span class="spacer"></span>
+          <button mat-icon-button color="primary" (click)="abrirFormulario(s)" matTooltip="Editar">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button [color]="s.activo ? 'warn' : 'accent'" (click)="toggleActivo(s)"
+            [matTooltip]="s.activo ? 'Desactivar' : 'Activar'">
+            <mat-icon>{{ s.activo ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    }
+    @if (sucursales().length === 0) {
+      <div class="empty-state">
+        <mat-icon>store_mall_directory</mat-icon>
+        <p>No hay sucursales registradas</p>
+        <button mat-raised-button color="primary" (click)="abrirFormulario()">Crear primera sucursal</button>
+      </div>
+    }
+  </div>
+</div>

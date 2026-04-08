@@ -1,0 +1,24 @@
+.detalle-page { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+.loading-center { display: flex; justify-content: center; padding: 64px; }
+.page-header { display: flex; flex-direction: column; gap: 12px; }
+.header-info { display: flex; align-items: center; gap: 16px; h2 { margin: 0; font-size: 1.6rem; font-weight: 700; color: #37474f; } p { margin: 2px 0 0; color: #666; font-size: 0.9rem; } }
+.avatar { width: 56px; height: 56px; border-radius: 50%; background: #37474f; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.4rem; flex-shrink: 0; }
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.stat-card mat-card-content { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 20px !important; mat-icon { font-size: 28px; width: 28px; height: 28px; } .num { font-size: 1.8rem; font-weight: 700; color: #37474f; } .lbl { font-size: 0.8rem; color: #888; } }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.horarios-list { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+.horario-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: center; }
+.dia-field { }
+.horarios-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px; }
+.ausencias-list { display: flex; flex-direction: column; gap: 12px; }
+.ausencia-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 8px; background: #fafafa; border: 1px solid #eeeeee; }
+.ausencia-info { display: flex; flex-direction: column; gap: 2px; .motivo { font-size: 0.85rem; color: #666; } }
+.ausencia-estado { display: flex; align-items: center; gap: 8px; }
+.turnos-list { display: flex; flex-direction: column; gap: 8px; }
+.turno-item { display: flex; align-items: center; gap: 16px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; &:last-child { border-bottom: none; } }
+.chip { display: inline-flex; padding: 4px 12px; border-radius: 16px; font-size: 0.78rem; font-weight: 600; }
+.chip-success { background: #e8f5e9; color: #2e7d32; }
+.chip-warn { background: #fff3e0; color: #e65100; }
+.chip-error { background: #ffebee; color: #c62828; }
+.empty-state { text-align: center; padding: 32px; color: #999; mat-icon { font-size: 36px; width: 36px; height: 36px; display: block; margin: 0 auto 8px; } }
+@media (max-width: 767px) { .stats-row { grid-template-columns: 1fr 1fr; } .horario-row { grid-template-columns: 1fr 1fr; } .form-row { grid-template-columns: 1fr; } }

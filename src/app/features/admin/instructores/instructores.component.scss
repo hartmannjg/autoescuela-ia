@@ -1,0 +1,19 @@
+.instructores-page { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #37474f; } p { margin: 4px 0 0; color: #666; } }
+.filters-card { border-radius: 10px !important; mat-card-content { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; } }
+mat-form-field { min-width: 280px; }
+.form-card { border-radius: 12px !important; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-top: 8px; }
+mat-card-actions { display: flex; gap: 8px; justify-content: flex-end; padding: 8px 16px 16px; }
+.table-card { border-radius: 12px !important; overflow: hidden; }
+.instructores-table { width: 100%; }
+.nombre-cell { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: #37474f; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; flex-shrink: 0; }
+.nombre { font-weight: 600; font-size: 0.95rem; }
+.email { font-size: 0.8rem; color: #888; }
+.estrellas { color: #f57c00; font-size: 1rem; letter-spacing: 1px; }
+.chip { display: inline-flex; padding: 4px 12px; border-radius: 16px; font-size: 0.78rem; font-weight: 600; }
+.chip-success { background: #e8f5e9; color: #2e7d32; }
+.chip-warn { background: #fff3e0; color: #e65100; }
+.empty-state { text-align: center; padding: 48px; color: #999; mat-icon { font-size: 48px; width: 48px; height: 48px; display: block; margin: 0 auto 12px; } }
+@media (max-width: 599px) { .form-grid { grid-template-columns: 1fr; } .page-header { flex-direction: column; gap: 12px; } }

@@ -101,6 +101,9 @@ html, body {
   z-index: 9999;
 }
 
+// ─── CDK Overlay — asegurar z-index por encima del sidenav ───────────────────
+.cdk-overlay-container { z-index: 1000 !important; }
+
 // ─── SweetAlert2 override ─────────────────────────────────────────────────────
 .swal2-popup {
   border-radius: 16px !important;

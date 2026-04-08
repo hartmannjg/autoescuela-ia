@@ -1,1 +1,142 @@
-<div class="page"><div class="page-header"><h2>Reportes</h2><p>Módulo en desarrollo</p></div></div>
+<div class="reportes-page">
+  <div class="page-header">
+    <div>
+      <h2>Reportes</h2>
+      <p>Estadísticas y análisis del período</p>
+    </div>
+  </div>
+
+  <!-- Filtro de período -->
+  <mat-card class="filtro-card">
+    <mat-card-header>
+      <mat-card-title><mat-icon>date_range</mat-icon> Período</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="filtro-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Desde</mat-label>
+          <input matInput type="date" [ngModel]="desde()" (ngModelChange)="desde.set($event)" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Hasta</mat-label>
+          <input matInput type="date" [ngModel]="hasta()" (ngModelChange)="hasta.set($event)" />
+        </mat-form-field>
+        <button mat-raised-button color="primary" (click)="generarReporte()" [disabled]="cargando()">
+          @if (cargando()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            <ng-container><mat-icon>bar_chart</mat-icon> Generar reporte</ng-container>
+          }
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  @if (reporte(); as r) {
+
+    <!-- KPIs -->
+    <div class="kpis-grid">
+      <mat-card class="kpi-card">
+        <mat-card-content>
+          <mat-icon color="primary">school</mat-icon>
+          <span class="num">{{ r.totalClases }}</span>
+          <span class="lbl">Total clases</span>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card success">
+        <mat-card-content>
+          <mat-icon>check_circle</mat-icon>
+          <span class="num">{{ r.clasesCompletadas }}</span>
+          <span class="lbl">Completadas ({{ tasaCompletadas }}%)</span>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card warn">
+        <mat-card-content>
+          <mat-icon>person_off</mat-icon>
+          <span class="num">{{ r.clasesAusentes }}</span>
+          <span class="lbl">Ausencias ({{ tasaAusencia }}%)</span>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="kpi-card muted">
+        <mat-card-content>
+          <mat-icon>cancel</mat-icon>
+          <span class="num">{{ r.clasesCanceladas }}</span>
+          <span class="lbl">Canceladas</span>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Barra de estados -->
+    <mat-card class="chart-card">
+      <mat-card-header>
+        <mat-card-title><mat-icon>pie_chart</mat-icon> Distribución de estados</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (r.totalClases > 0) {
+          <div class="stacked-bar">
+            <div class="bar-segment success" [style.width]="getBarWidth(r.clasesCompletadas, r.totalClases)"
+              [title]="'Completadas: ' + r.clasesCompletadas"></div>
+            <div class="bar-segment warn" [style.width]="getBarWidth(r.clasesAusentes, r.totalClases)"
+              [title]="'Ausentes: ' + r.clasesAusentes"></div>
+            <div class="bar-segment muted" [style.width]="getBarWidth(r.clasesCanceladas, r.totalClases)"
+              [title]="'Canceladas: ' + r.clasesCanceladas"></div>
+          </div>
+          <div class="bar-legend">
+            <span class="legend-item"><span class="dot success"></span> Completadas {{ tasaCompletadas }}%</span>
+            <span class="legend-item"><span class="dot warn"></span> Ausencias {{ tasaAusencia }}%</span>
+            <span class="legend-item"><span class="dot muted"></span> Canceladas {{ 100 - tasaCompletadas - tasaAusencia }}%</span>
+          </div>
+        } @else {
+          <p class="no-data">Sin datos para el período seleccionado</p>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Temas frecuentes -->
+    @if (r.temasFrecuentes.length > 0) {
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title><mat-icon>topic</mat-icon> Temas más dictados</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="temas-list">
+            @for (t of r.temasFrecuentes; track t.tema) {
+              <div class="tema-row">
+                <span class="tema-nombre">{{ t.tema }}</span>
+                <div class="tema-bar-wrap">
+                  <div class="tema-bar" [style.width]="getBarWidth(t.count, r.temasFrecuentes[0].count)"></div>
+                </div>
+                <span class="tema-count">{{ t.count }}</span>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Exportar -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title><mat-icon>download</mat-icon> Exportar</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="export-buttons">
+          <button mat-stroked-button color="primary" (click)="exportarExcel()">
+            <mat-icon>table_view</mat-icon> Exportar Excel
+          </button>
+          <button mat-stroked-button color="warn" (click)="exportarPDF()">
+            <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  } @else if (!cargando()) {
+    <mat-card class="empty-card">
+      <mat-card-content class="empty-state">
+        <mat-icon>bar_chart</mat-icon>
+        <p>Seleccioná un período y generá el reporte</p>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

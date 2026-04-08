@@ -7,7 +7,7 @@
     <mat-card-content>
       <mat-form-field appearance="outline">
         <mat-label>Filtrar por instructor</mat-label>
-        <mat-select [(ngModel)]="filtroInstructor" (ngModelChange)="filtroInstructor.set($event)">
+        <mat-select [ngModel]="filtroInstructor()" (ngModelChange)="filtroInstructor.set($event)">
           <mat-option value="">Todos</mat-option>
           @for (inst of instructores(); track inst.uid) {
             <mat-option [value]="inst.uid">{{ inst.nombre }}</mat-option>

@@ -1,5 +1,7 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router, ActivatedRouteSnapshot } from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { filter, take, switchMap, of } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { UserRole } from '../../shared/models';
 
@@ -7,12 +9,16 @@ export const roleGuard = (roles: UserRole[]): CanActivateFn => () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  const rol = auth.rol();
-  if (!rol || !roles.includes(rol)) {
-    router.navigate(['/login']);
-    return false;
-  }
-  return true;
+  return toObservable(auth.loading).pipe(
+    filter(loading => !loading),
+    take(1),
+    switchMap(() => {
+      const rol = auth.rol();
+      if (rol && roles.includes(rol)) return of(true);
+      router.navigate(['/login']);
+      return of(false);
+    })
+  );
 };
 
 export const alumnoGuard: CanActivateFn = roleGuard(['alumno']);
