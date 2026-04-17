@@ -72,17 +72,10 @@ export class AuthService {
       fechaAlta: serverTimestamp() as any,
       alumnoData: {
         tipoAlumno: 'individual',
-        reglasAsignacion: {
-          maxClasesPorSemana: 3,
-          requiereMinimoSemanal: false,
-          semanasSinClaseMax: 4,
-          puedeAgendarSinLimite: false,
-        },
         bloqueado: false,
         creditoIndividual: {
           clasesDisponibles: 0,
           clasesTomadas: 0,
-          paquetesComprados: [],
         },
       },
     };

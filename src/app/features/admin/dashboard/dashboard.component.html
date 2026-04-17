@@ -4,6 +4,10 @@
     <p>Resumen general de la sucursal</p>
   </div>
 
+  @if (loading()) {
+    <div class="loading-center"><mat-spinner diameter="48" /></div>
+  } @else {
+
   <div class="kpi-grid">
     <mat-card class="kpi-card">
       <mat-card-content>
@@ -96,4 +100,6 @@
       </mat-card-content>
     </mat-card>
   </div>
+
+  }
 </div>

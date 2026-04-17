@@ -3,7 +3,10 @@
     "allow": [
       "Bash(grep -v \"^$\")",
       "Bash(netstat -ano)",
-      "Bash(start cmd:*)"
+      "Bash(start cmd:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e \"const m = require\\('d:/Proyectos/AutoEscuela-Claude/autoescuela-ia/node_modules/@angular/material/button/index.js'\\); console.log\\(Object.keys\\(m\\).filter\\(k => k.includes\\('Button'\\)\\).slice\\(0,5\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(list\\(d.get\\('exports',{}\\).keys\\(\\)\\)[:10]\\)\")"
     ]
   }
 }

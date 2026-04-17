@@ -2,45 +2,31 @@ import { Timestamp } from '@angular/fire/firestore';
 
 export type UserRole = 'super-admin' | 'admin' | 'instructor' | 'alumno';
 
-export interface PaqueteComprado {
-  id: string;
-  cantidadClases: number;
-  precio: number;
-  fechaCompra: Timestamp;
-  metadoPago?: string;
-}
-
 export interface PlanContratado {
   id: string;
   nombre: string;
-  duracionClaseMinutos: 30 | 45 | 60;
+  duracionClase: 40 | 80;
   clasesTotales: number;
   clasesRestantes: number;
   clasesTomadas: number;
   fechaInicio: Timestamp;
   fechaFin: Timestamp;
   valor: number;
+  maxClasesPorDia: number | null; // null = sin límite
+  maxClasesPorSemana: number;
 }
 
 export interface CreditoIndividual {
-  clasesDisponibles: number;
+  clasesDisponibles: number;  // total (suma de todos los tipos)
   clasesTomadas: number;
-  fechaUltimaCompra?: Timestamp;
-  paquetesComprados: PaqueteComprado[];
-}
-
-export interface ReglasAsignacion {
-  maxClasesPorSemana: number;
-  requiereMinimoSemanal: boolean;
-  semanasSinClaseMax: number;
-  puedeAgendarSinLimite: boolean;
+  ultimaAsignacion?: Timestamp;
+  clases40min?: number;
 }
 
 export interface AlumnoData {
   tipoAlumno: 'plan' | 'individual' | 'mixto';
   planContratado?: PlanContratado;
   creditoIndividual?: CreditoIndividual;
-  reglasAsignacion: ReglasAsignacion;
   bloqueado: boolean;
   bloqueadoDesde?: Timestamp;
   motivoBloqueo?: string;
@@ -60,7 +46,6 @@ export interface InstructorData {
   clasesDictadas: number;
   valoracionPromedio: number;
   activo: boolean;
-  limiteDiario: number;
 }
 
 export interface User {

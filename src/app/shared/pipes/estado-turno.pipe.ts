@@ -5,22 +5,23 @@ import { TurnoEstado } from '../models';
 export class EstadoTurnoPipe implements PipeTransform {
   private readonly labels: Record<TurnoEstado, string> = {
     PENDIENTE_CONFIRMACION: 'Pendiente',
-    CONFIRMADA: 'Confirmada',
-    RECHAZADA: 'Rechazada',
-    REPROGRAMADA: 'Reprogramada',
-    COMPLETADA: 'Completada',
-    CANCELADA: 'Cancelada',
-    AUSENTE: 'Ausente',
+    CONFIRMADA:             'Confirmada',
+    RECHAZADA:              'Rechazada',
+    REPROGRAMADA:           'Reprogramada',
+    COMPLETADA:             'Completada',
+    CANCELADA:              'Cancelada',
+    AUSENTE:                'Ausente',
   };
 
+  // CSS class suffix for .estado-chip.estado-{color}
   private readonly colors: Record<TurnoEstado, string> = {
-    PENDIENTE_CONFIRMACION: 'warn',
-    CONFIRMADA: 'accent',
-    RECHAZADA: 'warn',
-    REPROGRAMADA: 'primary',
-    COMPLETADA: 'primary',
-    CANCELADA: '',
-    AUSENTE: 'warn',
+    PENDIENTE_CONFIRMACION: 'pendiente',
+    CONFIRMADA:             'confirmada',
+    RECHAZADA:              'rechazada',
+    REPROGRAMADA:           'reprogramada',
+    COMPLETADA:             'completada',
+    CANCELADA:              'cancelada',
+    AUSENTE:                'ausente',
   };
 
   transform(value: TurnoEstado, tipo: 'label' | 'color' = 'label'): string {

@@ -1,10 +1,73 @@
 .calendario-page { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
-.page-header { h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #1a237e; } p { margin: 4px 0 0; color: #666; } }
+.page-header { display: flex; flex-direction: column; gap: 12px;
+  .header-top { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 8px;
+    div { flex: 1; }
+    h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #1a237e; }
+    p  { margin: 4px 0 0; color: #666; }
+    .masiva-btn { align-self: center; }
+  }
+}
+.page-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: -8px;
+}
+.page-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: -2px;
+  transition: color .15s, border-color .15s;
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+  &:hover { color: #1a237e; }
+  &.active { color: #1a237e; border-bottom-color: #1a237e; font-weight: 600; }
+}
+
+.saldo-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.saldo-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  strong { font-weight: 700; }
+  &.plan     { background: #e8eaf6; color: #1a237e; }
+  &.credito  { background: #e8f5e9; color: #2e7d32; }
+  &.sin-saldo { background: #fff3e0; color: #e65100; }
+}
 .step-card { border-radius: 12px !important; }
 mat-card-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .step-num { width: 28px; height: 28px; border-radius: 50%; background: #1a237e; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
 .semana-nav { display: flex; align-items: center; gap: 8px; margin-left: auto; span { font-size: 0.9rem; color: #666; white-space: nowrap; } }
-.instructores-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+.fuente-grid { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
+.fuente-card { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; cursor: pointer; transition: all 0.2s; min-width: 220px; flex: 1; position: relative;
+  mat-icon:first-child { font-size: 28px; width: 28px; height: 28px; color: #888; margin-top: 2px; flex-shrink: 0; }
+  .fuente-info { display: flex; flex-direction: column; gap: 2px; flex: 1;
+    strong { font-size: 0.95rem; }
+    span { font-size: 0.8rem; color: #666; }
+  }
+  .check-icon { color: #1a237e; font-size: 20px; width: 20px; height: 20px; }
+  .fuente-badge { position: absolute; top: -10px; right: 12px; font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .plan-badge { background: #e8eaf6; color: #1a237e; }
+  &:hover { border-color: #1a237e; background: #f3f4ff; }
+  &.selected { border-color: #1a237e; background: #e8eaf6;
+    mat-icon:first-child { color: #1a237e; }
+  }
+}
+.duraciones-grid { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.duracion-btn { display: flex; flex-direction: column; align-items: center; padding: 16px 28px; border: 2px solid #e0e0e0; border-radius: 10px; background: white; cursor: pointer; transition: all 0.2s; gap: 2px;
+  .dur-num { font-size: 1.8rem; font-weight: 700; color: #333; }
+  .dur-label { font-size: 0.75rem; color: #888; }
+  &:hover { border-color: #1a237e; background: #f3f4ff; }
+  &.selected { border-color: #1a237e; background: #1a237e; .dur-num, .dur-label { color: white; } }
+}
+.disabled-card { opacity: 0.5; pointer-events: none; }
+.instructores-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
 .instructor-card { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 10px; cursor: pointer; transition: all 0.2s; min-width: 200px; position: relative;
   &:hover { border-color: #1a237e; background: #f3f4ff; }
   &.selected { border-color: #1a237e; background: #e8eaf6; }
@@ -21,19 +84,28 @@ mat-card-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   &.today { border-color: #1976d2; .dia-num { color: #1976d2; } }
   &.selected { border-color: #1a237e; background: #1a237e; .dia-nombre, .dia-num { color: white; } }
   &.disabled { opacity: 0.4; cursor: not-allowed; }
+  &.dia-feriado { border-color: #f57c00 !important; background: #fff8e1 !important; .dia-nombre, .dia-num { color: #e65100; } cursor: not-allowed; }
+  &.dia-cierre  { border-color: #e91e63 !important; background: #fce4ec !important; .dia-nombre, .dia-num { color: #880e4f; } cursor: not-allowed; }
 }
+.dia-tag { font-size: 0.6rem; color: #ccc; }
+.tag-feriado { color: #e65100 !important; font-weight: 600; }
+.tag-cierre  { color: #880e4f !important; font-weight: 600; }
 .leyenda { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;
   .leyenda-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem;
     &::before { content: ''; width: 16px; height: 16px; border-radius: 4px; display: block; }
-    &.libre::before { background: #e8f5e9; border: 2px solid #4caf50; }
-    &.ocupado::before { background: #ffebee; border: 2px solid #ef5350; }
-    &.seleccionado::before { background: #1a237e; }
+    &.libre::before      { background: #e8f5e9; border: 2px solid #4caf50; }
+    &.ocupado::before    { background: #ffebee; border: 2px solid #ef5350; }
+    &.mi-clase::before   { background: #fff3e0; border: 2px solid #f57c00; }
+    &.seleccionado::before { background: #1a237e; border: 2px solid #1a237e; }
   }
 }
 .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; }
 .slot-btn { padding: 8px 4px; border-radius: 8px; border: 2px solid; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.15s;
-  &.disponible { border-color: #4caf50; background: #e8f5e9; color: #2e7d32; &:hover { background: #c8e6c9; } &.seleccionado { background: #1a237e; border-color: #1a237e; color: white; } }
-  &.ocupado { border-color: #ef5350; background: #ffebee; color: #c62828; cursor: not-allowed; opacity: 0.7; }
+  &.disponible { border-color: #4caf50; background: #e8f5e9; color: #2e7d32; &:hover { background: #c8e6c9; } }
+  &.ocupado    { border-color: #ef5350; background: #ffebee; color: #c62828; cursor: not-allowed; opacity: 0.7; }
+  &.mi-clase   { border-color: #f57c00; background: #fff3e0; color: #e65100; cursor: not-allowed; }
+  // seleccionado siempre gana (incluso sobre slots "disponible" del rango)
+  &.seleccionado { background: #1a237e !important; border-color: #1a237e !important; color: white !important; cursor: default; }
 }
 .loading-center { display: flex; justify-content: center; padding: 32px; }
 .empty-msg { color: #888; font-style: italic; }
@@ -43,4 +115,62 @@ mat-card-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
     div { display: flex; flex-direction: column; gap: 2px; strong { font-size: 0.95rem; } span { font-size: 0.85rem; color: #666; } }
   }
 }
-@media (max-width: 599px) { .dias-grid { gap: 4px; } .dia-btn { padding: 8px 2px; .dia-num { font-size: 1rem; } } .instructores-grid { flex-direction: column; } }
+@media (max-width: 599px) {
+  .dias-grid { gap: 4px; }
+  .dia-btn { padding: 8px 2px; .dia-num { font-size: 1rem; } }
+
+  // Instructor strip: horizontal scroll
+  .instructores-grid {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 10px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
+
+  .instructor-card {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 72px;
+    max-width: 80px;
+    width: 76px;
+    padding: 10px 6px 8px;
+    gap: 6px;
+    flex-shrink: 0;
+    text-align: center;
+
+    .instructor-avatar {
+      width: 48px;
+      height: 48px;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .instructor-info {
+      width: 100%;
+      strong {
+        font-size: 0.7rem;
+        line-height: 1.25;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-word;
+      }
+      .rating { display: none; }
+      small   { display: none; }
+    }
+
+    .check-icon {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+}

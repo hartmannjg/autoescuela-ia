@@ -8,3 +8,4 @@
   .turno-info { flex: 1; span { font-size: 0.85rem; color: #666; } }
 }
 .empty-state { display: flex; flex-direction: column; align-items: center; padding: 48px; gap: 12px; color: #aaa; mat-icon { font-size: 48px; width: 48px; height: 48px; } }
+.loading-center { display: flex; justify-content: center; align-items: center; padding: 80px 0; }

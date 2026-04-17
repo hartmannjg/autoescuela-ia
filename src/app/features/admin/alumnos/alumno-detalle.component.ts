@@ -5,21 +5,28 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatChipsModule } from '@angular/material/chips';
 import { toSignal } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { TurnoService } from '../../../core/services/turno.service';
-import { User, Turno } from '../../../shared/models';
+import { ConfiguracionService } from '../../../core/services/configuracion.service';
+import { User, Turno, PreciosPlan, PlanContratado } from '../../../shared/models';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 import { EstadoTurnoPipe } from '../../../shared/pipes/estado-turno.pipe';
+import { DuracionPipe, formatDuracion } from '../../../shared/pipes/duracion.pipe';
+
 @Component({
   selector: 'app-alumno-detalle',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatCardModule, MatButtonModule, MatIconModule, MatTabsModule, MatChipsModule, MatProgressBarModule, MatDividerModule, MatProgressSpinnerModule, FechaHoraPipe, EstadoTurnoPipe],
+  imports: [
+    CommonModule, RouterLink, MatCardModule, MatButtonModule, MatIconModule,
+    MatTabsModule, MatProgressBarModule, MatDividerModule,
+    MatProgressSpinnerModule, MatChipsModule, FechaHoraPipe, EstadoTurnoPipe, DuracionPipe,
+  ],
   templateUrl: './alumno-detalle.component.html',
   styleUrl: './alumno-detalle.component.scss',
 })
@@ -27,10 +34,16 @@ export class AlumnoDetalleComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private usuarioService = inject(UsuarioService);
   private turnoService = inject(TurnoService);
+  private configService = inject(ConfiguracionService);
 
   readonly alumno = signal<User | null>(null);
   readonly loading = signal(true);
   readonly uid = signal('');
+
+  readonly turnos = toSignal(
+    this.turnoService.turnosAlumno$(this.route.snapshot.paramMap.get('id') ?? ''),
+    { initialValue: [] as Turno[] }
+  );
 
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -40,39 +53,195 @@ export class AlumnoDetalleComponent implements OnInit {
     this.loading.set(false);
   }
 
-  readonly turnos = toSignal(
-    this.turnoService.turnosAlumno$(this.route.snapshot.paramMap.get('id') ?? ''),
-    { initialValue: [] as Turno[] }
-  );
+  private async recargar(): Promise<void> {
+    const u = await this.usuarioService.getByIdOnce(this.uid());
+    this.alumno.set(u);
+  }
+
+  getSaldoIndividual(): number {
+    return this.alumno()?.alumnoData?.creditoIndividual?.clasesDisponibles ?? 0;
+  }
 
   getSaldoTotal(): number {
     const a = this.alumno();
-    return (a?.alumnoData?.planContratado?.clasesRestantes ?? 0) + (a?.alumnoData?.creditoIndividual?.clasesDisponibles ?? 0);
+    return (a?.alumnoData?.planContratado?.clasesRestantes ?? 0)
+         + (a?.alumnoData?.creditoIndividual?.clasesDisponibles ?? 0);
+  }
+
+  getProgresoPlan(): number {
+    const plan = this.alumno()?.alumnoData?.planContratado;
+    if (!plan || plan.clasesTotales === 0) return 0;
+    return Math.round((plan.clasesTomadas / plan.clasesTotales) * 100);
+  }
+
+  async asignarClases(): Promise<void> {
+    const { value: cant } = await Swal.fire({
+      title: 'Asignar clases individuales (40 min)',
+      input: 'number',
+      inputLabel: 'Cantidad de clases a agregar',
+      inputAttributes: { min: '1', max: '100' },
+      showCancelButton: true,
+      confirmButtonText: 'Asignar',
+      confirmButtonColor: '#1a237e',
+      inputValidator: v => (!v || Number(v) < 1) ? 'Ingresá una cantidad válida' : undefined,
+    });
+    if (!cant) return;
+
+    await this.usuarioService.asignarClasesIndividuales(this.uid(), Number(cant));
+    await this.recargar();
+    Swal.fire({ icon: 'success', title: `${cant} clases de 40 min asignadas`, timer: 1800, showConfirmButton: false });
+  }
+
+  async quitarClases(): Promise<void> {
+    const ind = this.alumno()?.alumnoData?.creditoIndividual;
+    if (!ind || ind.clasesDisponibles === 0) {
+      Swal.fire({ icon: 'info', title: 'Sin clases individuales', text: 'El alumno no tiene clases individuales disponibles.' });
+      return;
+    }
+
+    const { value: cant } = await Swal.fire({
+      title: 'Quitar clases individuales (40 min)',
+      html: `Disponibles: <strong>${ind.clasesDisponibles}</strong>`,
+      input: 'number',
+      inputLabel: 'Cantidad a quitar',
+      inputAttributes: { min: '1', max: String(ind.clasesDisponibles) },
+      showCancelButton: true,
+      confirmButtonText: 'Quitar',
+      confirmButtonColor: '#c62828',
+      inputValidator: v => {
+        if (!v || Number(v) < 1) return 'Ingresá una cantidad válida';
+        if (Number(v) > ind.clasesDisponibles) return `No puede superar ${ind.clasesDisponibles}`;
+        return undefined;
+      },
+    });
+    if (!cant) return;
+
+    await this.usuarioService.quitarClasesIndividuales(this.uid(), Number(cant));
+    await this.recargar();
+    Swal.fire({ icon: 'success', title: `${cant} clases quitadas`, timer: 1500, showConfirmButton: false });
+  }
+
+  /** Carga planes: primero los de la sucursal, luego los globales que no estén en la sucursal. */
+  private async cargarPlanesDisponibles(): Promise<PreciosPlan[]> {
+    const sucursalId = this.alumno()?.sucursalId;
+    const [global, sucursal] = await Promise.all([
+      this.configService.getOnce(),
+      sucursalId ? this.configService.getSucursalOnce(sucursalId) : Promise.resolve(null),
+    ]);
+
+    const planesSucursal = sucursal?.precios?.planes?.filter(p => p.activo) ?? [];
+    const idsEnSucursal = new Set(planesSucursal.map(p => p.id));
+    const planesGlobal = (global.precios.planes ?? []).filter(p => p.activo && !idsEnSucursal.has(p.id));
+
+    return [...planesSucursal, ...planesGlobal];
+  }
+
+  async asignarPlan(): Promise<void> {
+    const planes = await this.cargarPlanesDisponibles();
+    if (!planes.length) {
+      Swal.fire({ icon: 'info', title: 'Sin planes disponibles', text: 'No hay planes activos configurados.', confirmButtonColor: '#1a237e' });
+      return;
+    }
+
+    const cardsHtml = planes.map(p => `
+      <label class="swal-plan-card" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px solid #e0e0e0;border-radius:10px;cursor:pointer;transition:border-color .15s,background .15s;margin-bottom:8px;text-align:left;">
+        <input type="radio" name="swal-plan" value="${p.id}" style="accent-color:#1a237e;width:16px;height:16px;flex-shrink:0;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:15px;color:#1a1a1a">${p.nombre}</div>
+          <div style="font-size:13px;color:#555;margin-top:2px">${p.cantidadClases} clases · ${formatDuracion(p.duracionClase)} por clase</div>
+          ${p.precio ? `<div style="font-size:13px;color:#1a237e;font-weight:500;margin-top:2px">$${p.precio.toLocaleString('es-AR')}</div>` : ''}
+        </div>
+      </label>
+    `).join('');
+
+    const { value: planId } = await Swal.fire({
+      title: 'Asignar plan',
+      html: `<div id="swal-planes-container" style="max-height:340px;overflow-y:auto;padding:4px 2px">${cardsHtml}</div>`,
+      showCancelButton: true,
+      confirmButtonText: 'Asignar',
+      confirmButtonColor: '#1a237e',
+      cancelButtonText: 'Cancelar',
+      focusConfirm: false,
+      didOpen: () => {
+        // Highlight on selection
+        document.querySelectorAll<HTMLInputElement>('input[name="swal-plan"]').forEach(radio => {
+          radio.addEventListener('change', () => {
+            document.querySelectorAll<HTMLElement>('.swal-plan-card').forEach(card => {
+              (card as HTMLElement).style.borderColor = '#e0e0e0';
+              (card as HTMLElement).style.background  = '';
+            });
+            const label = radio.closest<HTMLElement>('.swal-plan-card');
+            if (label) { label.style.borderColor = '#1a237e'; label.style.background = '#e8eaf6'; }
+          });
+          radio.closest<HTMLElement>('.swal-plan-card')?.addEventListener('click', () => radio.click());
+        });
+      },
+      preConfirm: () => {
+        const checked = document.querySelector<HTMLInputElement>('input[name="swal-plan"]:checked');
+        if (!checked) { Swal.showValidationMessage('Seleccioná un plan'); return false; }
+        return checked.value;
+      },
+    });
+
+    if (!planId) return;
+    const plan = planes.find(p => p.id === planId)!;
+
+    const hoy = new Date();
+    const fin = new Date(hoy);
+    fin.setFullYear(fin.getFullYear() + 1);
+
+    const planContratado: PlanContratado = {
+      id: plan.id,
+      nombre: plan.nombre,
+      duracionClase: plan.duracionClase,
+      clasesTotales: plan.cantidadClases,
+      clasesRestantes: plan.cantidadClases,
+      clasesTomadas: 0,
+      fechaInicio: hoy as any,
+      fechaFin: fin as any,
+      valor: plan.precio,
+      maxClasesPorDia: plan.maxClasesPorDia,
+      maxClasesPorSemana: plan.maxClasesPorSemana,
+    };
+
+    await this.usuarioService.asignarPlan(this.uid(), planContratado);
+    await this.recargar();
+    Swal.fire({ icon: 'success', title: 'Plan asignado', text: `${plan.nombre} asignado correctamente.`, timer: 1800, showConfirmButton: false });
+  }
+
+  async quitarPlan(): Promise<void> {
+    const plan = this.alumno()?.alumnoData?.planContratado;
+    if (!plan) return;
+    const r = await Swal.fire({
+      title: 'Quitar plan',
+      text: `¿Querés quitar el plan "${plan.nombre}"? Se perderán las clases restantes.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, quitar',
+      confirmButtonColor: '#c62828',
+    });
+    if (r.isConfirmed) {
+      await this.usuarioService.quitarPlan(this.uid());
+      await this.recargar();
+      Swal.fire({ icon: 'success', title: 'Plan quitado', timer: 1500, showConfirmButton: false });
+    }
   }
 
   async toggleBloqueo(): Promise<void> {
     const a = this.alumno();
     if (!a) return;
     if (a.alumnoData?.bloqueado) {
-      await this.usuarioService.desbloquearAlumno(a.uid);
-      Swal.fire({ icon: 'success', title: 'Alumno desbloqueado', confirmButtonColor: '#1a237e' });
+      const r = await Swal.fire({ title: '¿Desbloquear alumno?', text: a.nombre, icon: 'question', showCancelButton: true, confirmButtonText: 'Desbloquear', confirmButtonColor: '#2e7d32' });
+      if (r.isConfirmed) {
+        await this.usuarioService.desbloquearAlumno(a.uid);
+        await this.recargar();
+      }
     } else {
       const { value: motivo } = await Swal.fire({ title: 'Bloquear alumno', input: 'textarea', inputLabel: 'Motivo', showCancelButton: true, confirmButtonText: 'Bloquear', confirmButtonColor: '#c62828', inputValidator: v => !v ? 'Requerido' : undefined });
       if (motivo) {
         await this.usuarioService.bloquearAlumno(a.uid, motivo);
-        Swal.fire({ icon: 'success', title: 'Alumno bloqueado', confirmButtonColor: '#1a237e' });
+        await this.recargar();
       }
-    }
-    const updated = await this.usuarioService.getByIdOnce(a.uid);
-    this.alumno.set(updated);
-  }
-
-  async recargarCredito(): Promise<void> {
-    const { value: cant } = await Swal.fire({ title: 'Recargar crédito', input: 'number', inputLabel: 'Clases a agregar', showCancelButton: true, confirmButtonText: 'Recargar', confirmButtonColor: '#1a237e' });
-    if (cant) {
-      await this.usuarioService.recargarCredito(this.alumno()!.uid, Number(cant));
-      const updated = await this.usuarioService.getByIdOnce(this.alumno()!.uid);
-      this.alumno.set(updated);
     }
   }
 }

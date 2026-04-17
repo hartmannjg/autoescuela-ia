@@ -6,9 +6,24 @@
 .avatar-grande { width: 80px; height: 80px; border-radius: 50%; background: #37474f; color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; }
 .estado-chips { display: flex; gap: 8px; justify-content: center; }
 .desde { font-size: 0.8rem; color: #888; margin: 0; }
-.saldo-section { width: 100%; .saldo-item { display: flex; align-items: baseline; gap: 6px; justify-content: center; margin-bottom: 8px; .saldo-num { font-size: 2.5rem; font-weight: 700; color: #1a237e; } .saldo-label { color: #666; font-size: 0.85rem; } }
-  .plan-info { width: 100%; text-align: left; font-size: 0.8rem; strong { display: block; margin-bottom: 4px; } span { color: #888; } }
+.saldo-section { width: 100%;
+  .saldo-item { display: flex; align-items: baseline; gap: 6px; justify-content: center; margin-bottom: 8px;
+    .saldo-num { font-size: 2.5rem; font-weight: 700; color: #1a237e; }
+    .saldo-label { color: #666; font-size: 0.85rem; }
+  }
+  .credito-bloque { width: 100%; text-align: left; background: #f5f7fa; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;
+    .credito-titulo { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.85rem; color: #37474f; margin-bottom: 6px;
+      mat-icon { font-size: 16px; width: 16px; height: 16px; color: #1a237e; }
+    }
+    .credito-detalle { display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; }
+    .saldo-ind { font-size: 1rem; font-weight: 700; color: #2e7d32; }
+    mat-progress-bar { margin-bottom: 4px; }
+    .credito-tipos { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .tipo-badge { font-size: 0.72rem; font-weight: 600; background: #e8eaf6; color: #1a237e; border-radius: 4px; padding: 2px 7px; }
+  }
+  .sin-credito { color: #aaa; font-size: 0.85rem; margin: 0; }
 }
+.acciones-credito { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; }
 .acciones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .motivo-bloqueo { background: #ffebee; color: #c62828; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; mat-icon { font-size: 16px; width: 16px; height: 16px; } }
 .historial-card { border-radius: 12px !important; }

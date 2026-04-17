@@ -26,24 +26,74 @@
 
           <mat-divider />
 
+          <!-- Resumen de crédito -->
           <div class="saldo-section">
             <div class="saldo-item">
               <span class="saldo-num">{{ getSaldoTotal() }}</span>
-              <span class="saldo-label">clases disponibles</span>
+              <span class="saldo-label">clases disponibles (total)</span>
             </div>
+
+            <!-- Plan contratado -->
             @if (a.alumnoData?.planContratado; as plan) {
-              <div class="plan-info">
-                <strong>{{ plan.nombre }}</strong>
-                <mat-progress-bar [value]="(plan.clasesTomadas / plan.clasesTotales) * 100" />
-                <span>{{ plan.clasesTomadas }}/{{ plan.clasesTotales }} tomadas</span>
+              <div class="credito-bloque">
+                <div class="credito-titulo"><mat-icon>card_membership</mat-icon> Plan: {{ plan.nombre }}</div>
+                <mat-progress-bar [value]="getProgresoPlan()" />
+                <div class="credito-detalle">
+                  <span>{{ plan.clasesRestantes }} restantes de {{ plan.clasesTotales }}</span>
+                  <span>Vence: {{ plan.fechaFin | fechaHora: 'fecha' }}</span>
+                </div>
               </div>
+            }
+
+            <!-- Clases individuales -->
+            @if (a.alumnoData?.creditoIndividual; as ind) {
+              <div class="credito-bloque">
+                <div class="credito-titulo"><mat-icon>confirmation_number</mat-icon> Clases individuales</div>
+                <div class="credito-detalle">
+                  <span class="saldo-ind">{{ ind.clasesDisponibles }} disponibles</span>
+                </div>
+                @if ((ind.clases40min ?? 0) > 0) {
+                  <div class="credito-tipos">
+                    <span class="tipo-badge">{{ ind.clases40min }}× 40 min</span>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (!a.alumnoData?.planContratado && !a.alumnoData?.creditoIndividual) {
+              <p class="sin-credito">Sin crédito asignado</p>
             }
           </div>
 
-          <div class="acciones">
-            <button mat-raised-button color="primary" (click)="recargarCredito()">
-              <mat-icon>add_circle</mat-icon> Recargar
+          <mat-divider />
+
+          <!-- Acciones de plan -->
+          <div class="acciones-credito">
+            <button mat-stroked-button color="primary" (click)="asignarPlan()">
+              <mat-icon>card_membership</mat-icon>
+              {{ a.alumnoData?.planContratado ? 'Cambiar plan' : 'Asignar plan' }}
             </button>
+            @if (a.alumnoData?.planContratado) {
+              <button mat-stroked-button color="warn" (click)="quitarPlan()">
+                <mat-icon>remove_circle</mat-icon> Quitar plan
+              </button>
+            }
+          </div>
+
+          <mat-divider />
+
+          <!-- Acciones de crédito individual -->
+          <div class="acciones-credito">
+            <button mat-stroked-button color="primary" (click)="asignarClases()">
+              <mat-icon>add</mat-icon> Asignar clases
+            </button>
+            <button mat-stroked-button color="warn" (click)="quitarClases()" [disabled]="getSaldoIndividual() === 0">
+              <mat-icon>remove</mat-icon> Quitar clases
+            </button>
+          </div>
+
+          <!-- Bloqueo -->
+          <div class="acciones">
             <button mat-stroked-button [color]="a.alumnoData?.bloqueado ? 'primary' : 'warn'" (click)="toggleBloqueo()">
               <mat-icon>{{ a.alumnoData?.bloqueado ? 'lock_open' : 'block' }}</mat-icon>
               {{ a.alumnoData?.bloqueado ? 'Desbloquear' : 'Bloquear' }}
@@ -72,9 +122,9 @@
             <div class="turno-row">
               <div>
                 <strong>{{ turno.fecha | fechaHora: 'fecha' }}</strong>
-                <span>{{ turno.horaInicio }} · {{ turno.duracionMinutos }}min</span>
+                <span>{{ turno.horaInicio }} · {{ turno.duracionMinutos | duracion }}</span>
               </div>
-              <mat-chip [color]="turno.estado | estadoTurno: 'color'" selected>{{ turno.estado | estadoTurno }}</mat-chip>
+              <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
             </div>
           }
         </mat-card-content>

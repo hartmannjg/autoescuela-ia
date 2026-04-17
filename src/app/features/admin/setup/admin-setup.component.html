@@ -1,0 +1,130 @@
+<div class="setup-page">
+  <div class="setup-header">
+    <img src="/logo.png" alt="Next Level Manejo" class="brand-logo" />
+    <h1>Next Level Manejo</h1>
+    @if (sucursalActualId()) {
+      <p class="subtitle">Seleccioná la sucursal a administrar</p>
+    } @else {
+      <p class="subtitle">Configuración inicial — seleccioná tu sucursal</p>
+    }
+  </div>
+
+  <mat-card class="setup-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>store</mat-icon>
+        @if (sucursalActualId()) { Cambiar sucursal } @else { Seleccioná tu sucursal }
+      </mat-card-title>
+      <mat-card-subtitle>
+        @if (sucursalActualId()) {
+          Todo lo operativo (alumnos, instructores, turnos) quedará ligado a la sucursal seleccionada.
+        } @else {
+          Como Super Admin, necesitás asociarte a una sucursal para comenzar a operar.
+        }
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      @if (loading()) {
+        <div class="loading-center"><mat-spinner /></div>
+      } @else {
+
+        <!-- Sucursales existentes -->
+        @if (sucursales().length > 0) {
+          <div class="seccion-titulo">Sucursales disponibles</div>
+          <div class="sucursales-grid">
+            @for (s of sucursales(); track s.id) {
+              <div class="sucursal-card" [class.inactiva]="!s.activo" [class.actual]="esActual(s)">
+                <div class="sucursal-info">
+                  <mat-icon>{{ esActual(s) ? 'store' : 'storefront' }}</mat-icon>
+                  <div>
+                    <strong>{{ s.nombre }}</strong>
+                    <span>{{ s.direccion }}</span>
+                    <span>{{ s.telefono }}</span>
+                    @if (esActual(s)) { <span class="badge-actual">Sucursal actual</span> }
+                    @if (!s.activo) { <span class="badge-inactiva">Inactiva</span> }
+                  </div>
+                </div>
+                <button mat-raised-button
+                  [color]="esActual(s) ? 'accent' : 'primary'"
+                  (click)="seleccionar(s)"
+                  [disabled]="guardando() || !s.activo">
+                  @if (esActual(s)) { Continuar } @else { Seleccionar }
+                </button>
+              </div>
+            }
+          </div>
+
+          <mat-divider />
+          <div class="o-crear">
+            <button mat-stroked-button (click)="mostrarFormNueva.set(!mostrarFormNueva())">
+              <mat-icon>add</mat-icon>
+              {{ mostrarFormNueva() ? 'Cancelar' : 'Crear nueva sucursal' }}
+            </button>
+          </div>
+        }
+
+        <!-- Formulario nueva sucursal -->
+        @if (mostrarFormNueva()) {
+          <div class="form-nueva">
+            <div class="seccion-titulo">
+              {{ sucursales().length === 0 ? 'No hay sucursales. Creá la primera:' : 'Nueva sucursal' }}
+            </div>
+            <form [formGroup]="form" class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Nombre de la sucursal</mat-label>
+                <mat-icon matPrefix>store</mat-icon>
+                <input matInput formControlName="nombre" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Dirección</mat-label>
+                <mat-icon matPrefix>location_on</mat-icon>
+                <input matInput formControlName="direccion" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Teléfono</mat-label>
+                <mat-icon matPrefix>phone</mat-icon>
+                <input matInput formControlName="telefono" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Horario apertura</mat-label>
+                <mat-icon matPrefix>schedule</mat-icon>
+                <input matInput type="time" formControlName="horarioApertura" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Horario cierre</mat-label>
+                <mat-icon matPrefix>schedule</mat-icon>
+                <input matInput type="time" formControlName="horarioCierre" />
+              </mat-form-field>
+
+
+            </form>
+
+            <button mat-raised-button color="primary"
+              (click)="crearYSeleccionar()"
+              [disabled]="form.invalid || guardando()">
+              @if (guardando()) { <mat-spinner diameter="18" /> } @else {
+                <ng-container><mat-icon>check</mat-icon> Crear y seleccionar</ng-container>
+              }
+            </button>
+          </div>
+        }
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <div class="footer-btns">
+    @if (sucursalActualId()) {
+      <button mat-button (click)="router.navigate(['/admin/dashboard'])">
+        <mat-icon>arrow_back</mat-icon> Volver al panel
+      </button>
+    }
+    <button mat-button class="logout-btn" (click)="logout()">
+      <mat-icon>logout</mat-icon> Cerrar sesión
+    </button>
+  </div>
+</div>

@@ -1,0 +1,58 @@
+<div class="escanear-container">
+  <mat-card class="scanner-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>qr_code_scanner</mat-icon>
+      <mat-card-title>Escanear QR de clase</mat-card-title>
+      <mat-card-subtitle>Tu instructor mostrará el QR en pantalla para registrar tu asistencia</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+
+      <!-- Estado: listo para escanear -->
+      @if (!escaneando() && !procesando() && !resultado()) {
+        <div class="idle-state">
+          <div class="qr-icon-wrapper">
+            <mat-icon class="qr-big-icon">qr_code_scanner</mat-icon>
+          </div>
+          <p class="instruccion">Cuando el instructor muestre el QR de tu clase, pulsá el botón para activar la cámara y escanearlo.</p>
+          <button mat-flat-button color="primary" class="btn-escanear" (click)="iniciarEscaneo()">
+            <mat-icon>camera_alt</mat-icon>
+            Activar cámara
+          </button>
+        </div>
+      }
+
+      <!-- Estado: escaneando -->
+      @if (escaneando()) {
+        <div class="scanner-state">
+          <div id="qr-reader" class="qr-reader"></div>
+          <button mat-stroked-button color="warn" class="btn-cancelar" (click)="detenerEscaneo()">
+            <mat-icon>close</mat-icon>
+            Cancelar
+          </button>
+        </div>
+      }
+
+      <!-- Estado: procesando -->
+      @if (procesando()) {
+        <div class="procesando-state">
+          <mat-spinner diameter="60" />
+          <p>Registrando asistencia...</p>
+        </div>
+      }
+
+      <!-- Estado: resultado -->
+      @if (resultado(); as res) {
+        <div class="resultado-state" [class.valido]="res.valido" [class.invalido]="!res.valido">
+          <mat-icon class="resultado-icon">{{ res.valido ? 'check_circle' : 'cancel' }}</mat-icon>
+          <p class="resultado-mensaje">{{ res.mensaje }}</p>
+          <button mat-flat-button color="primary" (click)="reiniciar()">
+            <mat-icon>refresh</mat-icon>
+            Escanear otro
+          </button>
+        </div>
+      }
+
+    </mat-card-content>
+  </mat-card>
+</div>

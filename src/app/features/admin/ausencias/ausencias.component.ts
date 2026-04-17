@@ -8,6 +8,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { tap } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../../core/services/auth.service';
@@ -22,7 +24,7 @@ import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
   imports: [
     CommonModule, FormsModule,
     MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule,
-    MatSelectModule, MatDividerModule, MatTooltipModule, FechaHoraPipe,
+    MatSelectModule, MatDividerModule, MatTooltipModule, MatProgressSpinnerModule, FechaHoraPipe,
   ],
   templateUrl: './ausencias.component.html',
   styleUrl: './ausencias.component.scss',
@@ -34,14 +36,17 @@ export class AusenciasComponent {
 
   readonly sucursalId = this.authService.currentUser()?.sucursalId ?? '';
   readonly filtroEstado = signal<EstadoAusencia | 'todos'>('todos');
+  readonly loading = signal(true);
+  private _pending = 2;
+  private readonly _markLoaded = () => { if (--this._pending === 0) this.loading.set(false); };
 
   readonly ausencias = toSignal(
-    this.ausenciaService.ausenciasPorSucursal$(this.sucursalId),
+    this.ausenciaService.ausenciasPorSucursal$(this.sucursalId).pipe(tap(this._markLoaded)),
     { initialValue: [] as InstructorAusencia[] }
   );
 
   readonly instructores = toSignal(
-    this.usuarioService.instructoresPorSucursal$(this.sucursalId),
+    this.usuarioService.instructoresPorSucursal$(this.sucursalId).pipe(tap(this._markLoaded)),
     { initialValue: [] as User[] }
   );
 

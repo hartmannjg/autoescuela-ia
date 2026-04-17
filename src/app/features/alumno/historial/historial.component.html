@@ -1,8 +1,11 @@
 <div class="historial-page">
   <div class="page-header">
     <h2>Historial de Clases</h2>
-    <p>{{ historial().length }} clases completadas</p>
   </div>
+
+  @if (loading()) {
+    <div class="loading-center"><mat-spinner diameter="48" /></div>
+  } @else {
 
   @if (historial().length === 0) {
     <div class="empty-state">
@@ -89,4 +92,6 @@
       </mat-expansion-panel>
     }
   </mat-accordion>
+
+  }
 </div>

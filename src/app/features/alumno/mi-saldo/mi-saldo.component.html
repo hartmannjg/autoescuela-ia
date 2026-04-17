@@ -4,13 +4,24 @@
     <p>Tu crédito y plan contratado</p>
   </div>
 
+  <!-- Resumen total -->
+  <mat-card class="resumen-card">
+    <mat-card-content>
+      <div class="total-saldo">
+        <span class="total-num">{{ saldoTotal() }}</span>
+        <span class="total-label">clases disponibles en total</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
   <div class="cards-grid">
+    <!-- Plan contratado -->
     @if (plan(); as p) {
       <mat-card class="info-card plan-card">
         <mat-card-header>
-          <mat-icon mat-card-avatar>school</mat-icon>
+          <mat-icon mat-card-avatar>card_membership</mat-icon>
           <mat-card-title>{{ p.nombre }}</mat-card-title>
-          <mat-card-subtitle>Plan contratado · {{ p.duracionClaseMinutos }} min/clase</mat-card-subtitle>
+          <mat-card-subtitle>Plan · {{ p.duracionClase | duracion }}/clase</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="big-number">
@@ -32,46 +43,31 @@
       </mat-card>
     }
 
+    <!-- Crédito individual -->
     @if (credito(); as c) {
       <mat-card class="info-card credito-card">
         <mat-card-header>
-          <mat-icon mat-card-avatar>account_balance_wallet</mat-icon>
-          <mat-card-title>Crédito Individual</mat-card-title>
-          <mat-card-subtitle>Clases sueltas disponibles</mat-card-subtitle>
+          <mat-icon mat-card-avatar>confirmation_number</mat-icon>
+          <mat-card-title>Clases individuales</mat-card-title>
+          <mat-card-subtitle>Asignadas por tu instructor</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="big-number">
             <span class="num">{{ c.clasesDisponibles }}</span>
             <span class="label">clases disponibles</span>
           </div>
-          @if (c.fechaUltimaCompra) {
-            <p class="last-buy">Última compra: {{ c.fechaUltimaCompra | fechaHora: 'fecha' }}</p>
+          @if (c.ultimaAsignacion) {
+            <p class="last-asign">Última asignación: {{ c.ultimaAsignacion | fechaHora: 'fecha' }}</p>
           }
         </mat-card-content>
       </mat-card>
     }
-  </div>
 
-  <mat-card class="paquetes-card">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>add_shopping_cart</mat-icon>
-        Comprar paquete de clases
-      </mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <div class="paquetes-grid">
-        @for (paq of paquetes; track paq.id) {
-          <div class="paquete-option">
-            <div class="paq-clases">{{ paq.clases }}</div>
-            <div class="paq-label">{{ paq.label }}</div>
-            <div class="paq-precio">{{ paq.precio | moneda }}</div>
-            <button mat-raised-button color="primary" (click)="comprarPaquete(paq)" [disabled]="loading()">
-              Comprar
-            </button>
-          </div>
-        }
+    @if (!plan() && !credito()) {
+      <div class="empty-state">
+        <mat-icon>account_balance_wallet</mat-icon>
+        <p>No tenés crédito asignado aún.<br>Contactá al administrador.</p>
       </div>
-    </mat-card-content>
-  </mat-card>
+    }
+  </div>
 </div>

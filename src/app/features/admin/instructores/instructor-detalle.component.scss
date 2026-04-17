@@ -1,24 +1,149 @@
-.detalle-page { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+.detalle-page { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
 .loading-center { display: flex; justify-content: center; padding: 64px; }
+
 .page-header { display: flex; flex-direction: column; gap: 12px; }
-.header-info { display: flex; align-items: center; gap: 16px; h2 { margin: 0; font-size: 1.6rem; font-weight: 700; color: #37474f; } p { margin: 2px 0 0; color: #666; font-size: 0.9rem; } }
-.avatar { width: 56px; height: 56px; border-radius: 50%; background: #37474f; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.4rem; flex-shrink: 0; }
-.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-.stat-card mat-card-content { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 20px !important; mat-icon { font-size: 28px; width: 28px; height: 28px; } .num { font-size: 1.8rem; font-weight: 700; color: #37474f; } .lbl { font-size: 0.8rem; color: #888; } }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-.horarios-list { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
-.horario-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: center; }
-.dia-field { }
-.horarios-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px; }
+.header-info {
+  display: flex; align-items: center; gap: 16px;
+  h2 { margin: 0; font-size: 1.6rem; font-weight: 700; color: #37474f; }
+  p  { margin: 2px 0 0; color: #666; font-size: 0.9rem; }
+}
+.avatar {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: #37474f; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1.4rem; flex-shrink: 0;
+}
+
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.stat-card mat-card-content {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 20px !important;
+  mat-icon { font-size: 28px; width: 28px; height: 28px; }
+  .num { font-size: 1.8rem; font-weight: 700; color: #37474f; }
+  .lbl { font-size: 0.8rem; color: #888; }
+}
+
+// ── Inputs nativos estilados ──────────────────────────────────────────────────
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.form-row-1 { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 20px; max-width: 400px; }
+
+.field-group {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.field-label {
+  font-size: 0.78rem; font-weight: 500; color: #546e7a;
+  text-transform: uppercase; letter-spacing: 0.4px;
+}
+.field-input, .field-select {
+  height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid #cfd8dc;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #37474f;
+  background: white;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  &:focus { border-color: #1a237e; box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.08); }
+}
+.field-select { cursor: pointer; }
+
+.section-divider { height: 1px; background: #f0f0f0; margin: 8px 0 16px; }
+
+// ── Días ─────────────────────────────────────────────────────────────────────
+.dias-list { display: flex; flex-direction: column; gap: 2px; }
+
+.dia-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border-radius: 8px; gap: 16px;
+  transition: background 0.15s;
+  &.dia-activo { background: #f3f4ff; }
+
+  .dia-toggle-group {
+    display: flex; align-items: center; gap: 12px; min-width: 150px;
+  }
+
+  .dia-nombre {
+    font-size: 0.95rem; font-weight: 500; color: #bbb; transition: color 0.15s;
+    &.activo { color: #37474f; font-weight: 600; }
+  }
+
+  .dia-horas {
+    display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end;
+  }
+
+  .no-disponible { font-size: 0.85rem; color: #bbb; flex: 1; text-align: right; }
+  .hora-sep { color: #999; }
+}
+
+.field-group-inline {
+  display: flex; flex-direction: column; gap: 2px;
+  .field-label-sm { font-size: 0.7rem; font-weight: 500; color: #90a4ae; text-transform: uppercase; }
+  .field-select { height: 38px; min-width: 90px; font-size: 0.88rem; }
+}
+
+// ── Toggle switch nativo ──────────────────────────────────────────────────────
+.toggle-switch {
+  position: relative; display: inline-block;
+  width: 40px; height: 22px; cursor: pointer;
+
+  input { opacity: 0; width: 0; height: 0; }
+
+  .toggle-track {
+    position: absolute; inset: 0;
+    background: #ccc; border-radius: 22px; transition: background 0.2s;
+    &::before {
+      content: ''; position: absolute;
+      width: 16px; height: 16px; left: 3px; top: 3px;
+      background: white; border-radius: 50%;
+      transition: transform 0.2s;
+    }
+  }
+
+  input:checked + .toggle-track { background: #1a237e; }
+  input:checked + .toggle-track::before { transform: translateX(18px); }
+}
+
+// ── Guardar ───────────────────────────────────────────────────────────────────
+.save-row { display: flex; justify-content: flex-end; margin-top: 20px;
+  button { min-width: 220px; height: 44px; }
+  ng-container { display: inline-flex; align-items: center; gap: 6px; }
+  mat-icon { font-size: 18px; width: 18px; height: 18px; line-height: 18px; vertical-align: middle; }
+}
+
+// ── Ausencias ─────────────────────────────────────────────────────────────────
 .ausencias-list { display: flex; flex-direction: column; gap: 12px; }
-.ausencia-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 8px; background: #fafafa; border: 1px solid #eeeeee; }
-.ausencia-info { display: flex; flex-direction: column; gap: 2px; .motivo { font-size: 0.85rem; color: #666; } }
+.ausencia-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px; border-radius: 8px; background: #fafafa; border: 1px solid #eee;
+}
+.ausencia-info {
+  display: flex; flex-direction: column; gap: 2px;
+  .motivo { font-size: 0.85rem; color: #666; }
+}
 .ausencia-estado { display: flex; align-items: center; gap: 8px; }
-.turnos-list { display: flex; flex-direction: column; gap: 8px; }
-.turno-item { display: flex; align-items: center; gap: 16px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; &:last-child { border-bottom: none; } }
+
+// ── Turnos ────────────────────────────────────────────────────────────────────
+.turnos-list { display: flex; flex-direction: column; }
+.turno-item {
+  display: flex; align-items: center; gap: 16px;
+  padding: 10px 0; border-bottom: 1px solid #f0f0f0;
+  &:last-child { border-bottom: none; }
+}
+
+// ── Chips ─────────────────────────────────────────────────────────────────────
 .chip { display: inline-flex; padding: 4px 12px; border-radius: 16px; font-size: 0.78rem; font-weight: 600; }
 .chip-success { background: #e8f5e9; color: #2e7d32; }
-.chip-warn { background: #fff3e0; color: #e65100; }
-.chip-error { background: #ffebee; color: #c62828; }
-.empty-state { text-align: center; padding: 32px; color: #999; mat-icon { font-size: 36px; width: 36px; height: 36px; display: block; margin: 0 auto 8px; } }
-@media (max-width: 767px) { .stats-row { grid-template-columns: 1fr 1fr; } .horario-row { grid-template-columns: 1fr 1fr; } .form-row { grid-template-columns: 1fr; } }
+.chip-warn    { background: #fff3e0; color: #e65100; }
+.chip-error   { background: #ffebee; color: #c62828; }
+
+.empty-state {
+  text-align: center; padding: 32px; color: #999;
+  mat-icon { font-size: 36px; width: 36px; height: 36px; display: block; margin: 0 auto 8px; }
+}
+
+@media (max-width: 767px) {
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .form-row-2 { grid-template-columns: 1fr; }
+  .dia-row { flex-wrap: wrap; .dia-horas { justify-content: flex-start; } }
+}

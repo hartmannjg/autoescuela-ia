@@ -4,8 +4,31 @@
 mat-card { border-radius: 12px !important; }
 mat-card-header { mat-card-title { display: flex; align-items: center; gap: 8px; } }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-top: 8px; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding-top: 8px; }
 .toggles-grid { display: flex; flex-direction: column; gap: 16px; padding: 8px 0; }
 .toggle-row { display: flex; align-items: center; }
-.precio-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; padding: 12px; border-radius: 8px; background: #fafafa; border: 1px solid #eeeeee; mat-form-field { min-width: 120px; } }
-.save-row { display: flex; justify-content: flex-end; padding-bottom: 24px; button { min-width: 220px; height: 48px; font-size: 1rem; } }
-@media (max-width: 599px) { .form-grid { grid-template-columns: 1fr; } .precio-row { flex-direction: column; align-items: stretch; } }
+.precio-row, .plan-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; padding: 12px; border-radius: 8px; background: #fafafa; border: 1px solid #eeeeee; mat-form-field { min-width: 120px; } }
+form { display: flex; flex-direction: column; gap: 20px; }
+.save-row { display: flex; justify-content: flex-end;
+  button { min-width: 240px; height: 48px; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  mat-icon { font-size: 18px; width: 18px; height: 18px; line-height: 18px; }
+}
+button[mat-stroked-button] { gap: 8px; }
+button[mat-raised-button] { gap: 8px; }
+button[mat-flat-button]    { gap: 8px; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; }
+
+.referencia-card {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0 !important;
+  .referencia-grid { display: flex; gap: 24px; flex-wrap: wrap; padding: 8px 0; }
+  .ref-item { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; mat-icon { color: #78909c; font-size: 18px; width: 18px; height: 18px; } span { color: #666; } strong { color: #37474f; } }
+  .ref-planes-label { margin: 12px 0 8px; font-size: 0.85rem; color: #666; }
+  .ref-planes { display: flex; flex-wrap: wrap; gap: 8px; }
+  .plan-chip { background: #e3f2fd; color: #1565c0; border-radius: 16px; padding: 4px 12px; font-size: 0.82rem; }
+}
+
+.toggle-planes { padding: 8px 0 12px; p.hint-text { margin: 8px 0 0; font-size: 0.85rem; color: #888; } }
+.planes-list { padding-top: 16px; }
+
+@media (max-width: 599px) { .form-grid, .form-grid-3 { grid-template-columns: 1fr; } .plan-row { flex-direction: column; align-items: stretch; } }

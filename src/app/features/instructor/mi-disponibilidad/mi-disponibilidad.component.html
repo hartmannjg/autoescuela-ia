@@ -4,6 +4,10 @@
     <p>Registrá tus ausencias para que el sistema bloquee esos horarios</p>
   </div>
 
+  @if (loadingData()) {
+    <div class="loading-center"><mat-spinner diameter="48" /></div>
+  } @else {
+
   <div class="content-grid">
     <!-- Formulario nueva ausencia -->
     <mat-card class="form-card">
@@ -77,4 +81,6 @@
       </mat-card-content>
     </mat-card>
   </div>
+
+  }
 </div>

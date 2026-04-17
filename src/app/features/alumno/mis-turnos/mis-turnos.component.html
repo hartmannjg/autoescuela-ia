@@ -4,6 +4,10 @@
     <p>Gestioná tus clases programadas</p>
   </div>
 
+  @if (loadingData()) {
+    <div class="loading-center"><mat-spinner diameter="48" /></div>
+  } @else {
+
   <mat-tab-group>
     <mat-tab label="Próximas ({{ proximos().length }})">
       <div class="tab-content">
@@ -24,21 +28,28 @@
                     <span>{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
                   </div>
                 </div>
-                <span class="chip chip-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+                <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
               </div>
               <mat-divider />
               <div class="turno-meta">
-                <span><mat-icon>schedule</mat-icon>{{ turno.duracionMinutos }} min</span>
+                <span><mat-icon>person</mat-icon>{{ nombreInstructor(turno.instructorUid) }}</span>
+                <span><mat-icon>schedule</mat-icon>{{ turno.duracionMinutos | duracion }}</span>
                 <span><mat-icon>badge</mat-icon>{{ turno.tipoClase | titlecase }}</span>
                 @if (turno.motivoRechazo) {
                   <span class="rechazo"><mat-icon>info</mat-icon>{{ turno.motivoRechazo }}</span>
                 }
               </div>
-              @if (['PENDIENTE_CONFIRMACION', 'CONFIRMADA'].includes(turno.estado)) {
+              @if (esFuturo(turno)) {
                 <div class="turno-actions">
-                  <button mat-stroked-button color="warn" (click)="cancelar(turno)" [disabled]="loading()">
-                    <mat-icon>cancel</mat-icon> Cancelar
-                  </button>
+                  @if (puedeCancelar(turno)) {
+                    <button mat-stroked-button color="warn" (click)="cancelar(turno)" [disabled]="loading()">
+                      <mat-icon>cancel</mat-icon> Cancelar
+                    </button>
+                  } @else {
+                    <span class="no-cancelable">
+                      <mat-icon>lock_clock</mat-icon> No cancelable (menos de 24 hs)
+                    </span>
+                  }
                 </div>
               }
             </mat-card-content>
@@ -66,7 +77,12 @@
                     <span>{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
                   </div>
                 </div>
-                <span class="chip chip-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+                <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+              </div>
+              <mat-divider />
+              <div class="turno-meta">
+                <span><mat-icon>person</mat-icon>{{ nombreInstructor(turno.instructorUid) }}</span>
+                <span><mat-icon>schedule</mat-icon>{{ turno.duracionMinutos | duracion }}</span>
               </div>
               @if (turno.temaClase) {
                 <div class="turno-tema">
@@ -80,4 +96,6 @@
       </div>
     </mat-tab>
   </mat-tab-group>
+
+  }
 </div>

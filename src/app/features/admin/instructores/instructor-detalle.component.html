@@ -2,6 +2,8 @@
   @if (loading()) {
     <div class="loading-center"><mat-spinner /></div>
   } @else if (instructor()) {
+
+    <!-- Encabezado -->
     <div class="page-header">
       <a routerLink="/admin/instructores" mat-button>
         <mat-icon>arrow_back</mat-icon> Instructores
@@ -18,7 +20,7 @@
       </div>
     </div>
 
-    <!-- Stats rápidas -->
+    <!-- Stats -->
     <div class="stats-row">
       <mat-card class="stat-card">
         <mat-card-content>
@@ -36,13 +38,6 @@
       </mat-card>
       <mat-card class="stat-card">
         <mat-card-content>
-          <mat-icon>today</mat-icon>
-          <span class="num">{{ instructor()!.instructorData?.limiteDiario ?? 6 }}</span>
-          <span class="lbl">Límite diario</span>
-        </mat-card-content>
-      </mat-card>
-      <mat-card class="stat-card">
-        <mat-card-content>
           <mat-icon color="warn">event_busy</mat-icon>
           <span class="num">{{ ausencias().length }}</span>
           <span class="lbl">Ausencias</span>
@@ -50,77 +45,106 @@
       </mat-card>
     </div>
 
-    <!-- Horarios disponibles -->
+    <!-- Datos personales -->
     <mat-card>
       <mat-card-header>
-        <mat-card-title><mat-icon>schedule</mat-icon> Horarios disponibles</mat-card-title>
+        <mat-card-title><mat-icon>person</mat-icon> Datos personales</mat-card-title>
+        <mat-card-subtitle>Nombre, contacto y especialidad del instructor</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        <form [formGroup]="horariosForm">
-          <div class="form-row">
-            <mat-form-field appearance="outline">
-              <mat-label>Especialidad</mat-label>
-              <input matInput formControlName="especialidad" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Límite diario de clases</mat-label>
-              <input matInput type="number" formControlName="limiteDiario" min="1" max="20" />
-            </mat-form-field>
-          </div>
-
-          <mat-divider />
-
-          <div class="horarios-list" formArrayName="horarios">
-            @for (h of horariosArray.controls; track $index; let i = $index) {
-              <div [formGroupName]="i" class="horario-row">
-                <mat-form-field appearance="outline" class="dia-field">
-                  <mat-label>Día</mat-label>
-                  <mat-select formControlName="dia">
-                    @for (d of diasSemana; track d) {
-                      <mat-option [value]="d">{{ DIAS[d] }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Desde</mat-label>
-                  <mat-select formControlName="horaInicio">
-                    @for (h of HORAS; track h) {
-                      <mat-option [value]="h">{{ h }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Hasta</mat-label>
-                  <mat-select formControlName="horaFin">
-                    @for (h of HORAS; track h) {
-                      <mat-option [value]="h">{{ h }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-                <button mat-icon-button color="warn" type="button" (click)="quitarHorario(i)">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </div>
-            }
-          </div>
-
-          <div class="horarios-actions">
-            <button mat-stroked-button type="button" (click)="agregarHorario()">
-              <mat-icon>add</mat-icon> Agregar horario
-            </button>
-            <button mat-raised-button color="primary" type="button" (click)="guardarHorarios()" [disabled]="horariosForm.invalid || guardando()">
-              @if (guardando()) { <mat-spinner diameter="18" /> } @else { Guardar horarios }
-            </button>
+        <form [formGroup]="formPersonal">
+          <div class="form-row-2">
+            <div class="field-group">
+              <label class="field-label">Nombre completo</label>
+              <input class="field-input" type="text" formControlName="nombre" />
+            </div>
+            <div class="field-group">
+              <label class="field-label">Teléfono</label>
+              <input class="field-input" type="text" formControlName="telefono" placeholder="Opcional" />
+            </div>
+            <div class="field-group">
+              <label class="field-label">Especialidad</label>
+              <input class="field-input" type="text" formControlName="especialidad" placeholder="ej: Manejo urbano" />
+            </div>
           </div>
         </form>
+        <div class="save-row">
+          <button mat-raised-button color="primary" (click)="guardarPersonal()"
+            [disabled]="formPersonal.invalid || guardandoPersonal()">
+            @if (guardandoPersonal()) {
+              <mat-spinner diameter="18" />
+            } @else {
+              <ng-container><mat-icon>save</mat-icon> Guardar datos</ng-container>
+            }
+          </button>
+        </div>
       </mat-card-content>
     </mat-card>
 
-    <!-- Ausencias pendientes -->
+    <!-- Disponibilidad -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title><mat-icon>calendar_month</mat-icon> Disponibilidad semanal</mat-card-title>
+        <mat-card-subtitle>Activá los días que trabaja y configurá el rango horario</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="dias-list">
+          @for (d of dias(); track d.dia) {
+            <div class="dia-row" [class.dia-activo]="d.activo">
+              <div class="dia-toggle-group">
+                <label class="toggle-switch">
+                  <input type="checkbox" [checked]="d.activo" (change)="toggleDia(d.dia)" />
+                  <span class="toggle-track"></span>
+                </label>
+                <span class="dia-nombre" [class.activo]="d.activo">{{ d.nombre }}</span>
+              </div>
+              @if (d.activo) {
+                <div class="dia-horas">
+                  <div class="field-group-inline">
+                    <label class="field-label-sm">Desde</label>
+                    <select class="field-select" [value]="d.horaInicio"
+                      (change)="setHoraInicio(d.dia, $any($event.target).value)">
+                      @for (h of horas; track h) {
+                        <option [value]="h" [selected]="h === d.horaInicio">{{ h }}</option>
+                      }
+                    </select>
+                  </div>
+                  <span class="hora-sep">—</span>
+                  <div class="field-group-inline">
+                    <label class="field-label-sm">Hasta</label>
+                    <select class="field-select" [value]="d.horaFin"
+                      (change)="setHoraFin(d.dia, $any($event.target).value)">
+                      @for (h of horas; track h) {
+                        <option [value]="h" [selected]="h === d.horaFin">{{ h }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+              } @else {
+                <span class="no-disponible">No disponible</span>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="save-row">
+          <button mat-raised-button color="primary" (click)="guardarHorarios()" [disabled]="guardando()">
+            @if (guardando()) {
+              <mat-spinner diameter="18" />
+            } @else {
+              <ng-container><mat-icon>save</mat-icon> Guardar disponibilidad</ng-container>
+            }
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Ausencias -->
     @if (ausencias().length > 0) {
       <mat-card>
         <mat-card-header>
-          <mat-card-title><mat-icon color="warn">event_busy</mat-icon> Ausencias / Licencias</mat-card-title>
+          <mat-card-title>Ausencias registradas</mat-card-title>
+          <mat-card-subtitle>Aprobá o rechazá las pendientes</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="ausencias-list">
@@ -153,7 +177,7 @@
     <!-- Últimas clases -->
     <mat-card>
       <mat-card-header>
-        <mat-card-title><mat-icon>history</mat-icon> Últimas clases</mat-card-title>
+        <mat-card-title>Últimas clases</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         @if (turnos().length === 0) {
@@ -161,17 +185,19 @@
             <mat-icon>event_available</mat-icon>
             <p>Sin clases registradas</p>
           </div>
+        } @else {
+          <div class="turnos-list">
+            @for (t of turnos().slice(0, 10); track t.id) {
+              <div class="turno-item">
+                <span>{{ t.fecha | fechaHora:'fecha' }}</span>
+                <span>{{ t.horaInicio }} - {{ t.horaFin }}</span>
+                <span class="estado-chip estado-{{ t.estado | estadoTurno:'color' }}">{{ t.estado | estadoTurno }}</span>
+              </div>
+            }
+          </div>
         }
-        <div class="turnos-list">
-          @for (t of turnos().slice(0, 10); track t.id) {
-            <div class="turno-item">
-              <span>{{ t.fecha | fechaHora:'fecha' }}</span>
-              <span>{{ t.horaInicio }} - {{ t.horaFin }}</span>
-              <span class="chip chip-{{ t.estado | estadoTurno:'color' }}">{{ t.estado | estadoTurno }}</span>
-            </div>
-          }
-        </div>
       </mat-card-content>
     </mat-card>
+
   }
 </div>

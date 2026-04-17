@@ -37,6 +37,12 @@ export class SucursalService {
     });
   }
 
+  /** Lectura directa al servidor — evita devolver solo el caché local. */
+  async todasLasSucursalesOnce(): Promise<Sucursal[]> {
+    const snap = await getDocs(this.colRef());
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Sucursal);
+  }
+
   async getById(id: string): Promise<Sucursal | null> {
     const snap = await getDoc(doc(this.firestore, 'sucursales', id));
     return snap.exists() ? ({ id: snap.id, ...snap.data() } as Sucursal) : null;

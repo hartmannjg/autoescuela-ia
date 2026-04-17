@@ -6,6 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { tap } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../../core/services/auth.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
@@ -18,7 +20,7 @@ import { dateToStr } from '../../../shared/utils/date-utils';
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatCardModule, MatButtonModule, MatIconModule, MatChipsModule, MatDividerModule, FechaHoraPipe, EstadoTurnoPipe],
+  imports: [CommonModule, RouterLink, MatCardModule, MatButtonModule, MatIconModule, MatChipsModule, MatDividerModule, MatProgressSpinnerModule, FechaHoraPipe, EstadoTurnoPipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
@@ -29,10 +31,13 @@ export class AdminDashboardComponent {
 
   readonly sucursalId = this.authService.currentUser()?.sucursalId ?? '';
   readonly hoyStr = dateToStr(new Date());
+  readonly loading = signal(true);
+  private _pending = 3;
+  private readonly _markLoaded = () => { if (--this._pending === 0) this.loading.set(false); };
 
-  readonly alumnos = toSignal(this.usuarioService.alumnosPorSucursal$(this.sucursalId), { initialValue: [] as User[] });
-  readonly instructores = toSignal(this.usuarioService.instructoresPorSucursal$(this.sucursalId), { initialValue: [] as User[] });
-  readonly turnosHoy = toSignal(this.turnoService.turnosSucursal$(this.sucursalId, this.hoyStr, this.hoyStr), { initialValue: [] as Turno[] });
+  readonly alumnos = toSignal(this.usuarioService.alumnosPorSucursal$(this.sucursalId).pipe(tap(this._markLoaded)), { initialValue: [] as User[] });
+  readonly instructores = toSignal(this.usuarioService.instructoresPorSucursal$(this.sucursalId).pipe(tap(this._markLoaded)), { initialValue: [] as User[] });
+  readonly turnosHoy = toSignal(this.turnoService.turnosSucursal$(this.sucursalId, this.hoyStr, this.hoyStr).pipe(tap(this._markLoaded)), { initialValue: [] as Turno[] });
 
   readonly alumnosActivos = computed(() => this.alumnos().filter(a => a.activo).length);
   readonly alumnosBloqueados = computed(() => this.alumnos().filter(a => a.alumnoData?.bloqueado).length);

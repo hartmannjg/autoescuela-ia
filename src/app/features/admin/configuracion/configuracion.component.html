@@ -1,152 +1,286 @@
 <div class="config-page">
-  <div class="page-header">
-    <div>
-      <h2>Configuración global</h2>
-      <p>Límites, precios y notificaciones del sistema</p>
-    </div>
-  </div>
 
   @if (cargando()) {
     <div class="loading-center"><mat-spinner /></div>
   } @else {
-    <form [formGroup]="form">
 
-      <!-- Límites operativos -->
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title><mat-icon>tune</mat-icon> Límites operativos</mat-card-title>
-        </mat-card-header>
-        <mat-card-content formGroupName="limites">
-          <div class="form-grid">
-            <mat-form-field appearance="outline">
-              <mat-label>Máx. clases por semana</mat-label>
-              <input matInput type="number" formControlName="maxClasesPorSemana" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Mín. clases por semana</mat-label>
-              <input matInput type="number" formControlName="minClasesPorSemana" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Semanas sin clase para bloqueo</mat-label>
-              <input matInput type="number" formControlName="semanasSinClaseParaBloqueo" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Horas antes para cancelar</mat-label>
-              <input matInput type="number" formControlName="horasAntesParaCancelar" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Minutos validez QR (antes y después)</mat-label>
-              <input matInput type="number" formControlName="minutosQrValidez" />
-            </mat-form-field>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Notificaciones -->
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title><mat-icon>notifications</mat-icon> Notificaciones automáticas</mat-card-title>
-        </mat-card-header>
-        <mat-card-content formGroupName="notificaciones">
-          <div class="toggles-grid">
-            <div class="toggle-row">
-              <mat-slide-toggle formControlName="recordatorio24hs">Recordatorio 24hs antes de la clase</mat-slide-toggle>
-            </div>
-            <div class="toggle-row">
-              <mat-slide-toggle formControlName="recordatorio2hs">Recordatorio 2hs antes de la clase</mat-slide-toggle>
-            </div>
-            <div class="toggle-row">
-              <mat-slide-toggle formControlName="confirmacionTurno">Email de confirmación al reservar turno</mat-slide-toggle>
-            </div>
-            <div class="toggle-row">
-              <mat-slide-toggle formControlName="alertaSaldoBajo">Alerta cuando el saldo llega a 1 clase</mat-slide-toggle>
-            </div>
-            <div class="toggle-row">
-              <mat-slide-toggle formControlName="alertaVencimientoPlan">Alerta de vencimiento de plan (7 días antes)</mat-slide-toggle>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Planes -->
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title><mat-icon>card_membership</mat-icon> Planes de suscripción</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div formArrayName="planes">
-            @for (plan of planesArray.controls; track $index; let i = $index) {
-              <div [formGroupName]="i" class="precio-row">
-                <mat-form-field appearance="outline">
-                  <mat-label>Nombre del plan</mat-label>
-                  <input matInput formControlName="nombre" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Duración (min)</mat-label>
-                  <mat-select formControlName="duracionMinutos">
-                    <mat-option [value]="30">30 min</mat-option>
-                    <mat-option [value]="45">45 min</mat-option>
-                    <mat-option [value]="60">60 min</mat-option>
-                  </mat-select>
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Cantidad de clases</mat-label>
-                  <input matInput type="number" formControlName="cantidadClases" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Precio ($)</mat-label>
-                  <input matInput type="number" formControlName="precio" />
-                </mat-form-field>
-                <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
-                <button mat-icon-button color="warn" type="button" (click)="quitarPlan(i)">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </div>
-            }
-          </div>
-          <button mat-stroked-button type="button" (click)="agregarPlan()">
-            <mat-icon>add</mat-icon> Agregar plan
-          </button>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Paquetes de crédito -->
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title><mat-icon>account_balance_wallet</mat-icon> Paquetes de crédito individual</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div formArrayName="paquetes">
-            @for (paq of paquetesArray.controls; track $index; let i = $index) {
-              <div [formGroupName]="i" class="precio-row">
-                <mat-form-field appearance="outline">
-                  <mat-label>Cantidad de clases</mat-label>
-                  <input matInput type="number" formControlName="cantidadClases" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Precio ($)</mat-label>
-                  <input matInput type="number" formControlName="precio" />
-                </mat-form-field>
-                <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
-                <button mat-icon-button color="warn" type="button" (click)="quitarPaquete(i)">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </div>
-            }
-          </div>
-          <button mat-stroked-button type="button" (click)="agregarPaquete()">
-            <mat-icon>add</mat-icon> Agregar paquete
-          </button>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Guardar -->
-      <div class="save-row">
-        <button mat-raised-button color="primary" type="button" (click)="guardar()" [disabled]="form.invalid || guardando()">
-          @if (guardando()) { <mat-spinner diameter="20" /> } @else { <ng-container><mat-icon>save</mat-icon> Guardar configuración</ng-container> }
-        </button>
+    <!-- ══════════════════════════════════════════════════════
+         VISTA SUPER-ADMIN — edita configuración global
+    ═══════════════════════════════════════════════════════ -->
+    @if (esSuperAdmin()) {
+      <div class="page-header">
+        <div>
+          <h2>Configuración global</h2>
+          <p>Límites, precios base y notificaciones del sistema. Los admins pueden sobreescribir los precios para su sucursal.</p>
+        </div>
       </div>
 
-    </form>
+      <form [formGroup]="formGlobal">
+
+        <!-- Precios base globales -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title><mat-icon>attach_money</mat-icon> Precios base (globales)</mat-card-title>
+            <mat-card-subtitle>Valores por defecto que se aplican a todas las sucursales salvo que tengan precios propios</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content formGroupName="precios">
+            <div class="form-grid-3">
+              <mat-form-field appearance="outline">
+                <mat-label>Precio clase individual 40 min ($)</mat-label>
+                <mat-icon matPrefix>timer</mat-icon>
+                <input matInput type="text" appMonedaInput formControlName="precioClase40min" />
+              </mat-form-field>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Planes globales -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title><mat-icon>card_membership</mat-icon> Planes de suscripción (base)</mat-card-title>
+            <mat-card-subtitle>Catálogo global de planes. Cada sucursal puede definir los suyos propios.</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div formArrayName="planes">
+              @for (plan of planesGlobalArray.controls; track $index; let i = $index) {
+                <div [formGroupName]="i" class="plan-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Nombre</mat-label>
+                    <input matInput formControlName="nombre" placeholder="ej: Plan Básico" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Duración clase</mat-label>
+                    <mat-select formControlName="duracionClase">
+                      <mat-option [value]="40">40 min</mat-option>
+                      <mat-option [value]="80">1 h 20 min</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Cant. clases</mat-label>
+                    <input matInput type="number" formControlName="cantidadClases" min="1" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Precio ($)</mat-label>
+                    <input matInput type="text" appMonedaInput formControlName="precio" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Máx. clases/día</mat-label>
+                    <mat-select formControlName="maxClasesPorDia">
+                      <mat-option [value]="null">Sin límite</mat-option>
+                      <mat-option [value]="1">1 por día</mat-option>
+                      <mat-option [value]="2">2 por día</mat-option>
+                      <mat-option [value]="3">3 por día</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Máx. clases/semana</mat-label>
+                    <input matInput type="number" formControlName="maxClasesPorSemana" min="1" max="20" />
+                  </mat-form-field>
+                  <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
+                  <button mat-icon-button color="warn" type="button" (click)="quitarPlanGlobal(i)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+            <button mat-stroked-button type="button" (click)="agregarPlanGlobal()">
+              <mat-icon>add</mat-icon> Agregar plan
+            </button>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Límites operativos -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title><mat-icon>tune</mat-icon> Límites operativos</mat-card-title>
+          </mat-card-header>
+          <mat-card-content formGroupName="limites">
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Semanas sin clase para bloqueo</mat-label>
+                <input matInput type="number" formControlName="semanasSinClaseParaBloqueo" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Horas antes para cancelar</mat-label>
+                <input matInput type="number" formControlName="horasAntesParaCancelar" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Validez QR (minutos)</mat-label>
+                <input matInput type="number" formControlName="minutosQrValidez" />
+              </mat-form-field>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Notificaciones -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title><mat-icon>notifications</mat-icon> Notificaciones automáticas</mat-card-title>
+          </mat-card-header>
+          <mat-card-content formGroupName="notificaciones">
+            <div class="toggles-grid">
+              <mat-slide-toggle formControlName="recordatorio24hs">Recordatorio 24hs antes</mat-slide-toggle>
+              <mat-slide-toggle formControlName="recordatorio2hs">Recordatorio 2hs antes</mat-slide-toggle>
+              <mat-slide-toggle formControlName="confirmacionTurno">Email de confirmación al reservar</mat-slide-toggle>
+              <mat-slide-toggle formControlName="alertaSaldoBajo">Alerta cuando el saldo llega a 1 clase</mat-slide-toggle>
+              <mat-slide-toggle formControlName="alertaVencimientoPlan">Alerta de vencimiento de plan (7 días antes)</mat-slide-toggle>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <div class="save-row">
+          <button mat-raised-button color="primary" type="button" (click)="guardarGlobal()" [disabled]="formGlobal.invalid || guardando()">
+            @if (guardando()) { <mat-spinner diameter="20" /> } @else {
+              <ng-container><mat-icon>save</mat-icon> Guardar configuración global</ng-container>
+            }
+          </button>
+        </div>
+      </form>
+    }
+
+    <!-- ══════════════════════════════════════════════════════
+         VISTA ADMIN — override de precios de la sucursal
+    ═══════════════════════════════════════════════════════ -->
+    @if (!esSuperAdmin()) {
+      <div class="page-header">
+        <div>
+          <h2>Precios de la sucursal</h2>
+          <p>
+            Podés definir precios propios para esta sucursal.
+            Si dejás un campo vacío, se usa el precio global base.
+          </p>
+        </div>
+        @if (configSucursal()) {
+          <button mat-stroked-button color="warn" (click)="restablecerGlobal()" matTooltip="Eliminar todos los precios personalizados y volver al global">
+            <mat-icon>restore</mat-icon> Restablecer al global
+          </button>
+        }
+      </div>
+
+      <!-- Referencia: precios globales -->
+      <mat-card class="referencia-card">
+        <mat-card-header>
+          <mat-card-title><mat-icon>public</mat-icon> Precios base globales (referencia)</mat-card-title>
+          <mat-card-subtitle>Estos son los valores del sistema. Se aplican salvo que definas los tuyos abajo.</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="referencia-grid">
+            <div class="ref-item">
+              <mat-icon>timer</mat-icon>
+              <span>Clase individual 40 min</span>
+              <strong>{{ precioGlobal('precioClase40min') | moneda }}</strong>
+            </div>
+          </div>
+          @if (configGlobal()?.precios?.planes?.length) {
+            <mat-divider />
+            <p class="ref-planes-label">Planes globales base:</p>
+            <div class="ref-planes">
+              @for (p of configGlobal()!.precios.planes; track p.id) {
+                @if (p.activo) {
+                  <span class="plan-chip">{{ p.nombre }} · {{ p.cantidadClases }} clases · {{ p.precio | moneda }}</span>
+                }
+              }
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Override de sucursal -->
+      <form [formGroup]="formSucursal">
+
+        <!-- Precio clases individuales -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title><mat-icon>attach_money</mat-icon> Precio de clases individuales</mat-card-title>
+            <mat-card-subtitle>Dejá en blanco para usar el precio global</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="form-grid-3">
+              <mat-form-field appearance="outline">
+                <mat-label>Precio clase individual 40 min ($)</mat-label>
+                <mat-icon matPrefix>timer</mat-icon>
+                <input matInput type="text" appMonedaInput formControlName="precioClase40min" />
+                <mat-hint>Global: {{ precioGlobal('precioClase40min') | moneda }}</mat-hint>
+              </mat-form-field>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Planes de la sucursal -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title><mat-icon>card_membership</mat-icon> Planes de suscripción</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="toggle-planes">
+              <mat-slide-toggle formControlName="usarPlanesPersonalizados">
+                Usar planes propios para esta sucursal
+              </mat-slide-toggle>
+              @if (!formSucursal.value.usarPlanesPersonalizados) {
+                <p class="hint-text">Se usarán los planes globales base.</p>
+              }
+            </div>
+
+            @if (formSucursal.value.usarPlanesPersonalizados) {
+              <mat-divider />
+              <div formArrayName="planes" class="planes-list">
+                @for (plan of planesSucursalArray.controls; track $index; let i = $index) {
+                  <div [formGroupName]="i" class="plan-row">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Nombre</mat-label>
+                      <input matInput formControlName="nombre" />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Duración</mat-label>
+                      <mat-select formControlName="duracionClase">
+                        <mat-option [value]="40">40 min</mat-option>
+                        <mat-option [value]="80">1 h 20 min</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Cant. clases</mat-label>
+                      <input matInput type="number" formControlName="cantidadClases" min="1" />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Precio ($)</mat-label>
+                      <input matInput type="text" appMonedaInput formControlName="precio" />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Máx. clases/día</mat-label>
+                      <mat-select formControlName="maxClasesPorDia">
+                        <mat-option [value]="null">Sin límite</mat-option>
+                        <mat-option [value]="1">1 por día</mat-option>
+                        <mat-option [value]="2">2 por día</mat-option>
+                        <mat-option [value]="3">3 por día</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Máx. clases/semana</mat-label>
+                      <input matInput type="number" formControlName="maxClasesPorSemana" min="1" max="20" />
+                    </mat-form-field>
+                    <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
+                    <button mat-icon-button color="warn" type="button" (click)="quitarPlanSucursal(i)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                }
+              </div>
+              <button mat-stroked-button type="button" (click)="agregarPlanSucursal()">
+                <mat-icon>add</mat-icon> Agregar plan
+              </button>
+            }
+          </mat-card-content>
+        </mat-card>
+
+        <div class="save-row">
+          <button mat-raised-button color="primary" type="button" (click)="guardarSucursal()" [disabled]="formSucursal.invalid || guardando()">
+            @if (guardando()) { <mat-spinner diameter="20" /> } @else {
+              <ng-container><mat-icon>save</mat-icon> Guardar precios de la sucursal</ng-container>
+            }
+          </button>
+        </div>
+      </form>
+    }
+
   }
 </div>

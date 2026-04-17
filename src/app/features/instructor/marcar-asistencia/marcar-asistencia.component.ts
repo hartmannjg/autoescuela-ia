@@ -1,95 +1,99 @@
-import { Component, inject, signal, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, effect } from '@angular/core';
+import { tap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { FormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../../core/services/auth.service';
 import { TurnoService } from '../../../core/services/turno.service';
-import { SucursalService } from '../../../core/services/sucursal.service';
+import { UsuarioService } from '../../../core/services/usuario.service';
 import { QrService } from '../../../core/services/qr.service';
-import { Turno, Sucursal } from '../../../shared/models';
-import { dateToStr } from '../../../shared/utils/date-utils';
-import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
+import { Turno } from '../../../shared/models';
+import { dateToStr, strToDate } from '../../../shared/utils/date-utils';
 import { EstadoTurnoPipe } from '../../../shared/pipes/estado-turno.pipe';
 
 @Component({
   selector: 'app-marcar-asistencia',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatDividerModule, MatProgressSpinnerModule, FechaHoraPipe, EstadoTurnoPipe],
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, EstadoTurnoPipe],
   templateUrl: './marcar-asistencia.component.html',
   styleUrl: './marcar-asistencia.component.scss',
 })
-export class MarcarAsistenciaComponent implements OnDestroy {
+export class MarcarAsistenciaComponent {
   private authService = inject(AuthService);
   private turnoService = inject(TurnoService);
-  private sucursalService = inject(SucursalService);
+  private usuarioService = inject(UsuarioService);
   private qrService = inject(QrService);
 
   readonly loading = signal(false);
+  readonly loadingData = signal(true);
   readonly scanMode = signal<'qr' | 'manual'>('qr');
-  readonly qrResult = signal<string>('');
-  readonly turnoManualId = signal('');
-  readonly turnoManual = signal<Turno | null>(null);
+
+  readonly selectedTurno = signal<Turno | null>(null);
+  readonly qrImageUrl = signal<string>('');
+  readonly generandoQr = signal(false);
+  readonly alumnoNombres = signal<Map<string, string>>(new Map());
 
   readonly hoyStr = dateToStr(new Date());
 
   readonly turnosHoy = toSignal(
-    this.turnoService.turnosInstructor$(this.authService.currentUser()?.uid ?? '', this.hoyStr),
+    this.turnoService.turnosInstructor$(this.authService.currentUser()?.uid ?? '', this.hoyStr)
+      .pipe(tap(() => this.loadingData.set(false))),
     { initialValue: [] as Turno[] }
   );
 
-  private html5QrScanner: any = null;
-
-  async iniciarEscaneo(): Promise<void> {
-    // Importación dinámica del escáner
-    const { Html5QrcodeScanner } = await import('html5-qrcode');
-    this.html5QrScanner = new Html5QrcodeScanner('qr-reader', { fps: 10, qrbox: 250 }, false);
-    this.html5QrScanner.render(
-      (decodedText: string) => this.onQrSuccess(decodedText),
-      () => {} // error silencioso
-    );
+  constructor() {
+    effect(() => {
+      const turnos = this.turnosHoy();
+      const uids = [...new Set(turnos.map(t => t.alumnoUid))];
+      if (!uids.length) return;
+      uids.forEach(uid => {
+        if (!this.alumnoNombres().has(uid)) {
+          this.usuarioService.getByIdOnce(uid).then(u => {
+            if (u) this.alumnoNombres.update(m => new Map(m).set(uid, u.nombre));
+          });
+        }
+      });
+    });
   }
 
-  private async onQrSuccess(decodedText: string): Promise<void> {
-    if (this.html5QrScanner) {
-      await this.html5QrScanner.clear();
-      this.html5QrScanner = null;
-    }
+  getNombreAlumno(uid: string): string {
+    return this.alumnoNombres().get(uid) ?? uid;
+  }
 
-    this.loading.set(true);
+  formatFecha(fechaStr: string): string {
+    return strToDate(fechaStr).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  async seleccionarTurno(turno: Turno): Promise<void> {
+    this.selectedTurno.set(turno);
+    this.qrImageUrl.set('');
+    this.generandoQr.set(true);
     try {
-      const suc = await this.sucursalService.getById(this.authService.currentUser()!.sucursalId);
-      if (!suc) throw new Error('Sucursal no encontrada');
-
-      const pos = await this.obtenerPosicion();
-      const resultado = await this.qrService.validarQr(decodedText, pos, suc.ubicacion);
-
-      if (!resultado.valido) {
-        Swal.fire({ icon: 'error', title: 'QR inválido', text: resultado.motivo, confirmButtonColor: '#1b5e20' });
-        return;
-      }
-
-      await this.qrService.marcarAsistenciaQr(resultado.turno!.id!);
-      Swal.fire({ icon: 'success', title: '¡Asistencia registrada!', text: 'Se verificó la asistencia por QR.', confirmButtonColor: '#1b5e20' });
-    } catch (err: any) {
-      Swal.fire({ icon: 'error', title: 'Error', text: err.message, confirmButtonColor: '#1b5e20' });
+      const url = await this.qrService.generarQrInstructor(turno.id!);
+      this.qrImageUrl.set(url);
+    } catch (e: any) {
+      Swal.fire({ icon: 'error', title: 'Error al generar QR', text: e.message });
     } finally {
-      this.loading.set(false);
+      this.generandoQr.set(false);
     }
   }
 
-  async buscarTurnoManual(): Promise<void> {
-    const id = this.turnoManualId();
-    if (!id) return;
-    const t = await this.turnoService.getById(id);
-    this.turnoManual.set(t);
+  volverALista(): void {
+    this.selectedTurno.set(null);
+    this.qrImageUrl.set('');
+  }
+
+  /** Retorna true si el instructor aún puede validar (hasta 1 hora después del fin) */
+  puedeVerificar(turno: Turno): boolean {
+    const [h, m] = turno.horaFin.split(':').map(Number);
+    const [y, mo, d] = turno.fechaStr.split('-').map(Number);
+    const finClase = new Date(y, mo - 1, d, h, m);
+    const limite = new Date(finClase.getTime() + 60 * 60 * 1000);
+    return new Date() <= limite;
   }
 
   async marcarManual(turno: Turno): Promise<void> {
@@ -102,24 +106,12 @@ export class MarcarAsistenciaComponent implements OnDestroy {
       confirmButtonColor: '#1b5e20',
     });
     if (!result.isConfirmed) return;
-    await this.qrService.marcarAsistenciaManual(turno.id!);
-    Swal.fire({ icon: 'success', title: 'Asistencia registrada manualmente', confirmButtonColor: '#1b5e20' });
-    this.turnoManual.set(null);
-    this.turnoManualId.set('');
-  }
-
-  private obtenerPosicion(): Promise<{ lat: number; lng: number }> {
-    return new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(
-        pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => reject(new Error('No se pudo obtener tu ubicación. Habilitá el GPS.'))
-      );
-    });
-  }
-
-  ngOnDestroy(): void {
-    if (this.html5QrScanner) {
-      this.html5QrScanner.clear().catch(() => {});
+    this.loading.set(true);
+    try {
+      await this.qrService.marcarAsistenciaManual(turno.id!);
+      Swal.fire({ icon: 'success', title: 'Asistencia registrada', confirmButtonColor: '#1b5e20' });
+    } finally {
+      this.loading.set(false);
     }
   }
 }

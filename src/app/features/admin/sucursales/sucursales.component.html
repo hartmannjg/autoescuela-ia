@@ -9,6 +9,10 @@
     </button>
   </div>
 
+  @if (loading()) {
+    <div class="loading-center"><mat-spinner diameter="48" /></div>
+  } @else {
+
   @if (mostrarFormulario()) {
     <mat-card class="form-card">
       <mat-card-header>
@@ -60,7 +64,7 @@
           <mat-divider />
 
           <div class="form-section">
-            <h4>Horarios y capacidad</h4>
+            <h4>Horarios</h4>
             <div class="form-grid">
               <mat-form-field appearance="outline">
                 <mat-label>Hora apertura</mat-label>
@@ -70,10 +74,7 @@
                 <mat-label>Hora cierre</mat-label>
                 <input matInput type="time" formControlName="horarioCierre" />
               </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Capacidad máxima diaria</mat-label>
-                <input matInput type="number" formControlName="capacidadMaximaDiaria" />
-              </mat-form-field>
+
             </div>
           </div>
         </form>
@@ -105,10 +106,7 @@
               <mat-icon>schedule</mat-icon>
               <span>{{ s.configuracionHorarios.horarioApertura }} — {{ s.configuracionHorarios.horarioCierre }}</span>
             </div>
-            <div class="info-row">
-              <mat-icon>people</mat-icon>
-              <span>Máx. {{ s.configuracionHorarios.capacidadMaximaDiaria }} clases/día</span>
-            </div>
+
             <div class="info-row">
               <mat-icon>location_on</mat-icon>
               <span>Radio QR: {{ s.ubicacion.radioPermitido }}m</span>
@@ -138,4 +136,6 @@
       </div>
     }
   </div>
+
+  }
 </div>

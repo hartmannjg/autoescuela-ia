@@ -11,6 +11,10 @@
     </div>
   </div>
 
+  @if (loading()) {
+    <div class="loading-center"><mat-spinner diameter="48" /></div>
+  } @else {
+
   <mat-tab-group>
 
     <!-- Tab: Bloqueados -->
@@ -112,7 +116,7 @@
                   <button mat-icon-button color="primary" [routerLink]="['/admin/alumnos', a.uid]" matTooltip="Ver detalle">
                     <mat-icon>visibility</mat-icon>
                   </button>
-                  <button mat-stroked-button color="primary" (click)="recargarCredito(a)">
+                  <button mat-stroked-button color="primary" (click)="asignarClases(a)">
                     <mat-icon>add</mat-icon> Recargar
                   </button>
                 </td>
@@ -166,7 +170,7 @@
                   <button mat-icon-button color="primary" [routerLink]="['/admin/alumnos', a.uid]" matTooltip="Ver detalle">
                     <mat-icon>visibility</mat-icon>
                   </button>
-                  <button mat-stroked-button color="primary" (click)="recargarCredito(a)">
+                  <button mat-stroked-button color="primary" (click)="asignarClases(a)">
                     <mat-icon>add</mat-icon> Recargar
                   </button>
                 </td>
@@ -180,4 +184,6 @@
     </mat-tab>
 
   </mat-tab-group>
+
+  }
 </div>

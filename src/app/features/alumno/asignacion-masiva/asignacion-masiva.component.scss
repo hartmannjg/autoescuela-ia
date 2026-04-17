@@ -1,0 +1,89 @@
+.masiva-page { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+
+.page-header {
+  display: flex; align-items: flex-start; gap: 8px;
+  h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #1a237e; }
+  p  { margin: 4px 0 0; color: #666; }
+}
+
+.info-card { border-radius: 10px !important;
+  mat-card-content { display: flex; align-items: center; gap: 10px; }
+}
+.warn-card { background: #fff8e1 !important; color: #e65100; mat-icon { color: #f57c00; } }
+
+// Plan summary
+.plan-card { border-radius: 12px !important; border-left: 4px solid #1a237e !important;
+  .plan-info { display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    mat-icon { font-size: 32px; width: 32px; height: 32px; color: #1a237e; }
+    div { display: flex; flex-direction: column; gap: 2px; flex: 1;
+      strong { font-size: 1rem; } span { font-size: 0.82rem; color: #666; }
+    }
+    .plan-saldo { text-align: right; flex-shrink: 0;
+      .plan-num { font-size: 2.2rem; font-weight: 700; color: #1a237e; display: block; line-height: 1; }
+      span { font-size: 0.78rem; color: #666; }
+    }
+  }
+}
+
+// Steps
+.step-card { border-radius: 12px !important;
+  mat-card-title { display: flex; align-items: center; gap: 10px; }
+}
+.step-num { width: 28px; height: 28px; border-radius: 50%; background: #1a237e; color: white;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
+
+// Slot form
+.slot-form { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start;
+  mat-form-field { min-width: 160px; flex: 1; }
+  button { margin-top: 4px; height: 56px; }
+}
+.disabled-field { opacity: 0.6; }
+.divider { margin: 16px 0; }
+
+// Slots list
+.slots-lista { display: flex; flex-direction: column; gap: 8px; }
+.slot-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: #f5f7fa; border-radius: 8px;
+  mat-icon { color: #1a237e; }
+  .slot-info { display: flex; flex-direction: column; gap: 1px; flex: 1;
+    strong { font-size: 0.9rem; }
+    span { font-size: 0.8rem; color: #666; }
+    .slot-instructor { color: #1a237e; font-weight: 500; }
+  }
+}
+.empty-msg { color: #aaa; font-style: italic; font-size: 0.88rem; margin: 8px 0 0; }
+
+// Config
+.config-row { display: flex; gap: 16px; flex-wrap: wrap; }
+.config-field { min-width: 260px; }
+
+// Preview
+.preview-card { border-radius: 12px !important; background: #f0f4ff !important;
+  mat-card-title { display: flex; align-items: center; gap: 10px; }
+}
+.preview-stats { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;
+  .stat { display: flex; flex-direction: column; align-items: center;
+    .stat-num { font-size: 2.4rem; font-weight: 700; color: #1a237e; line-height: 1; }
+    .stat-label { font-size: 0.78rem; color: #666; margin-top: 2px; }
+  }
+  .stat-fecha { flex-direction: row; gap: 8px; align-items: center;
+    mat-icon { color: #1a237e; }
+    div { display: flex; flex-direction: column; font-size: 0.85rem; color: #444; gap: 2px; }
+  }
+}
+.preview-slots { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.preview-chip { font-size: 0.78rem; padding: 4px 10px; border-radius: 20px; background: #e8eaf6; color: #1a237e; font-weight: 500; }
+.preview-chip.frecuencia { background: #e8f5e9; color: #2e7d32; }
+
+.progress-section { margin-bottom: 16px;
+  mat-progress-bar { border-radius: 4px; margin-bottom: 4px; }
+  .progress-label { font-size: 0.82rem; color: #666; }
+}
+
+.confirm-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  button, a { display: flex; align-items: center; gap: 6px; }
+}
+
+@media (max-width: 599px) {
+  .slot-form { flex-direction: column; button { height: auto; } }
+  .preview-stats { gap: 16px; }
+}

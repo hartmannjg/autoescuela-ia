@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed } from '@angular/core';
+import { tap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -12,6 +13,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../../core/services/auth.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
+import { ConfiguracionService } from '../../../core/services/configuracion.service';
 import { User } from '../../../shared/models';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 
@@ -27,13 +29,15 @@ import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
   styleUrl: './excepciones.component.scss',
 })
 export class ExcepcionesComponent {
-  private authService = inject(AuthService);
+  private authService    = inject(AuthService);
   private usuarioService = inject(UsuarioService);
+  private configService  = inject(ConfiguracionService);
 
   readonly sucursalId = this.authService.currentUser()?.sucursalId ?? '';
+  readonly loading = signal(true);
 
   readonly alumnos = toSignal(
-    this.usuarioService.alumnosPorSucursal$(this.sucursalId),
+    this.usuarioService.alumnosPorSucursal$(this.sucursalId).pipe(tap(() => this.loading.set(false))),
     { initialValue: [] as User[] }
   );
 
@@ -75,20 +79,21 @@ export class ExcepcionesComponent {
     }
   }
 
-  async recargarCredito(alumno: User): Promise<void> {
+  async asignarClases(alumno: User): Promise<void> {
     const { value: cant } = await Swal.fire({
-      title: 'Recargar crédito',
+      title: 'Asignar clases individuales (40 min)',
       input: 'number',
       inputLabel: 'Clases a agregar',
       inputAttributes: { min: '1', max: '50' },
       showCancelButton: true,
-      confirmButtonText: 'Recargar',
+      confirmButtonText: 'Asignar',
       confirmButtonColor: '#1a237e',
+      inputValidator: v => (!v || Number(v) < 1) ? 'Ingresá una cantidad válida' : undefined,
     });
-    if (cant) {
-      await this.usuarioService.recargarCredito(alumno.uid, Number(cant));
-      Swal.fire({ icon: 'success', title: 'Crédito recargado', timer: 1500, showConfirmButton: false });
-    }
+    if (!cant) return;
+
+    await this.usuarioService.asignarClasesIndividuales(alumno.uid, Number(cant));
+    Swal.fire({ icon: 'success', title: `${cant} clases de 40 min asignadas`, timer: 1800, showConfirmButton: false });
   }
 
   getTipoAlumno(a: User): string {

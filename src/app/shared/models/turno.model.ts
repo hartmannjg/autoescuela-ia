@@ -11,7 +11,7 @@ export type TurnoEstado =
 
 export type TipoClase = 'plan' | 'individual' | 'cortesia';
 export type ConsumidoDe = 'plan' | 'credito_individual';
-export type MetodoVerificacion = 'qr' | 'manual';
+export type MetodoVerificacion = 'qr' | 'manual' | 'auto';
 
 export interface Turno {
   id?: string;
@@ -23,7 +23,7 @@ export interface Turno {
   horaInicio: string; // "09:00"
   horaFin: string;   // "10:00"
   duracionMinutos: number;
-  slots: string[]; // ["2026-04-16_09:00", "2026-04-16_09:15"]
+  slots: string[]; // ["2026-04-16_09:00", "2026-04-16_09:20", ...]
   estado: TurnoEstado;
   tipoClase: TipoClase;
   consumidoDe: ConsumidoDe;
@@ -42,6 +42,7 @@ export interface Turno {
   qrValidoHasta?: Timestamp;
   asistenciaVerificada: boolean;
   metodoVerificacion?: MetodoVerificacion;
+  saldoDescontado?: boolean;
   feedbackId?: string;
   creadoEn: Timestamp;
   actualizadoEn?: Timestamp;

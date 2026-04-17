@@ -6,8 +6,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { combineLatest, map } from 'rxjs';
+import { combineLatest, map, tap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { TurnoService } from '../../../core/services/turno.service';
 import { FeedbackService } from '../../../core/services/feedback.service';
@@ -17,7 +18,7 @@ import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 @Component({
   selector: 'app-historial',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatChipsModule, MatExpansionModule, MatDividerModule, FechaHoraPipe],
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatChipsModule, MatExpansionModule, MatDividerModule, MatProgressSpinnerModule, FechaHoraPipe],
   templateUrl: './historial.component.html',
   styleUrl: './historial.component.scss',
 })
@@ -27,14 +28,17 @@ export class HistorialComponent {
   private feedbackService = inject(FeedbackService);
 
   readonly uid = this.authService.currentUser()?.uid ?? '';
+  readonly loading = signal(true);
+  private _pending = 2;
+  private readonly _markLoaded = () => { if (--this._pending === 0) this.loading.set(false); };
 
   readonly turnos = toSignal(
-    this.turnoService.turnosAlumno$(this.uid),
+    this.turnoService.turnosAlumno$(this.uid).pipe(tap(this._markLoaded)),
     { initialValue: [] as Turno[] }
   );
 
   readonly feedbacks = toSignal(
-    this.feedbackService.feedbackAlumno$(this.uid),
+    this.feedbackService.feedbackAlumno$(this.uid).pipe(tap(this._markLoaded)),
     { initialValue: [] as FeedbackClase[] }
   );
 

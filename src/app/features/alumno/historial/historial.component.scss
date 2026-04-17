@@ -13,3 +13,4 @@
 .tag-group { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; strong { font-size: 0.85rem; } }
 .comentario { font-style: italic; color: #555; font-size: 0.9rem; margin: 8px 0 0; }
 .examen-status { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; margin-top: 8px; background: #ffebee; color: #c62828; mat-icon { font-size: 20px; width: 20px; height: 20px; } &.apto { background: #e8f5e9; color: #2e7d32; } }
+.loading-center { display: flex; justify-content: center; align-items: center; padding: 80px 0; }

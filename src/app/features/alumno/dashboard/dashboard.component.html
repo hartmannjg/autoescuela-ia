@@ -5,11 +5,12 @@
     <div class="alerta" [class]="'alerta-' + alerta.tipo">
       <mat-icon>{{ alerta.tipo === 'error' ? 'block' : alerta.tipo === 'warn' ? 'warning' : 'info' }}</mat-icon>
       <span>{{ alerta.mensaje }}</span>
-      @if (alerta.tipo === 'warn' && clasesDisponibles() === 0) {
-        <a routerLink="/alumno/mi-saldo" mat-button color="warn">Comprar clases</a>
-      }
     </div>
   }
+
+  @if (loading()) {
+    <div class="loading-center"><mat-spinner diameter="48" /></div>
+  } @else {
 
   <!-- Header -->
   <div class="page-header">
@@ -26,7 +27,7 @@
         <mat-card-header>
           <mat-icon mat-card-avatar>school</mat-icon>
           <mat-card-title>Plan {{ plan.nombre }}</mat-card-title>
-          <mat-card-subtitle>{{ plan.duracionClaseMinutos }} min por clase</mat-card-subtitle>
+          <mat-card-subtitle>{{ plan.duracionClase | duracion }} por clase</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="clases-count">
@@ -38,8 +39,22 @@
             color="primary"
             class="progreso-bar" />
           <div class="progreso-info">
-            <span>{{ plan.clasesTomadas }} tomadas</span>
+            <span>{{ plan.clasesTomadas }} usadas</span>
             <span>{{ plan.clasesTotales }} totales</span>
+          </div>
+          <div class="stats-row">
+            <div class="stat-item stat-agendada">
+              <span class="stat-num">{{ turnosStats().agendadas }}</span>
+              <span class="stat-lbl">Agendadas</span>
+            </div>
+            <div class="stat-item stat-confirmada">
+              <span class="stat-num">{{ turnosStats().confirmadas }}</span>
+              <span class="stat-lbl">Confirmadas</span>
+            </div>
+            <div class="stat-item stat-completada">
+              <span class="stat-num">{{ turnosStats().completadas }}</span>
+              <span class="stat-lbl">Completadas</span>
+            </div>
           </div>
           <div class="vencimiento">
             <mat-icon>schedule</mat-icon>
@@ -49,22 +64,26 @@
       </mat-card>
     }
 
-    <!-- Crédito individual -->
-    @if (creditoIndividual(); as credito) {
-      <mat-card class="saldo-card credito-card">
+    <!-- Clases individuales asignadas por el admin -->
+    @if (clasesIndividualesPorTipo().length > 0) {
+      <mat-card class="saldo-card individual-card">
         <mat-card-header>
-          <mat-icon mat-card-avatar>account_balance_wallet</mat-icon>
-          <mat-card-title>Crédito Individual</mat-card-title>
-          <mat-card-subtitle>Clases sueltas</mat-card-subtitle>
+          <mat-icon mat-card-avatar>confirmation_number</mat-icon>
+          <mat-card-title>Clases individuales</mat-card-title>
+          <mat-card-subtitle>Asignadas por el administrador</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
-          <div class="clases-count">
-            <span class="number">{{ credito.clasesDisponibles }}</span>
-            <span class="label">clases disponibles</span>
+          <div class="individual-tipos">
+            @for (tipo of clasesIndividualesPorTipo(); track tipo.duracion) {
+              <div class="individual-tipo">
+                <span class="individual-cant">{{ tipo.cantidad }}</span>
+                <span class="individual-desc">
+                  @if (tipo.duracion > 0) { clase{{ tipo.cantidad !== 1 ? 's' : '' }} de {{ tipo.duracion }} min }
+                  @else { clase{{ tipo.cantidad !== 1 ? 's' : '' }} disponible{{ tipo.cantidad !== 1 ? 's' : '' }} }
+                </span>
+              </div>
+            }
           </div>
-          <button mat-stroked-button color="primary" routerLink="/alumno/mi-saldo">
-            <mat-icon>add</mat-icon> Comprar más
-          </button>
         </mat-card-content>
       </mat-card>
     }
@@ -78,6 +97,9 @@
         <button mat-raised-button color="accent" [disabled]="bloqueado() || clasesDisponibles() === 0">
           <mat-icon>add</mat-icon> Nueva clase
         </button>
+        @if (clasesDisponibles() === 0 && !bloqueado()) {
+          <p class="sin-clases-hint">Contactá al administrador para asignarte clases</p>
+        }
       </mat-card-content>
     </mat-card>
 
@@ -110,7 +132,7 @@
                 <mat-icon>schedule</mat-icon>
                 <span>{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
               </div>
-              <span class="chip chip-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+              <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
             </div>
           }
         </div>
@@ -135,4 +157,5 @@
     </mat-card>
   }
 
+  }
 </div>

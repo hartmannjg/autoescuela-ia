@@ -1,0 +1,207 @@
+.disp-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// ── Barra superior ────────────────────────────────────────────────────────────
+.disp-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.disp-leyenda {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+
+  .dl-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: #555;
+
+    &::before {
+      content: '';
+      width: 14px;
+      height: 10px;
+      border-radius: 2px;
+      display: block;
+      flex-shrink: 0;
+    }
+    &.libre::before   { background: #4caf50; }
+    &.ocupado::before { background: #ef5350; }
+    &.pasado::before  { background: #e0e0e0; }
+  }
+}
+
+.disp-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  span { font-size: 0.88rem; color: #555; white-space: nowrap; padding: 0 4px; }
+}
+
+// ── Estados vacíos ────────────────────────────────────────────────────────────
+.disp-loading { display: flex; justify-content: center; padding: 48px; }
+.disp-empty   { text-align: center; color: #aaa; font-style: italic; font-size: 0.88rem; padding: 32px 0; }
+
+// ── Tabla ─────────────────────────────────────────────────────────────────────
+.disp-table-wrap { overflow-x: auto; }
+
+.disp-table {
+  display: grid;
+  gap: 4px;
+  min-width: 600px;
+}
+
+// Header row
+.disp-th {
+  padding: 8px 4px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+
+  .dia-nombre { font-size: 0.68rem; font-weight: 600; color: #888; text-transform: capitalize; }
+  .dia-num    { font-size: 1.1rem; font-weight: 700; color: #333; }
+
+  &.today    { .dia-nombre, .dia-num { color: #1976d2; } }
+  &.past-day { .dia-nombre, .dia-num { color: #ccc; } }
+}
+
+// Instructor label
+.disp-inst-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  min-height: 64px;
+
+  .inst-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #1a237e;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .inst-datos {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    strong { font-size: 0.82rem; }
+    small  { font-size: 0.72rem; color: #888; }
+  }
+}
+
+// Day cells
+.disp-cell {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 8px;
+  min-height: 64px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &.no-laboral {
+    background: #fafafa;
+    cursor: default;
+    justify-content: center;
+    align-items: center;
+    .disp-na { font-size: 1.1rem; color: #ddd; }
+  }
+
+  &.sin-datos {
+    justify-content: center;
+    align-items: center;
+  }
+
+  &.todo-ocupado {
+    cursor: default;
+    background: #fff5f5;
+    border-color: #ffcdd2;
+    &:hover { background: #fff5f5; border-color: #ffcdd2; }
+  }
+
+  &:not(.no-laboral):not(.sin-datos):not(.todo-ocupado):hover {
+    border-color: #9fa8da;
+    background: #f5f6ff;
+  }
+
+  &.expandida {
+    border-color: #1a237e;
+    background: #f0f2ff;
+  }
+}
+
+// Colored segment bar
+.slot-bar {
+  display: flex;
+  gap: 2px;
+  height: 10px;
+}
+.slot-seg {
+  flex: 1;
+  border-radius: 2px;
+  min-width: 4px;
+  &.libre   { background: #4caf50; }
+  &.ocupado { background: #ef5350; }
+  &.pasado  { background: #e0e0e0; }
+}
+
+// Count text
+.cell-count {
+  font-size: 0.7rem;
+  line-height: 1.2;
+  .count-libre { color: #2e7d32; font-weight: 600; }
+  .count-none  { color: #ef5350; font-weight: 600; }
+  .count-sep   { color: #aaa; }
+}
+
+// Expanded slot list
+.disp-detalle {
+  border-top: 1px solid #c5cae9;
+  padding-top: 6px;
+  margin-top: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.dd-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+}
+.dd-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  &.libre   { background: #4caf50; }
+  &.ocupado { background: #ef5350; }
+  &.pasado  { background: #ccc; }
+}
+.dd-hora   { color: #333; font-weight: 500; min-width: 38px; }
+.dd-estado { color: #888; }
+
+@media (max-width: 599px) {
+  .disp-top-bar { flex-direction: column; align-items: flex-start; }
+}

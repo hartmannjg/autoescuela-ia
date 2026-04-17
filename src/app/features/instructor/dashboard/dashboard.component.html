@@ -1,8 +1,12 @@
 <div class="dashboard">
   <div class="page-header">
     <h2>Buenos días, {{ (user()?.nombre?.split(' ') ?? [''])[0] }}</h2>
-    <p>{{ hoyStr | date:'EEEE d \'de\' MMMM':'':'es-AR' | titlecase }}</p>
+    <p>{{ hoyStr | date:'dd/MM/yyyy' }}</p>
   </div>
+
+  @if (loadingData()) {
+    <div class="loading-center"><mat-spinner diameter="48" /></div>
+  } @else {
 
   <!-- Resumen del día -->
   <div class="stats-row">
@@ -43,7 +47,7 @@
           <div class="turno-item pendiente">
             <div class="turno-info">
               <strong>{{ turno.fecha | fechaHora: 'fecha' }}</strong>
-              <span>{{ turno.horaInicio }} - {{ turno.horaFin }} ({{ turno.duracionMinutos }} min)</span>
+              <span>{{ turno.horaInicio }} - {{ turno.horaFin }} ({{ turno.duracionMinutos | duracion }})</span>
               <span class="alumno-id">Alumno: {{ turno.alumnoUid | slice:0:8 }}...</span>
             </div>
             <div class="turno-actions">
@@ -84,9 +88,9 @@
           </div>
           <mat-divider [vertical]="true" />
           <div class="turno-info">
-            <span>{{ turno.duracionMinutos }} min · {{ turno.tipoClase }}</span>
+            <span>{{ turno.duracionMinutos | duracion }} · {{ turno.tipoClase }}</span>
           </div>
-          <span class="chip chip-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+          <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
           @if (turno.estado === 'CONFIRMADA') {
             <a mat-icon-button [routerLink]="['/instructor/evaluar-alumno', turno.id]" color="primary">
               <mat-icon>edit_note</mat-icon>
@@ -120,10 +124,39 @@
             <span>{{ turno.horaInicio }}</span>
           </div>
           <div class="turno-info">
-            <span>{{ turno.duracionMinutos }} min</span>
+            <span>{{ turno.duracionMinutos | duracion }}</span>
           </div>
         </div>
       }
     </mat-card-content>
   </mat-card>
+
+  <!-- Historial reciente -->
+  @if (historial().length > 0) {
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>history</mat-icon>
+          Historial reciente
+        </mat-card-title>
+        <a mat-button routerLink="/instructor/mis-clases">Ver todo →</a>
+      </mat-card-header>
+      <mat-card-content>
+        @for (turno of historial(); track turno.id) {
+          <div class="turno-item">
+            <div class="turno-hora">
+              <strong>{{ turno.fecha | fechaHora: 'fecha' }}</strong>
+              <span>{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
+            </div>
+            <div class="turno-info">
+              <span>{{ turno.duracionMinutos | duracion }}</span>
+            </div>
+            <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
+  }
 </div>

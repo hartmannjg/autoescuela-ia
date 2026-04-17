@@ -1,0 +1,116 @@
+<div class="disp-container">
+  <!-- Barra superior: leyenda + navegación -->
+  <div class="disp-top-bar">
+    <div class="disp-leyenda">
+      <span class="dl-item libre">Libre</span>
+      <span class="dl-item ocupado">Ocupado</span>
+      <span class="dl-item pasado">Pasado / Sin horario</span>
+    </div>
+    <div class="disp-nav">
+      <button mat-icon-button (click)="cambiarSemana(-1)"><mat-icon>chevron_left</mat-icon></button>
+      <span>{{ semanaLabel() }}</span>
+      <button mat-icon-button (click)="cambiarSemana(1)"><mat-icon>chevron_right</mat-icon></button>
+      <button mat-icon-button [disabled]="loadingDisp()" (click)="cargar()" matTooltip="Actualizar">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  @if (loadingDisp()) {
+    <div class="disp-loading"><mat-spinner diameter="40" /></div>
+  } @else if (instructores().length === 0) {
+    <p class="disp-empty">No hay instructores activos en esta sucursal.</p>
+  } @else {
+    <div class="disp-table-wrap">
+      <div class="disp-table" [style.grid-template-columns]="'180px repeat(' + diasSemana().length + ', 1fr)'">
+
+        <!-- Fila de encabezado -->
+        <div class="disp-th corner"></div>
+        @for (dia of diasSemana(); track dia.fechaStr) {
+          <div class="disp-th" [class.today]="dia.esHoy" [class.past-day]="dia.esPasado && !dia.esHoy">
+            <span class="dia-nombre">{{ dia.fecha | date:'EEE':'':'es-AR' }}</span>
+            <span class="dia-num">{{ dia.fecha | date:'d' }}</span>
+          </div>
+        }
+
+        <!-- Filas de instructores -->
+        @for (inst of instructores(); track inst.uid) {
+
+          <div class="disp-inst-label">
+            <div class="inst-avatar">{{ inst.nombre.charAt(0) }}</div>
+            <div class="inst-datos">
+              <strong>{{ inst.nombre }}</strong>
+              @if (inst.instructorData?.especialidad) {
+                <small>{{ inst.instructorData!.especialidad }}</small>
+              }
+            </div>
+          </div>
+
+          @for (dia of diasSemana(); track dia.fechaStr) {
+            @let key        = inst.uid + '|' + dia.fechaStr;
+            @let laboral    = diaLaboralParaInst(inst, dia);
+            @let slots      = getCeldaSlots(inst.uid, dia.fechaStr);
+            @let libres     = contarLibres(inst.uid, dia.fechaStr);
+            @let todoOcup   = esCeldaTodoOcupado(inst.uid, dia.fechaStr);
+            @let expandida  = celdaExpandida() === key;
+
+            <div class="disp-cell"
+              [class.no-laboral]="!laboral"
+              [class.sin-datos]="laboral && slots.length === 0"
+              [class.todo-ocupado]="todoOcup"
+              [class.expandida]="expandida"
+              (click)="toggleCelda(key, laboral, inst.uid, dia.fechaStr)">
+
+              @if (!laboral) {
+                <span class="disp-na">—</span>
+              } @else if (slots.length === 0) {
+                <mat-spinner diameter="20" />
+              } @else {
+
+                <!-- Barra de segmentos coloreados -->
+                <div class="slot-bar">
+                  @for (s of slots; track s.horaInicio) {
+                    <div class="slot-seg"
+                      [class.libre]="s.disponible && !s.esPasado"
+                      [class.ocupado]="!s.disponible && !s.esPasado"
+                      [class.pasado]="s.esPasado"
+                      [matTooltip]="s.horaInicio + ' — ' + (s.esPasado ? 'Pasado' : s.disponible ? 'Libre' : 'Ocupado')">
+                    </div>
+                  }
+                </div>
+
+                <!-- Contador libre/total -->
+                <div class="cell-count">
+                  <span [class.count-libre]="libres > 0" [class.count-none]="libres === 0">
+                    {{ libres }} libre{{ libres !== 1 ? 's' : '' }}
+                  </span>
+                  <span class="count-sep"> / {{ slots.length }}</span>
+                </div>
+
+                <!-- Detalle expandido (solo si no todo ocupado) -->
+                @if (expandida && !todoOcup) {
+                  <div class="disp-detalle">
+                    @for (s of slots; track s.horaInicio) {
+                      <div class="dd-row">
+                        <div class="dd-dot"
+                          [class.libre]="s.disponible && !s.esPasado"
+                          [class.ocupado]="!s.disponible && !s.esPasado"
+                          [class.pasado]="s.esPasado">
+                        </div>
+                        <span class="dd-hora">{{ s.horaInicio }}</span>
+                        <span class="dd-estado">{{ s.esPasado ? 'Pasado' : s.disponible ? 'Libre' : 'Ocupado' }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+
+              }
+            </div>
+          }
+
+        }
+
+      </div>
+    </div>
+  }
+</div>

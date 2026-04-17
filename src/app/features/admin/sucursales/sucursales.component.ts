@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { tap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -29,7 +30,11 @@ export class SucursalesComponent {
   private sucursalService = inject(SucursalService);
   private fb = inject(FormBuilder);
 
-  readonly sucursales = toSignal(this.sucursalService.todasLasSucursales$(), { initialValue: [] as Sucursal[] });
+  readonly loading = signal(true);
+  readonly sucursales = toSignal(
+    this.sucursalService.todasLasSucursales$().pipe(tap(() => this.loading.set(false))),
+    { initialValue: [] as Sucursal[] }
+  );
   readonly mostrarFormulario = signal(false);
   readonly editandoId = signal<string | null>(null);
   readonly guardando = signal(false);
@@ -43,7 +48,6 @@ export class SucursalesComponent {
     radioPermitido: [200, [Validators.required, Validators.min(50), Validators.max(2000)]],
     horarioApertura: ['08:00', Validators.required],
     horarioCierre: ['20:00', Validators.required],
-    capacidadMaximaDiaria: [20, [Validators.required, Validators.min(1)]],
   });
 
   abrirFormulario(s?: Sucursal): void {
@@ -58,10 +62,9 @@ export class SucursalesComponent {
         radioPermitido: s.ubicacion.radioPermitido,
         horarioApertura: s.configuracionHorarios.horarioApertura,
         horarioCierre: s.configuracionHorarios.horarioCierre,
-        capacidadMaximaDiaria: s.configuracionHorarios.capacidadMaximaDiaria,
       });
     } else {
-      this.form.reset({ lat: 0, lng: 0, radioPermitido: 200, horarioApertura: '08:00', horarioCierre: '20:00', capacidadMaximaDiaria: 20 });
+      this.form.reset({ lat: 0, lng: 0, radioPermitido: 200, horarioApertura: '08:00', horarioCierre: '20:00' });
     }
     this.mostrarFormulario.set(true);
   }
@@ -83,12 +86,11 @@ export class SucursalesComponent {
         activo: true,
         ubicacion: { lat: v.lat!, lng: v.lng!, radioPermitido: v.radioPermitido! },
         configuracionHorarios: {
-          slotBaseMinutos: 15,
-          duracionesPermitidas: [30, 45, 60],
+          slotBaseMinutos: 20,
+          duracionesPermitidas: [20, 40, 60],
           horarioApertura: v.horarioApertura!,
           horarioCierre: v.horarioCierre!,
           diasLaborales: [1, 2, 3, 4, 5, 6],
-          capacidadMaximaDiaria: v.capacidadMaximaDiaria!,
         },
       };
       const id = this.editandoId();

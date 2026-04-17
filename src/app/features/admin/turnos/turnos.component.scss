@@ -1,6 +1,17 @@
 .turnos-page { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
 .page-header { h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #37474f; } p { margin: 4px 0 0; color: #666; } }
-.filters-card mat-card-content { display: flex; gap: 16px; flex-wrap: wrap; }
+.filters-card mat-card-content, .filters-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
 mat-form-field { min-width: 240px; }
-.turno-row { display: flex; align-items: center; gap: 16px; padding: 10px; border-radius: 8px; background: #f8f9fa; margin-bottom: 8px; flex-wrap: wrap; .turno-info { flex: 1; display: flex; gap: 12px; strong { font-size: 0.9rem; } span { font-size: 0.85rem; color: #666; } } }
+.turno-row { display: flex; align-items: center; gap: 16px; padding: 10px; border-radius: 8px; background: #f8f9fa; margin-bottom: 8px; flex-wrap: wrap;
+  .turno-info { display: flex; gap: 12px; align-items: center; min-width: 180px; strong { font-size: 0.9rem; } span { font-size: 0.85rem; color: #666; } }
+  .turno-personas { display: flex; gap: 24px; flex: 1; flex-wrap: wrap; }
+  .persona { display: flex; flex-direction: column; gap: 1px; min-width: 160px;
+    .persona-rol { font-size: 0.7rem; text-transform: uppercase; color: #999; letter-spacing: 0.04em; }
+    .persona-nombre { font-size: 0.88rem; font-weight: 600; color: #333; }
+    .persona-email { font-size: 0.78rem; color: #888; }
+  }
+}
 .empty-state { display: flex; flex-direction: column; align-items: center; padding: 48px; gap: 8px; color: #aaa; mat-icon { font-size: 48px; width: 48px; height: 48px; } }
+.loading-center { display: flex; justify-content: center; align-items: center; padding: 80px 0; }
+
+.page-subtitle { margin: -12px 0 4px; color: #888; font-size: 0.9rem; }

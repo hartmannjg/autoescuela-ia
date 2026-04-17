@@ -15,13 +15,17 @@
       <div class="filtro-row">
         <mat-form-field appearance="outline">
           <mat-label>Desde</mat-label>
-          <input matInput type="date" [ngModel]="desde()" (ngModelChange)="desde.set($event)" />
+          <input matInput [matDatepicker]="pickerDesde" [value]="desde()" (dateChange)="desde.set($event.value)" />
+          <mat-datepicker-toggle matIconSuffix [for]="pickerDesde" />
+          <mat-datepicker #pickerDesde />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Hasta</mat-label>
-          <input matInput type="date" [ngModel]="hasta()" (ngModelChange)="hasta.set($event)" />
+          <input matInput [matDatepicker]="pickerHasta" [value]="hasta()" (dateChange)="hasta.set($event.value)" />
+          <mat-datepicker-toggle matIconSuffix [for]="pickerHasta" />
+          <mat-datepicker #pickerHasta />
         </mat-form-field>
-        <button mat-raised-button color="primary" (click)="generarReporte()" [disabled]="cargando()">
+        <button mat-raised-button color="primary" class="generar-btn" (click)="generarReporte()" [disabled]="cargando()">
           @if (cargando()) {
             <mat-spinner diameter="20" />
           } @else {

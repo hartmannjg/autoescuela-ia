@@ -1,5 +1,3 @@
-import { Timestamp } from '@angular/fire/firestore';
-
 /** Convierte Date a string "YYYY-MM-DD" */
 export function dateToStr(date: Date): string {
   const y = date.getFullYear();
@@ -14,33 +12,26 @@ export function strToDate(str: string): Date {
   return new Date(y, m - 1, d);
 }
 
-/** Convierte Timestamp de Firestore a Date */
-export function tsToDate(ts: Timestamp): Date {
-  return ts.toDate();
-}
-
-/** Convierte Date a Timestamp de Firestore */
-export function dateToTs(date: Date): Timestamp {
-  return Timestamp.fromDate(date);
-}
-
 /** Genera el key de un slot: "YYYY-MM-DD_HH:MM" */
 export function slotKey(fechaStr: string, hora: string): string {
   return `${fechaStr}_${hora}`;
 }
 
-/** Genera todos los slots de 15 minutos para una clase */
+/** Intervalo base de cada slot en minutos (1 slot = 40 min) */
+export const SLOT_INTERVAL = 40;
+
+/** Genera todos los slots de 40 minutos para una clase */
 export function generarSlots(fechaStr: string, horaInicio: string, duracionMinutos: number): string[] {
   const slots: string[] = [];
   const [hh, mm] = horaInicio.split(':').map(Number);
   let totalMinutos = hh * 60 + mm;
-  const cantSlots = duracionMinutos / 15;
+  const cantSlots = duracionMinutos / SLOT_INTERVAL;
 
   for (let i = 0; i < cantSlots; i++) {
     const h = Math.floor(totalMinutos / 60);
     const m = totalMinutos % 60;
     slots.push(slotKey(fechaStr, `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`));
-    totalMinutos += 15;
+    totalMinutos += SLOT_INTERVAL;
   }
   return slots;
 }
@@ -75,6 +66,40 @@ export function semanaActual(): { inicio: Date; fin: Date } {
   fin.setDate(inicio.getDate() + 6);
   fin.setHours(23, 59, 59, 999);
   return { inicio, fin };
+}
+
+/**
+ * Dado un string "YYYY-MM-DD" retorna el identificador de semana ISO:
+ * "YYYY-Www" donde W es el número de semana (lunes como inicio).
+ */
+export function getSemanaStr(fechaStr: string): string {
+  const [y, m, d] = fechaStr.split('-').map(Number);
+  const fecha = new Date(y, m - 1, d);
+  const day = (fecha.getDay() + 6) % 7; // 0=lun … 6=dom
+  const lunes = new Date(fecha);
+  lunes.setDate(fecha.getDate() - day);
+  const startOfYear = new Date(lunes.getFullYear(), 0, 1);
+  const week = Math.ceil(((lunes.getTime() - startOfYear.getTime()) / 86400000 + 1) / 7);
+  return `${lunes.getFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
+/**
+ * Dado un identificador "YYYY-Www" retorna { lunes, domingo } como strings "YYYY-MM-DD".
+ * Inverso consistente de getSemanaStr.
+ */
+export function getSemanaBounds(semanaStr: string): { lunes: string; domingo: string } {
+  const [yearStr, weekStr] = semanaStr.split('-W');
+  const year = Number(yearStr);
+  const week = Number(weekStr);
+  // Candidato: Jan 1 + (week-1)*7 días. Puede no ser lunes.
+  const jan1 = new Date(year, 0, 1);
+  const candidate = new Date(jan1.getTime() + (week - 1) * 7 * 86400000);
+  // Avanzar al próximo lunes (o quedarse si ya es lunes)
+  const dayOfWeek = (candidate.getDay() + 6) % 7; // 0=lun…6=dom
+  const daysToNextMonday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+  const lunes = new Date(candidate.getTime() + daysToNextMonday * 86400000);
+  const domingo = new Date(lunes.getTime() + 6 * 86400000);
+  return { lunes: dateToStr(lunes), domingo: dateToStr(domingo) };
 }
 
 /** Formatea hora "09:00" a "9:00 AM" */

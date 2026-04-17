@@ -1,31 +1,35 @@
 export interface PreciosPlan {
   id: string;
   nombre: string;
-  duracionMinutos: 30 | 45 | 60;
+  duracionClase: 40 | 80;
   cantidadClases: number;
   precio: number;
   activo: boolean;
+  maxClasesPorDia: number | null; // null = sin límite
+  maxClasesPorSemana: number;
 }
 
-export interface PreciosPaquete {
-  id: string;
-  cantidadClases: number;
-  precio: number;
-  activo: boolean;
+/** Override de precios por sucursal. null = usar el valor global. */
+export interface PreciosOverride {
+  planes: PreciosPlan[] | null;
+  precioClase40min: number | null;
+}
+
+export interface ConfiguracionSucursal {
+  id?: string;
+  precios: PreciosOverride;
 }
 
 export interface ConfiguracionGlobal {
   id?: string;
   limites: {
-    maxClasesPorSemana: number;
-    minClasesPorSemana: number;
     semanasSinClaseParaBloqueo: number;
     horasAntesParaCancelar: number;
-    minutosQrValidez: number; // antes y después de la clase
+    minutosQrValidez: number;
   };
   precios: {
     planes: PreciosPlan[];
-    paquetes: PreciosPaquete[];
+    precioClase40min: number;
   };
   notificaciones: {
     recordatorio24hs: boolean;

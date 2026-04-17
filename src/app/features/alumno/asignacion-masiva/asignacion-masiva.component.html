@@ -1,0 +1,179 @@
+<div class="masiva-page">
+
+  <div class="page-header">
+    <a mat-icon-button routerLink="/alumno/calendario"><mat-icon>arrow_back</mat-icon></a>
+    <div>
+      <h2>Agendar plan completo</h2>
+      <p>Elegí un horario recurrente y agendamos todas las clases de tu plan automáticamente</p>
+    </div>
+  </div>
+
+  @if (!plan()) {
+    <mat-card class="info-card warn-card">
+      <mat-card-content>
+        <mat-icon>info</mat-icon>
+        <span>Necesitás tener un plan activo para usar esta función.</span>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+
+    <!-- Plan activo -->
+    <mat-card class="plan-card">
+      <mat-card-content>
+        <div class="plan-info">
+          <mat-icon>school</mat-icon>
+          <div>
+            <strong>{{ plan()!.nombre }}</strong>
+            <span>{{ plan()!.duracionClase | duracion }} por clase</span>
+          </div>
+          <div class="plan-saldo">
+            <span class="plan-num">{{ plan()!.clasesRestantes }}</span>
+            <span>clases disponibles para agendar</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Sección 1: Agregar horario recurrente -->
+    <mat-card class="step-card">
+      <mat-card-header>
+        <mat-card-title><span class="step-num">1</span> Horarios recurrentes</mat-card-title>
+        <mat-card-subtitle>Elegí los días y horarios que se repetirán cada semana</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+
+        <div class="slot-form">
+          <mat-form-field appearance="outline">
+            <mat-label>Instructor</mat-label>
+            <mat-select [ngModel]="instructorTemp()" (ngModelChange)="onInstructorChange($event)">
+              @for (inst of instructores(); track inst.uid) {
+                <mat-option [value]="inst">{{ inst.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" [class.disabled-field]="!instructorTemp()">
+            <mat-label>Día</mat-label>
+            <mat-select [ngModel]="diaTemp()" (ngModelChange)="onDiaChange($event)" [disabled]="!instructorTemp()">
+              @for (d of diasDisponibles(); track d.dia) {
+                <mat-option [value]="d.dia">{{ d.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" [class.disabled-field]="diaTemp() === null">
+            <mat-label>Horario</mat-label>
+            <mat-select [ngModel]="horaTemp()" (ngModelChange)="horaTemp.set($event)" [disabled]="diaTemp() === null">
+              @for (h of horasDisponibles(); track h) {
+                <mat-option [value]="h">{{ h }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" [disabled]="!puedeAgregar()" (click)="agregarSlot()">
+            <mat-icon>add</mat-icon> Agregar
+          </button>
+        </div>
+
+        <!-- Lista de slots agregados -->
+        @if (slotsRecurrentes().length > 0) {
+          <mat-divider class="divider" />
+          <div class="slots-lista">
+            @for (slot of slotsRecurrentes(); track $index) {
+              <div class="slot-item">
+                <mat-icon>event_repeat</mat-icon>
+                <div class="slot-info">
+                  <strong>{{ nombreDia(slot.dia) }}</strong>
+                  <span>{{ slot.horaInicio }} - {{ slot.horaFin }}</span>
+                  <span class="slot-instructor">{{ slot.instructor.nombre }}</span>
+                </div>
+                <button mat-icon-button color="warn" (click)="quitarSlot($index)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="empty-msg">Todavía no agregaste horarios. Usá el formulario de arriba.</p>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Sección 2: Configuración -->
+    @if (slotsRecurrentes().length > 0) {
+      <mat-card class="step-card">
+        <mat-card-header>
+          <mat-card-title><span class="step-num">2</span> Configuración</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="config-row">
+            <mat-form-field appearance="outline" class="config-field">
+              <mat-label>Máximo de clases por semana</mat-label>
+              <input matInput type="number"
+                [ngModel]="maxPorSemana()"
+                (ngModelChange)="maxPorSemana.set(+$event)"
+                [min]="1"
+                [max]="slotsRecurrentes().length" />
+              <mat-hint>Máximo: {{ slotsRecurrentes().length }} (cantidad de horarios seleccionados)</mat-hint>
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Sección 3: Preview y confirmación -->
+      @if (preview(); as prev) {
+        <mat-card class="preview-card">
+          <mat-card-header>
+            <mat-card-title><span class="step-num">3</span> Resumen de asignación</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="preview-stats">
+              <div class="stat">
+                <span class="stat-num">{{ prev.total }}</span>
+                <span class="stat-label">clases a agendar</span>
+              </div>
+              <div class="stat">
+                <span class="stat-num">{{ prev.semanas }}</span>
+                <span class="stat-label">semanas</span>
+              </div>
+              <div class="stat stat-fecha">
+                <mat-icon>calendar_today</mat-icon>
+                <div>
+                  <span>Inicio: {{ prev.fechaInicio }}</span>
+                  <span>Fin estimado: {{ prev.fechaFin }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-slots">
+              @for (slot of slotsRecurrentes(); track $index) {
+                <span class="preview-chip">
+                  {{ nombreDia(slot.dia) }} {{ slot.horaInicio }} · {{ slot.instructor.nombre }}
+                </span>
+              }
+              <span class="preview-chip frecuencia">
+                {{ maxPorSemana() }} clase{{ maxPorSemana() !== 1 ? 's' : '' }}/semana
+              </span>
+            </div>
+
+            @if (loading()) {
+              <div class="progress-section">
+                <mat-progress-bar mode="determinate" [value]="progreso()" />
+                <span class="progress-label">Creando clases... {{ progreso() }}%</span>
+              </div>
+            }
+
+            <div class="confirm-actions">
+              <button mat-raised-button color="primary" (click)="confirmarMasivo()" [disabled]="loading()">
+                <mat-icon>event_repeat</mat-icon>
+                Agendar {{ prev.total }} clases
+              </button>
+              <a mat-stroked-button routerLink="/alumno/calendario">Cancelar</a>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    }
+
+  }
+</div>

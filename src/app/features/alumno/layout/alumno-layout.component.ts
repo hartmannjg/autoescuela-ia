@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -14,6 +14,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificacionService } from '../../../core/services/notificacion.service';
+import { TurnoService } from '../../../core/services/turno.service';
+import { Notificacion, TipoNotificacion } from '../../../shared/models';
 
 @Component({
   selector: 'app-alumno-layout',
@@ -26,9 +28,10 @@ import { NotificacionService } from '../../../core/services/notificacion.service
   templateUrl: './alumno-layout.component.html',
   styleUrl: './alumno-layout.component.scss',
 })
-export class AlumnoLayoutComponent {
+export class AlumnoLayoutComponent implements OnInit {
   private authService = inject(AuthService);
   private notifService = inject(NotificacionService);
+  private turnoService = inject(TurnoService);
   private breakpointObserver = inject(BreakpointObserver);
 
   readonly user = this.authService.currentUser;
@@ -38,18 +41,49 @@ export class AlumnoLayoutComponent {
   );
   readonly sidenavOpened = signal(true);
 
+  async ngOnInit(): Promise<void> {
+    const sucursalId = this.authService.currentUser()?.sucursalId;
+    if (sucursalId) {
+      this.turnoService.procesarClasesVencidas(sucursalId)
+        .catch(err => console.error('[procesarClasesVencidas alumno]', err));
+    }
+  }
+
   readonly notifCount = toSignal(
     this.notifService.noLeidas$(this.authService.currentUser()?.uid ?? ''),
     { initialValue: 0 }
   );
+  readonly notificaciones = toSignal(
+    this.notifService.notificaciones$(this.authService.currentUser()?.uid ?? ''),
+    { initialValue: [] as Notificacion[] }
+  );
+
+  async marcarLeida(notif: Notificacion): Promise<void> {
+    if (!notif.leida && notif.id) await this.notifService.marcarLeida(notif.id);
+  }
+  async marcarTodasLeidas(): Promise<void> {
+    const uid = this.authService.currentUser()?.uid;
+    if (uid) await this.notifService.marcarTodasLeidas(uid);
+  }
+  iconoNotif(tipo: TipoNotificacion): string {
+    const map: Record<TipoNotificacion, string> = {
+      confirmacion_turno: 'check_circle', rechazo_turno: 'cancel',
+      recordatorio_turno: 'schedule',     nueva_solicitud: 'pending_actions',
+      bloqueo_cuenta: 'block',            desbloqueo_cuenta: 'lock_open',
+      feedback_recibido: 'star',          clase_completada: 'school',
+      saldo_bajo: 'warning',              plan_vencimiento: 'event_busy',
+    };
+    return map[tipo] ?? 'notifications';
+  }
 
   readonly navItems = [
-    { label: 'Dashboard', icon: 'dashboard', route: '/alumno/dashboard' },
-    { label: 'Calendario', icon: 'calendar_month', route: '/alumno/calendario' },
-    { label: 'Mis Turnos', icon: 'event_note', route: '/alumno/mis-turnos' },
-    { label: 'Mi Saldo', icon: 'account_balance_wallet', route: '/alumno/mi-saldo' },
-    { label: 'Historial', icon: 'history', route: '/alumno/historial' },
-    { label: 'Calificar Clases', icon: 'star', route: '/alumno/feedback' },
+    { label: 'Dashboard',          icon: 'dashboard',        route: '/alumno/dashboard' },
+    { label: 'Calendario',         icon: 'calendar_month',   route: '/alumno/calendario' },
+    { label: 'Asignación masiva',  icon: 'event_repeat',     route: '/alumno/asignacion-masiva' },
+    { label: 'Mis Turnos',         icon: 'event_note',       route: '/alumno/mis-turnos' },
+    { label: 'Escanear QR',        icon: 'qr_code_scanner',  route: '/alumno/escanear-qr' },
+    { label: 'Historial',          icon: 'history',          route: '/alumno/historial' },
+    { label: 'Calificar Clases',   icon: 'star',             route: '/alumno/feedback' },
   ];
 
   toggleSidenav(): void {

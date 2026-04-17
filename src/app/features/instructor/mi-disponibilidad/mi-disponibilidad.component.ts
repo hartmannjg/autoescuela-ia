@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { tap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -11,19 +12,20 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { toSignal } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../../core/services/auth.service';
 import { AusenciaService } from '../../../core/services/ausencia.service';
 import { InstructorAusencia, TipoAusencia } from '../../../shared/models';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
-import { dateToTs } from '../../../shared/utils/date-utils';
+import { dateToTs } from '../../../shared/utils/firebase-utils';
 import { Timestamp } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-mi-disponibilidad',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule, MatCheckboxModule, MatChipsModule, FechaHoraPipe],
+  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule, MatCheckboxModule, MatChipsModule, MatProgressSpinnerModule, FechaHoraPipe],
   templateUrl: './mi-disponibilidad.component.html',
   styleUrl: './mi-disponibilidad.component.scss',
 })
@@ -33,10 +35,11 @@ export class MiDisponibilidadComponent {
   private fb = inject(FormBuilder);
 
   readonly loading = signal(false);
+  readonly loadingData = signal(true);
   readonly user = this.authService.currentUser;
 
   readonly ausencias = toSignal(
-    this.ausenciaService.ausenciasInstructor$(this.authService.currentUser()?.uid ?? ''),
+    this.ausenciaService.ausenciasInstructor$(this.authService.currentUser()?.uid ?? '').pipe(tap(() => this.loadingData.set(false))),
     { initialValue: [] as InstructorAusencia[] }
   );
 

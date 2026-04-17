@@ -1,57 +1,104 @@
+$gold:   #e6a817;
+$navy:   #1c2536;
+$navy-2: #242f45;
+$navy-3: #2d3a52;
+
 .sidenav-container { height: 100vh; }
 
 .sidenav {
   width: 260px;
-  background: #1b5e20;
+  background: $navy;
   color: white;
   display: flex;
   flex-direction: column;
 
   .sidenav-header {
-    padding: 24px 16px 16px;
-    display: flex; align-items: center; gap: 12px;
-    background: rgba(0,0,0,0.2);
-    .brand-icon { font-size: 32px; width: 32px; height: 32px; }
-    .brand-name { font-size: 1.2rem; font-weight: 700; }
+    padding: 18px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: darken($navy, 4%);
+    border-bottom: 1px solid rgba(230,168,23,0.3);
+
+    .brand-logo {
+      height: 46px;
+      width: auto;
+      object-fit: contain;
+      border-radius: 10px;
+    }
   }
 
   .user-info {
-    padding: 16px; display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    background: $navy-2;
+
     .avatar {
       width: 40px; height: 40px; border-radius: 50%;
-      background: rgba(255,255,255,0.2);
+      background: rgba(230,168,23,0.2);
+      border: 2px solid rgba(230,168,23,0.4);
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem; font-weight: 700;
+      font-size: 1.1rem; font-weight: 700; color: $gold;
     }
-    .user-name { font-weight: 600; font-size: 0.95rem; display: block; }
-    .user-role { font-size: 0.75rem; opacity: 0.7; }
+    .user-name { font-weight: 600; font-size: 0.9rem; display: block; }
+    .user-role { font-size: 0.7rem; color: $gold; opacity: 0.9; font-weight: 500; }
   }
 
-  mat-divider { border-color: rgba(255,255,255,0.15) !important; }
+  mat-divider { border-color: rgba(255,255,255,0.1) !important; }
 
   mat-nav-list {
-    flex: 1; padding-top: 8px;
+    flex: 1; padding: 8px 0;
+
     a[mat-list-item] {
-      color: rgba(255,255,255,0.8);
-      border-radius: 0 24px 24px 0; margin-right: 12px; transition: background 0.2s;
-      &:hover { background: rgba(255,255,255,0.1); color: white; }
-      &.active-link { background: rgba(255,255,255,0.2); color: white; font-weight: 600; }
-      mat-icon { color: inherit; }
+      color: rgba(255,255,255,0.65);
+      border-radius: 0 24px 24px 0;
+      margin-right: 12px;
+      transition: all 0.2s;
+      --mat-list-list-item-label-text-color: rgba(255,255,255,0.65);
+      mat-icon { color: rgba(255,255,255,0.4); transition: color 0.2s; }
+
+      &:hover {
+        background: rgba(230,168,23,0.08);
+        color: rgba(255,255,255,0.9);
+        --mat-list-list-item-label-text-color: rgba(255,255,255,0.9);
+        mat-icon { color: $gold; }
+      }
+      &.active-link {
+        background: rgba(230,168,23,0.12);
+        color: $gold;
+        font-weight: 600;
+        border-left: 3px solid $gold;
+        --mat-list-list-item-label-text-color: #{$gold};
+        mat-icon { color: $gold; }
+      }
     }
   }
 
-  .sidenav-footer { padding-bottom: 8px; .logout-item { cursor: pointer; color: rgba(255,255,255,0.8); } }
+  .sidenav-footer {
+    padding-bottom: 8px;
+    .logout-item {
+      cursor: pointer;
+      color: rgba(255,255,255,0.5);
+      --mat-list-list-item-label-text-color: rgba(255,255,255,0.5);
+      mat-icon { color: #ef9a9a !important; }
+    }
+  }
 }
 
 .toolbar {
   position: sticky; top: 0; z-index: 100;
-  background: #2e7d32 !important;
+  background: $navy-2 !important;
+  border-bottom: 1px solid rgba(230,168,23,0.25);
+  box-shadow: 0 1px 8px rgba(0,0,0,0.3) !important;
+
   .toolbar-spacer { flex: 1; }
+
   .avatar-small {
     width: 32px; height: 32px; border-radius: 50%;
-    background: rgba(255,255,255,0.3);
+    background: rgba(230,168,23,0.2);
+    border: 1px solid rgba(230,168,23,0.4);
     display: flex; align-items: center; justify-content: center;
-    font-size: 0.9rem; font-weight: 700; color: white;
+    font-size: 0.9rem; font-weight: 700; color: $gold;
   }
 }
 

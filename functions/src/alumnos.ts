@@ -1,7 +1,47 @@
 import * as admin from 'firebase-admin';
-import * as functions from 'firebase-functions';
+import * as functions from 'firebase-functions/v1';
 
 const db = admin.firestore();
+
+/**
+ * Callable: Elimina un usuario (alumno o instructor) del sistema.
+ * Borra el registro en Firebase Auth y en Firestore.
+ * Los turnos existentes se conservan como historial.
+ *
+ * Solo puede ser llamado por un admin o super-admin.
+ */
+export const eliminarUsuario = functions
+  .region('southamerica-east1')
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Debe estar autenticado.');
+    }
+
+    const { uid } = data as { uid: string };
+    if (!uid) {
+      throw new functions.https.HttpsError('invalid-argument', 'uid requerido.');
+    }
+
+    // Verificar que el caller es admin o super-admin
+    const callerSnap = await db.collection('users').doc(context.auth.uid).get();
+    const callerRol = callerSnap.data()?.rol as string | undefined;
+    if (callerRol !== 'admin' && callerRol !== 'super-admin') {
+      throw new functions.https.HttpsError('permission-denied', 'No tenés permisos para eliminar usuarios.');
+    }
+
+    // No permitir que se auto-elimine
+    if (uid === context.auth.uid) {
+      throw new functions.https.HttpsError('failed-precondition', 'No podés eliminar tu propia cuenta.');
+    }
+
+    // Eliminar de Firebase Auth
+    await admin.auth().deleteUser(uid);
+
+    // Eliminar documento de Firestore
+    await db.collection('users').doc(uid).delete();
+
+    return { success: true };
+  });
 
 /**
  * Se dispara cuando un instructor actualiza el valoracionPromedio.

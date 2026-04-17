@@ -1,0 +1,451 @@
+<div class="agenda-page">
+  <div class="page-header">
+    <h2>Agenda de alumnos</h2>
+    <p>Asigná clases a alumnos o consultá la disponibilidad global de instructores</p>
+  </div>
+
+  <!-- Tabs de página -->
+  <div class="page-tabs">
+    <button class="page-tab" [class.active]="pagModo() === 'agendar'" (click)="pagModo.set('agendar')">
+      <mat-icon>event</mat-icon>
+      <span>Agendar clase</span>
+    </button>
+    <button class="page-tab" [class.active]="pagModo() === 'disponibilidad'" (click)="pagModo.set('disponibilidad')">
+      <mat-icon>grid_view</mat-icon>
+      <span>Ver disponibilidad</span>
+    </button>
+  </div>
+
+  <!-- ══════════════════ TAB: AGENDAR ══════════════════ -->
+  @if (pagModo() === 'agendar') {
+
+  <!-- PASO 1: Seleccionar alumno -->
+  <mat-card class="step-card">
+    <mat-card-header>
+      <mat-card-title><span class="step-num">1</span> Seleccioná el alumno</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <input
+        class="search-input"
+        placeholder="Buscar por nombre o email..."
+        [value]="filtroAlumno()"
+        (input)="filtroAlumno.set($any($event.target).value)" />
+
+      <div class="alumnos-grid">
+        @for (alumno of alumnosFiltrados(); track alumno.uid) {
+          <div class="alumno-card"
+            [class.selected]="alumnoSeleccionado()?.uid === alumno.uid"
+            [class.bloqueado]="alumno.alumnoData?.bloqueado"
+            (click)="!alumno.alumnoData?.bloqueado && seleccionarAlumno(alumno)">
+            <div class="alumno-avatar">{{ alumno.nombre.charAt(0).toUpperCase() }}</div>
+            <div class="alumno-info">
+              <strong>{{ alumno.nombre }}</strong>
+              <span>{{ alumno.email }}</span>
+              @if (alumno.alumnoData?.bloqueado) { <span class="badge-bloqueado">Bloqueado</span> }
+            </div>
+            @if (alumnoSeleccionado()?.uid === alumno.uid) {
+              <mat-icon class="check-icon">check_circle</mat-icon>
+            }
+          </div>
+        }
+        @if (alumnosFiltrados().length === 0) {
+          <p class="empty-msg">No se encontraron alumnos.</p>
+        }
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  @if (alumnoSeleccionado(); as alumno) {
+
+    <!-- Saldo del alumno -->
+    <div class="saldo-row">
+      @if (planContratado(); as plan) {
+        <div class="saldo-chip plan">
+          <mat-icon>school</mat-icon>
+          <span><strong>{{ plan.clasesRestantes }}</strong> clases en {{ plan.nombre }} ({{ plan.duracionClase | duracion }})</span>
+        </div>
+      }
+      @if (alumnoData()?.creditoIndividual; as ci) {
+        @if (ci.clasesDisponibles > 0) {
+          <div class="saldo-chip credito">
+            <mat-icon>confirmation_number</mat-icon>
+            <span><strong>{{ ci.clasesDisponibles }}</strong> clases individuales (40 min)</span>
+          </div>
+        }
+      }
+      @if (!tieneSaldo()) {
+        <div class="saldo-chip sin-saldo">
+          <mat-icon>warning</mat-icon>
+          <span>El alumno no tiene saldo disponible</span>
+        </div>
+      }
+    </div>
+
+    @if (tieneSaldo()) {
+
+      <!-- PASO 2: Elegir modo -->
+      <div class="modo-selector">
+        <button class="modo-btn" [class.active]="modo() === 'individual'" (click)="cambiarModo('individual')">
+          <mat-icon>event</mat-icon>
+          <span>Clase individual</span>
+          <small>Elegí día y horario específico</small>
+        </button>
+        @if (planContratado() && planContratado()!.clasesRestantes > 0) {
+          <button class="modo-btn" [class.active]="modo() === 'masiva'" (click)="cambiarModo('masiva')">
+            <mat-icon>event_repeat</mat-icon>
+            <span>Agendar plan completo</span>
+            <small>Agenda todas las clases en un horario fijo</small>
+          </button>
+        }
+      </div>
+
+      <!-- ══════════════════ MODO INDIVIDUAL ══════════════════ -->
+      @if (modo() === 'individual') {
+
+        <!-- Fuente de saldo (si tiene ambos) -->
+        @if (debeMostrarSelectorFuente()) {
+          <mat-card class="step-card">
+            <mat-card-header>
+              <mat-card-title><span class="step-num">3</span> ¿Con qué saldo?</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="fuente-grid">
+                <div class="fuente-card" [class.selected]="fuenteEfectiva() === 'plan'" (click)="seleccionarFuente('plan')">
+                  <mat-icon>school</mat-icon>
+                  <div class="fuente-info">
+                    <strong>{{ alumno.alumnoData!.planContratado!.nombre }}</strong>
+                    <span>{{ alumno.alumnoData!.planContratado!.clasesRestantes }} clases · {{ alumno.alumnoData!.planContratado!.duracionClase | duracion }}</span>
+                  </div>
+                  @if (fuenteEfectiva() === 'plan') { <mat-icon class="check-icon">check_circle</mat-icon> }
+                  <span class="fuente-badge plan-badge">Recomendado</span>
+                </div>
+                <div class="fuente-card" [class.selected]="fuenteEfectiva() === 'credito_individual'" (click)="seleccionarFuente('credito_individual')">
+                  <mat-icon>confirmation_number</mat-icon>
+                  <div class="fuente-info">
+                    <strong>Clases individuales</strong>
+                    <span>{{ alumno.alumnoData!.creditoIndividual!.clasesDisponibles }} clases · 40 min</span>
+                  </div>
+                  @if (fuenteEfectiva() === 'credito_individual') { <mat-icon class="check-icon">check_circle</mat-icon> }
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+
+        <!-- Elegir instructor -->
+        <mat-card class="step-card">
+          <mat-card-header>
+            <mat-card-title>
+              <span class="step-num">{{ debeMostrarSelectorFuente() ? 4 : 3 }}</span>
+              Elegí un instructor
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="instructores-grid">
+              @for (instructor of instructores(); track instructor.uid) {
+                <div class="instructor-card"
+                  [class.selected]="instructorSeleccionado()?.uid === instructor.uid"
+                  (click)="seleccionarInstructor(instructor)">
+                  <div class="instructor-avatar">{{ instructor.nombre.charAt(0) }}</div>
+                  <div class="instructor-info">
+                    <strong>{{ instructor.nombre }}</strong>
+                    @if (instructor.instructorData?.valoracionPromedio) {
+                      <span class="rating">⭐ {{ instructor.instructorData!.valoracionPromedio | number:'1.1-1' }}</span>
+                    }
+                    @if (instructor.instructorData?.especialidad) {
+                      <small>{{ instructor.instructorData!.especialidad }}</small>
+                    }
+                  </div>
+                  @if (instructorSeleccionado()?.uid === instructor.uid) {
+                    <mat-icon class="check-icon">check_circle</mat-icon>
+                  }
+                </div>
+              }
+              @if (instructores().length === 0) {
+                <p class="empty-msg">No hay instructores disponibles.</p>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Elegir día -->
+        @if (instructorSeleccionado()) {
+          <mat-card class="step-card">
+            <mat-card-header>
+              <mat-card-title>
+                <span class="step-num">{{ debeMostrarSelectorFuente() ? 5 : 4 }}</span>
+                Elegí un día
+              </mat-card-title>
+              <div class="semana-nav">
+                <button mat-icon-button (click)="semanaOffset.update(v => v - 1)" [disabled]="semanaOffset() === 0">
+                  <mat-icon>chevron_left</mat-icon>
+                </button>
+                <span>{{ semanaLabel() }}</span>
+                <button mat-icon-button (click)="semanaOffset.update(v => v + 1)">
+                  <mat-icon>chevron_right</mat-icon>
+                </button>
+              </div>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="dias-grid">
+                @for (dia of diasSemana(); track dia.fechaStr) {
+                  <button
+                    class="dia-btn"
+                    [class.today]="dia.esHoy"
+                    [class.selected]="fechaSeleccionada() === dia.fechaStr"
+                    [class.disabled]="dia.esPasado || !dia.esLaborable"
+                    [class.dia-feriado]="!dia.esPasado && dia.feriadoNombre"
+                    [class.dia-cierre]="!dia.esPasado && dia.cierreMotivo"
+                    [matTooltip]="dia.feriadoNombre ?? dia.cierreMotivo ?? ''"
+                    (click)="seleccionarDia(dia)"
+                    [disabled]="dia.esPasado || !dia.esLaborable">
+                    <span class="dia-nombre">{{ dia.fecha | date:'EEE':'':'es-AR' }}</span>
+                    <span class="dia-num">{{ dia.fecha | date:'d' }}</span>
+                    @if (dia.feriadoNombre) { <span class="dia-tag tag-feriado">Feriado</span> }
+                    @else if (dia.cierreMotivo) { <span class="dia-tag tag-cierre">Cerrado</span> }
+                    @else if (!dia.esLaborable && !dia.esPasado) { <span class="dia-tag">No lab.</span> }
+                  </button>
+                }
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+
+        <!-- Elegir horario -->
+        @if (fechaSeleccionada()) {
+          <mat-card class="step-card">
+            <mat-card-header>
+              <mat-card-title>
+                <span class="step-num">{{ debeMostrarSelectorFuente() ? 6 : 5 }}</span>
+                Elegí un horario ({{ duracionClaseIndividual() | duracion }})
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              @if (loadingSlots()) {
+                <div class="loading-center"><mat-spinner diameter="40" /></div>
+              } @else {
+                <div class="leyenda">
+                  <span class="leyenda-item libre">Disponible</span>
+                  <span class="leyenda-item ocupado">Ocupado</span>
+                  <span class="leyenda-item mi-clase">Clase del alumno</span>
+                  <span class="leyenda-item seleccionado">Seleccionado</span>
+                </div>
+                <div class="slots-grid">
+                  @for (slot of slotsDelDia(); track slot.horaInicio) {
+                    <button
+                      class="slot-btn"
+                      [class.disponible]="slot.disponible && !slot.esMiClase"
+                      [class.ocupado]="!slot.disponible && !slot.esMiClase"
+                      [class.mi-clase]="slot.esMiClase"
+                      [class.seleccionado]="esSlotSeleccionado(slot)"
+                      [disabled]="!slot.disponible || slot.esMiClase"
+                      [matTooltip]="tooltipClaseAlumno(slot)"
+                      (click)="intentarSeleccionarSlot(slot)">
+                      {{ slot.horaInicio }}
+                    </button>
+                  }
+                </div>
+              }
+            </mat-card-content>
+          </mat-card>
+        }
+
+        <!-- Confirmar individual -->
+        @if (slotSeleccionado()) {
+          <mat-card class="confirm-card">
+            <mat-card-content>
+              <div class="confirm-info">
+                <mat-icon>person</mat-icon>
+                <div>
+                  <strong>{{ alumnoSeleccionado()!.nombre }}</strong>
+                  <span>{{ fuenteEfectiva() === 'plan' ? ('Plan: ' + planContratado()!.nombre) : 'Crédito individual' }}</span>
+                </div>
+                <mat-icon>event</mat-icon>
+                <div>
+                  <strong>{{ fechaSeleccionada() | date:'dd/MM/yyyy' }}</strong>
+                  <span>{{ slotSeleccionado()!.horaInicio }} - {{ slotSeleccionado()!.horaFin }}</span>
+                </div>
+                <div>
+                  <strong>{{ instructorSeleccionado()!.nombre }}</strong>
+                  <span>{{ duracionClaseIndividual() | duracion }}</span>
+                </div>
+              </div>
+              <button mat-raised-button color="primary" (click)="confirmarTurno()" [disabled]="loading()">
+                @if (loading()) { <mat-spinner diameter="20" /> } @else { Confirmar asignación }
+              </button>
+            </mat-card-content>
+          </mat-card>
+        }
+
+      }
+
+      <!-- ══════════════════ MODO MASIVA ══════════════════ -->
+      @if (modo() === 'masiva') {
+
+        <!-- Plan resumen -->
+        <mat-card class="plan-card">
+          <mat-card-content>
+            <div class="plan-info">
+              <mat-icon>school</mat-icon>
+              <div>
+                <strong>{{ planContratado()!.nombre }}</strong>
+                <span>{{ planContratado()!.duracionClase | duracion }} por clase</span>
+              </div>
+              <div class="plan-saldo">
+                <span class="plan-num">{{ planContratado()!.clasesRestantes }}</span>
+                <span>clases disponibles</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Horarios recurrentes -->
+        <mat-card class="step-card">
+          <mat-card-header>
+            <mat-card-title><span class="step-num">3</span> Horarios recurrentes</mat-card-title>
+            <mat-card-subtitle>Elegí los días y horarios que se repetirán cada semana</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="slot-form">
+              <mat-form-field appearance="outline">
+                <mat-label>Instructor</mat-label>
+                <mat-select [ngModel]="instructorTemp()" (ngModelChange)="onInstructorChange($event)">
+                  @for (inst of instructores(); track inst.uid) {
+                    <mat-option [value]="inst">{{ inst.nombre }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Día</mat-label>
+                <mat-select [ngModel]="diaTemp()" (ngModelChange)="onDiaChange($event)" [disabled]="!instructorTemp()">
+                  @for (d of diasDisponibles(); track d.dia) {
+                    <mat-option [value]="d.dia">{{ d.nombre }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Horario</mat-label>
+                <mat-select [ngModel]="horaTemp()" (ngModelChange)="horaTemp.set($event)" [disabled]="diaTemp() === null">
+                  @for (h of horasDisponibles(); track h) {
+                    <mat-option [value]="h">{{ h }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <button mat-flat-button color="primary" [disabled]="!puedeAgregar()" (click)="agregarSlot()">
+                <mat-icon>add</mat-icon> Agregar
+              </button>
+            </div>
+
+            @if (slotsRecurrentes().length > 0) {
+              <mat-divider class="divider" />
+              <div class="slots-lista">
+                @for (slot of slotsRecurrentes(); track $index) {
+                  <div class="slot-item">
+                    <mat-icon>event_repeat</mat-icon>
+                    <div class="slot-info">
+                      <strong>{{ nombreDia(slot.dia) }}</strong>
+                      <span>{{ slot.horaInicio }} - {{ slot.horaFin }}</span>
+                      <span class="slot-instructor">{{ slot.instructor.nombre }}</span>
+                    </div>
+                    <button mat-icon-button color="warn" (click)="quitarSlot($index)">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="empty-msg">Todavía no agregaste horarios.</p>
+            }
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Config -->
+        @if (slotsRecurrentes().length > 0) {
+          <mat-card class="step-card">
+            <mat-card-header>
+              <mat-card-title><span class="step-num">4</span> Configuración</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <mat-form-field appearance="outline" class="config-field">
+                <mat-label>Máximo de clases por semana</mat-label>
+                <input matInput type="number"
+                  [ngModel]="maxPorSemana()"
+                  (ngModelChange)="maxPorSemana.set(+$event)"
+                  [min]="1"
+                  [max]="slotsRecurrentes().length" />
+                <mat-hint>Máximo: {{ slotsRecurrentes().length }}</mat-hint>
+              </mat-form-field>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Preview y confirmación -->
+          @if (preview(); as prev) {
+            <mat-card class="preview-card">
+              <mat-card-header>
+                <mat-card-title><span class="step-num">5</span> Resumen</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="preview-stats">
+                  <div class="stat">
+                    <span class="stat-num">{{ prev.total }}</span>
+                    <span class="stat-label">clases a agendar</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-num">{{ prev.semanas }}</span>
+                    <span class="stat-label">semanas</span>
+                  </div>
+                  <div class="stat stat-fecha">
+                    <mat-icon>calendar_today</mat-icon>
+                    <div>
+                      <span>Inicio: {{ prev.fechaInicio }}</span>
+                      <span>Fin: {{ prev.fechaFin }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="preview-slots">
+                  @for (slot of slotsRecurrentes(); track $index) {
+                    <span class="preview-chip">{{ nombreDia(slot.dia) }} {{ slot.horaInicio }} · {{ slot.instructor.nombre }}</span>
+                  }
+                  <span class="preview-chip frecuencia">{{ maxPorSemana() }} clase{{ maxPorSemana() !== 1 ? 's' : '' }}/semana</span>
+                </div>
+
+                @if (loading()) {
+                  <div class="progress-section">
+                    <mat-progress-bar mode="determinate" [value]="progreso()" />
+                    <span class="progress-label">Creando clases... {{ progreso() }}%</span>
+                  </div>
+                }
+
+                <button mat-raised-button color="primary" (click)="confirmarMasivo()" [disabled]="loading()">
+                  <mat-icon>event_repeat</mat-icon>
+                  Agendar {{ prev.total }} clases a {{ alumnoSeleccionado()!.nombre }}
+                </button>
+              </mat-card-content>
+            </mat-card>
+          }
+        }
+
+      }
+
+    }
+  }
+
+  } <!-- /agendar -->
+
+  <!-- ══════════════════ TAB: DISPONIBILIDAD ══════════════════ -->
+  @if (pagModo() === 'disponibilidad') {
+    <mat-card class="disp-card">
+      <mat-card-header>
+        <mat-card-title>Disponibilidad semanal</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <app-disponibilidad-grid [sucursal]="sucursal()" [instructores]="instructores()" />
+      </mat-card-content>
+    </mat-card>
+  } <!-- /disponibilidad -->
+
+</div>

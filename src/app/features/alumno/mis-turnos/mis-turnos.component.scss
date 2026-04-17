@@ -10,5 +10,9 @@
   .rechazo { color: #c62828; }
 }
 .turno-tema { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 0.9rem; mat-icon { color: #1a237e; font-size: 18px; width: 18px; height: 18px; } }
-.turno-actions { margin-top: 12px; display: flex; gap: 8px; }
+.turno-actions { margin-top: 12px; display: flex; gap: 8px; align-items: center; }
+.no-cancelable { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: #e65100;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+}
 .empty-state { display: flex; flex-direction: column; align-items: center; padding: 48px 16px; gap: 12px; color: #888; mat-icon { font-size: 48px; width: 48px; height: 48px; } }
+.loading-center { display: flex; justify-content: center; align-items: center; padding: 80px 0; }

@@ -1,132 +1,184 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, FormArray, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { toSignal } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { TurnoService } from '../../../core/services/turno.service';
 import { AusenciaService } from '../../../core/services/ausencia.service';
-import { User, Turno, InstructorAusencia, HorarioDisponible } from '../../../shared/models';
+import { User, Turno, InstructorAusencia } from '../../../shared/models';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 import { EstadoTurnoPipe } from '../../../shared/pipes/estado-turno.pipe';
 
-const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+interface DiaConfig {
+  dia: number;
+  nombre: string;
+  activo: boolean;
+  horaInicio: string;
+  horaFin: string;
+}
+
+const DIAS_BASE: DiaConfig[] = [
+  { dia: 1, nombre: 'Lunes',     activo: false, horaInicio: '08:00', horaFin: '18:00' },
+  { dia: 2, nombre: 'Martes',    activo: false, horaInicio: '08:00', horaFin: '18:00' },
+  { dia: 3, nombre: 'Miércoles', activo: false, horaInicio: '08:00', horaFin: '18:00' },
+  { dia: 4, nombre: 'Jueves',    activo: false, horaInicio: '08:00', horaFin: '18:00' },
+  { dia: 5, nombre: 'Viernes',   activo: false, horaInicio: '08:00', horaFin: '18:00' },
+  { dia: 6, nombre: 'Sábado',    activo: false, horaInicio: '08:00', horaFin: '18:00' },
+  { dia: 0, nombre: 'Domingo',   activo: false, horaInicio: '08:00', horaFin: '18:00' },
+];
 
 @Component({
   selector: 'app-instructor-detalle',
   standalone: true,
   imports: [
     CommonModule, RouterLink, ReactiveFormsModule,
-    MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule,
-    MatInputModule, MatSelectModule, MatDividerModule, MatProgressSpinnerModule,
-    MatSlideToggleModule, FechaHoraPipe, EstadoTurnoPipe,
+    MatCardModule, MatButtonModule, MatIconModule,
+    MatDividerModule, MatProgressSpinnerModule,
+    MatFormFieldModule, MatInputModule,
+    FechaHoraPipe, EstadoTurnoPipe,
   ],
   templateUrl: './instructor-detalle.component.html',
   styleUrl: './instructor-detalle.component.scss',
 })
 export class InstructorDetalleComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private usuarioService = inject(UsuarioService);
-  private turnoService = inject(TurnoService);
+  private route           = inject(ActivatedRoute);
+  private usuarioService  = inject(UsuarioService);
+  private turnoService    = inject(TurnoService);
   private ausenciaService = inject(AusenciaService);
-  private fb = inject(FormBuilder);
+  private fb              = inject(FormBuilder);
 
-  readonly DIAS = DIAS;
-  readonly HORAS = Array.from({ length: 25 }, (_, i) => `${String(Math.floor(i / 2) + 7).padStart(2, '0')}:${i % 2 === 0 ? '00' : '30'}`).filter((_, i) => i <= 24);
-  readonly diasSemana = [1, 2, 3, 4, 5, 6, 0];
+  readonly instructor  = signal<User | null>(null);
+  readonly loading     = signal(true);
+  readonly guardando   = signal(false);
+  readonly guardandoPersonal = signal(false);
+  readonly uid         = signal('');
 
-  readonly instructor = signal<User | null>(null);
-  readonly loading = signal(true);
-  readonly guardando = signal(false);
-  readonly uid = signal('');
+  readonly dias = signal<DiaConfig[]>(DIAS_BASE.map(d => ({ ...d })));
+
+  readonly horas: string[] = (() => {
+    const list: string[] = [];
+    for (let i = 0; i < 29; i++) {
+      const totalMin = 7 * 60 + i * 30;
+      const h = String(Math.floor(totalMin / 60)).padStart(2, '0');
+      const m = totalMin % 60 === 0 ? '00' : '30';
+      list.push(`${h}:${m}`);
+    }
+    return list;
+  })();
+
+  // Datos personales
+  formPersonal = this.fb.group({
+    nombre:       ['', [Validators.required, Validators.minLength(3)]],
+    telefono:     [''],
+    especialidad: [''],
+  });
+
+  // Disponibilidad (solo especialidad queda aquí, nombre/tel se movieron a formPersonal)
+  form = this.fb.group({
+    especialidad: [''],
+  });
 
   readonly turnos = toSignal(
     this.turnoService.turnosInstructor$(this.route.snapshot.paramMap.get('id') ?? ''),
     { initialValue: [] as Turno[] }
   );
-
   readonly ausencias = toSignal(
     this.ausenciaService.ausenciasInstructor$(this.route.snapshot.paramMap.get('id') ?? ''),
     { initialValue: [] as InstructorAusencia[] }
   );
-
-  horariosForm = this.fb.group({
-    horarios: this.fb.array([]),
-    limiteDiario: [6, [Validators.required, Validators.min(1), Validators.max(20)]],
-    especialidad: [''],
-  });
-
-  get horariosArray(): FormArray {
-    return this.horariosForm.get('horarios') as FormArray;
-  }
 
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.uid.set(id);
     const u = await this.usuarioService.getByIdOnce(id);
     this.instructor.set(u);
-    this.cargarHorarios(u);
+    this.cargarForm(u);
     this.loading.set(false);
   }
 
-  private cargarHorarios(u: User | null): void {
-    this.horariosArray.clear();
-    const horarios = u?.instructorData?.horariosDisponibles ?? [];
-    horarios.forEach(h => this.horariosArray.push(this.crearHorarioGroup(h)));
-    this.horariosForm.patchValue({
-      limiteDiario: u?.instructorData?.limiteDiario ?? 6,
+  private cargarForm(u: User | null): void {
+    this.formPersonal.patchValue({
+      nombre:       u?.nombre ?? '',
+      telefono:     u?.telefono ?? '',
       especialidad: u?.instructorData?.especialidad ?? '',
     });
-  }
-
-  private crearHorarioGroup(h?: Partial<HorarioDisponible>) {
-    return this.fb.group({
-      dia: [h?.dia ?? 1, Validators.required],
-      horaInicio: [h?.horaInicio ?? '08:00', Validators.required],
-      horaFin: [h?.horaFin ?? '18:00', Validators.required],
+    this.form.patchValue({
+      especialidad: u?.instructorData?.especialidad ?? '',
     });
+    const horarios = u?.instructorData?.horariosDisponibles ?? [];
+    this.dias.set(DIAS_BASE.map(base => {
+      const guardado = horarios.find(h => h.dia === base.dia);
+      return guardado
+        ? { ...base, activo: true, horaInicio: guardado.horaInicio, horaFin: guardado.horaFin }
+        : { ...base, activo: false };
+    }));
   }
 
-  agregarHorario(): void {
-    this.horariosArray.push(this.crearHorarioGroup());
+  async guardarPersonal(): Promise<void> {
+    if (this.formPersonal.invalid) return;
+    const v = this.formPersonal.value;
+    this.guardandoPersonal.set(true);
+    try {
+      const u = this.instructor()!;
+      await this.usuarioService.actualizar(u.uid, {
+        nombre:   v.nombre!,
+        telefono: v.telefono || undefined,
+        instructorData: {
+          ...u.instructorData!,
+          especialidad: v.especialidad || undefined,
+        },
+      });
+      const updated = await this.usuarioService.getByIdOnce(u.uid);
+      this.instructor.set(updated);
+      Swal.fire({ icon: 'success', title: 'Datos guardados', timer: 1200, showConfirmButton: false });
+    } catch (e: any) {
+      Swal.fire({ icon: 'error', title: 'Error', text: e.message });
+    } finally {
+      this.guardandoPersonal.set(false);
+    }
   }
 
-  quitarHorario(i: number): void {
-    this.horariosArray.removeAt(i);
+  toggleDia(dia: number): void {
+    this.dias.update(list =>
+      list.map(d => d.dia === dia ? { ...d, activo: !d.activo } : d)
+    );
+  }
+
+  setHoraInicio(dia: number, valor: string): void {
+    this.dias.update(list =>
+      list.map(d => d.dia === dia ? { ...d, horaInicio: valor } : d)
+    );
+  }
+
+  setHoraFin(dia: number, valor: string): void {
+    this.dias.update(list =>
+      list.map(d => d.dia === dia ? { ...d, horaFin: valor } : d)
+    );
   }
 
   async guardarHorarios(): Promise<void> {
-    if (this.horariosForm.invalid) return;
-    const v = this.horariosForm.value;
+    const horariosDisponibles = this.dias()
+      .filter(d => d.activo)
+      .map(d => ({ dia: d.dia, horaInicio: d.horaInicio, horaFin: d.horaFin }));
+
     this.guardando.set(true);
     try {
-      const u = this.instructor();
-      if (!u) return;
+      const u = this.instructor()!;
       await this.usuarioService.actualizar(u.uid, {
-        instructorData: {
-          ...u.instructorData!,
-          horariosDisponibles: (v.horarios as any[]).map(h => ({
-            dia: Number(h.dia),
-            horaInicio: h.horaInicio,
-            horaFin: h.horaFin,
-          })),
-          limiteDiario: v.limiteDiario ?? 6,
-          especialidad: v.especialidad ?? undefined,
-        },
+        instructorData: { ...u.instructorData!, horariosDisponibles },
       });
-      Swal.fire({ icon: 'success', title: 'Horarios actualizados', timer: 1500, showConfirmButton: false });
       const updated = await this.usuarioService.getByIdOnce(u.uid);
       this.instructor.set(updated);
+      Swal.fire({ icon: 'success', title: 'Disponibilidad guardada', timer: 1500, showConfirmButton: false });
     } catch (e: any) {
       Swal.fire({ icon: 'error', title: 'Error', text: e.message });
     } finally {
@@ -140,9 +192,5 @@ export class InstructorDetalleComponent implements OnInit {
 
   async rechazarAusencia(ausencia: InstructorAusencia): Promise<void> {
     await this.ausenciaService.actualizarEstado(ausencia.id!, 'rechazado');
-  }
-
-  getNombreDia(dia: number): string {
-    return DIAS[dia];
   }
 }

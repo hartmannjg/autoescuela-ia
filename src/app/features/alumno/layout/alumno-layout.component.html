@@ -6,8 +6,7 @@
     class="sidenav">
 
     <div class="sidenav-header">
-      <mat-icon class="brand-icon">directions_car</mat-icon>
-      <span class="brand-name">AutoEscuela IA</span>
+      <img src="/logo.png" alt="Next Level Manejo" class="brand-logo" />
     </div>
 
     <div class="user-info">
@@ -45,10 +44,37 @@
         <mat-icon>menu</mat-icon>
       </button>
       <span class="toolbar-spacer"></span>
-      <button mat-icon-button [routerLink]="'/alumno/feedback'"
+      <button mat-icon-button [matMenuTriggerFor]="notifMenu"
         [matBadge]="notifCount() || null" matBadgeColor="warn" matBadgeSize="small">
         <mat-icon>notifications</mat-icon>
       </button>
+      <mat-menu #notifMenu="matMenu" class="notif-panel" xPosition="before">
+        <div class="notif-header" (click)="$event.stopPropagation()">
+          <strong>Notificaciones</strong>
+          @if (notifCount()) {
+            <button mat-button color="primary" (click)="marcarTodasLeidas(); $event.stopPropagation()">
+              Marcar todas como leídas
+            </button>
+          }
+        </div>
+        <mat-divider />
+        @if (notificaciones().length === 0) {
+          <div class="notif-empty" (click)="$event.stopPropagation()">
+            <mat-icon>notifications_none</mat-icon>
+            <p>Sin notificaciones</p>
+          </div>
+        }
+        @for (notif of notificaciones(); track notif.id) {
+          <button mat-menu-item class="notif-item" [class.no-leida]="!notif.leida" (click)="marcarLeida(notif)">
+            <mat-icon class="notif-tipo-icon">{{ iconoNotif(notif.tipo) }}</mat-icon>
+            <div class="notif-texto">
+              <span class="notif-titulo">{{ notif.titulo }}</span>
+              <span class="notif-mensaje">{{ notif.mensaje }}</span>
+            </div>
+            @if (!notif.leida) { <span class="notif-dot"></span> }
+          </button>
+        }
+      </mat-menu>
       <button mat-icon-button [matMenuTriggerFor]="userMenu">
         <div class="avatar-small">{{ user()?.nombre?.charAt(0)?.toUpperCase() }}</div>
       </button>

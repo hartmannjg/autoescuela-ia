@@ -54,13 +54,29 @@
 
   .progreso-bar { margin-bottom: 4px; border-radius: 4px; height: 8px; }
   .progreso-info { display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; margin-bottom: 12px; }
+  .stats-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .stat-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 8px 4px; border-radius: 8px; gap: 2px;
+    .stat-num { font-size: 1.4rem; font-weight: 700; line-height: 1; }
+    .stat-lbl { font-size: 0.68rem; color: #888; text-align: center; }
+    &.stat-agendada   { background: #fff3e0; .stat-num { color: #f57c00; } }
+    &.stat-confirmada { background: #e8f5e9; .stat-num { color: #2e7d32; } }
+    &.stat-completada { background: #e3f2fd; .stat-num { color: #1565c0; } }
+  }
   .vencimiento { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #666;
     mat-icon { font-size: 16px; width: 16px; height: 16px; }
   }
 }
 
 .plan-card mat-icon[mat-card-avatar] { background: #e3f2fd; color: #1976d2; }
-.credito-card mat-icon[mat-card-avatar] { background: #e8f5e9; color: #2e7d32; }
+.individual-card {
+  mat-icon[mat-card-avatar] { background: #f3e5f5; color: #7b1fa2; }
+  .individual-tipos { display: flex; flex-direction: column; gap: 10px; }
+  .individual-tipo {
+    display: flex; align-items: baseline; gap: 8px;
+    .individual-cant { font-size: 2.4rem; font-weight: 700; line-height: 1; color: #7b1fa2; }
+    .individual-desc { font-size: 0.88rem; color: #666; }
+  }
+}
 
 .action-card {
   cursor: pointer; transition: box-shadow 0.2s;
@@ -103,8 +119,10 @@
 }
 
 .feedback-card { border-left: 4px solid #f44336 !important; }
+.sin-clases-hint { margin: 8px 0 0; font-size: 0.78rem; color: #999; }
 
 @media (max-width: 599px) {
   .page-header h2 { font-size: 1.4rem; }
   .cards-grid { grid-template-columns: 1fr; }
 }
+.loading-center { display: flex; justify-content: center; align-items: center; padding: 80px 0; }

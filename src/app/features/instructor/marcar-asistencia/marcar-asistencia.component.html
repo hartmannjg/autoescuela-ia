@@ -4,9 +4,13 @@
     <p>Verificá la presencia de los alumnos en sus clases</p>
   </div>
 
+  @if (loadingData()) {
+    <div class="loading-center"><mat-spinner diameter="48" /></div>
+  } @else {
+
   <div class="mode-tabs">
-    <button mat-raised-button [color]="scanMode() === 'qr' ? 'primary' : ''" (click)="scanMode.set('qr')">
-      <mat-icon>qr_code_scanner</mat-icon> Escanear QR
+    <button mat-raised-button [color]="scanMode() === 'qr' ? 'primary' : ''" (click)="scanMode.set('qr'); volverALista()">
+      <mat-icon>qr_code</mat-icon> QR
     </button>
     <button mat-raised-button [color]="scanMode() === 'manual' ? 'primary' : ''" (click)="scanMode.set('manual')">
       <mat-icon>edit</mat-icon> Manual
@@ -14,22 +18,58 @@
   </div>
 
   @if (scanMode() === 'qr') {
-    <mat-card class="scan-card">
-      <mat-card-header>
-        <mat-card-title><mat-icon>qr_code_scanner</mat-icon> Escaneo por QR</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="instrucciones">Pedile al alumno que muestre su código QR. El sistema validará automáticamente la ubicación.</p>
-        @if (loading()) {
-          <div class="loading-center"><mat-spinner /></div>
-        } @else {
-          <div id="qr-reader" class="qr-reader"></div>
-          <button mat-raised-button color="primary" class="scan-btn" (click)="iniciarEscaneo()">
-            <mat-icon>camera_alt</mat-icon> Activar cámara
+    @if (selectedTurno(); as turno) {
+      <!-- QR generado para una clase -->
+      <mat-card class="qr-display-card">
+        <mat-card-header>
+          <mat-card-title><mat-icon>qr_code</mat-icon> QR · {{ getNombreAlumno(turno.alumnoUid) }}</mat-card-title>
+          <mat-card-subtitle>{{ formatFecha(turno.fechaStr) }} · {{ turno.horaInicio }} - {{ turno.horaFin }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="instrucciones">Mostrá este código al alumno para que lo escanee con su celular.</p>
+          @if (generandoQr()) {
+            <div class="loading-center"><mat-spinner diameter="48" /></div>
+          } @else if (qrImageUrl()) {
+            <div class="qr-wrapper">
+              <img [src]="qrImageUrl()" alt="QR asistencia" class="qr-image" />
+            </div>
+          }
+          <button mat-stroked-button (click)="volverALista()" class="back-btn">
+            <mat-icon>arrow_back</mat-icon> Volver a clases
           </button>
-        }
-      </mat-card-content>
-    </mat-card>
+        </mat-card-content>
+      </mat-card>
+    } @else {
+      <!-- Lista de clases de hoy para seleccionar -->
+      <mat-card class="qr-select-card">
+        <mat-card-header>
+          <mat-card-title><mat-icon>qr_code</mat-icon> Generar QR de clase</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="instrucciones">Seleccioná la clase para la que querés generar el QR de asistencia.</p>
+
+          @for (turno of turnosHoy(); track turno.id) {
+            @if (turno.estado === 'CONFIRMADA' && !turno.asistenciaVerificada) {
+              <div class="turno-item" (click)="seleccionarTurno(turno)">
+                <div class="turno-info">
+                  <strong>{{ getNombreAlumno(turno.alumnoUid) }}</strong>
+                  <span>{{ formatFecha(turno.fechaStr) }} · {{ turno.horaInicio }} - {{ turno.horaFin }}</span>
+                  <span>{{ turno.estado | estadoTurno }}</span>
+                </div>
+                <mat-icon color="primary">qr_code_2</mat-icon>
+              </div>
+            }
+          }
+
+          @if (turnosHoy().length === 0 || !turnosHoy().some(t => t.estado === 'CONFIRMADA' && !t.asistenciaVerificada)) {
+            <div class="empty-state">
+              <mat-icon>event_available</mat-icon>
+              <p>Sin clases pendientes de verificación hoy</p>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
   }
 
   @if (scanMode() === 'manual') {
@@ -40,21 +80,24 @@
       <mat-card-content>
         <p class="instrucciones">Usá este método solo cuando el QR no funcione.</p>
 
-        <!-- Clases de hoy -->
-        <h4>Clases de hoy</h4>
         @for (turno of turnosHoy(); track turno.id) {
           <div class="turno-item" [class.verificada]="turno.asistenciaVerificada">
             <div class="turno-info">
-              <strong>{{ turno.horaInicio }} - {{ turno.horaFin }}</strong>
+              <strong>{{ getNombreAlumno(turno.alumnoUid) }}</strong>
+              <span>{{ formatFecha(turno.fechaStr) }} · {{ turno.horaInicio }} - {{ turno.horaFin }}</span>
               <span>{{ turno.estado | estadoTurno }}</span>
             </div>
             @if (turno.asistenciaVerificada) {
               <mat-icon color="primary">verified</mat-icon>
               <span class="verificada-label">Verificada ({{ turno.metodoVerificacion }})</span>
             } @else if (turno.estado === 'CONFIRMADA') {
-              <button mat-stroked-button color="primary" (click)="marcarManual(turno)">
-                <mat-icon>check</mat-icon> Marcar presente
-              </button>
+              @if (puedeVerificar(turno)) {
+                <button mat-stroked-button color="primary" (click)="marcarManual(turno)" [disabled]="loading()">
+                  <mat-icon>check</mat-icon> Marcar presente
+                </button>
+              } @else {
+                <span class="vencida-label">Plazo vencido</span>
+              }
             }
           </div>
         }
@@ -64,5 +107,7 @@
         }
       </mat-card-content>
     </mat-card>
+  }
+
   }
 </div>
