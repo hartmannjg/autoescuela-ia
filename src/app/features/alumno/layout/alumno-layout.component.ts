@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -14,7 +14,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificacionService } from '../../../core/services/notificacion.service';
-import { TurnoService } from '../../../core/services/turno.service';
 import { Notificacion, TipoNotificacion } from '../../../shared/models';
 
 @Component({
@@ -28,10 +27,9 @@ import { Notificacion, TipoNotificacion } from '../../../shared/models';
   templateUrl: './alumno-layout.component.html',
   styleUrl: './alumno-layout.component.scss',
 })
-export class AlumnoLayoutComponent implements OnInit {
+export class AlumnoLayoutComponent {
   private authService = inject(AuthService);
   private notifService = inject(NotificacionService);
-  private turnoService = inject(TurnoService);
   private breakpointObserver = inject(BreakpointObserver);
 
   readonly user = this.authService.currentUser;
@@ -40,14 +38,6 @@ export class AlumnoLayoutComponent implements OnInit {
     { initialValue: false }
   );
   readonly sidenavOpened = signal(true);
-
-  async ngOnInit(): Promise<void> {
-    const sucursalId = this.authService.currentUser()?.sucursalId;
-    if (sucursalId) {
-      this.turnoService.procesarClasesVencidas(sucursalId)
-        .catch(err => console.error('[procesarClasesVencidas alumno]', err));
-    }
-  }
 
   readonly notifCount = toSignal(
     this.notifService.noLeidas$(this.authService.currentUser()?.uid ?? ''),

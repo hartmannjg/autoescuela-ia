@@ -7,7 +7,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { TurnoService } from '../../../core/services/turno.service';
 import { FeriadoService } from '../../../core/services/feriado.service';
 import { CierreService } from '../../../core/services/cierre.service';
-import { User, Sucursal } from '../../models';
+import { AusenciaService } from '../../../core/services/ausencia.service';
+import { User, Sucursal, Feriado, Cierre, InstructorAusencia } from '../../models';
 import { firstValueFrom } from 'rxjs';
 import { generarSlotsDia } from '../../utils/slot-utils';
 import { dateToStr } from '../../utils/date-utils';
@@ -18,6 +19,8 @@ interface DiaCalendario {
   esHoy: boolean;
   esPasado: boolean;
   esLaborable: boolean;
+  feriadoNombre: string | null;
+  cierreMotivo: string | null;
 }
 
 interface SlotDisp {
@@ -42,20 +45,21 @@ export class DisponibilidadGridComponent {
   private turnoService   = inject(TurnoService);
   private feriadoService = inject(FeriadoService);
   private cierreService  = inject(CierreService);
+  private ausenciaService = inject(AusenciaService);
 
   readonly sucursal     = input<Sucursal | null>(null);
   readonly instructores = input<User[]>([]);
 
   readonly semanaOffset   = signal(0);
-
-  private readonly feriados = signal<any[]>([]);
-  private readonly cierres  = signal<any[]>([]);
   readonly loadingDisp    = signal(false);
   readonly dispData       = signal<Map<string, SlotDisp[]>>(new Map());
   readonly celdaExpandida = signal<string | null>(null);
 
+  private readonly feriados  = signal<Feriado[]>([]);
+  private readonly cierres   = signal<Cierre[]>([]);
+  private readonly ausencias = signal<InstructorAusencia[]>([]);
+
   constructor() {
-    // Auto-load when both inputs are ready
     effect(() => {
       const insts = this.instructores();
       const suc   = this.sucursal();
@@ -77,14 +81,17 @@ export class DisponibilidadGridComponent {
     return Array.from({ length: 7 }, (_, i) => {
       const fecha = new Date(inicio);
       fecha.setDate(inicio.getDate() + i);
+      const fechaStr     = dateToStr(fecha);
+      const feriadoNombre = this.getFeriadoNombre(fechaStr);
+      const cierreMotivo  = feriadoNombre ? null : this.getCierreMotivo(fechaStr);
       return {
         fecha,
-        fechaStr: dateToStr(fecha),
-        esHoy:      dateToStr(fecha) === dateToStr(hoy),
-        esPasado:   fecha < hoy,
-        esLaborable: diasLab.includes(fecha.getDay()) &&
-          !this.feriadoService.esFeriado(dateToStr(fecha), this.feriados()) &&
-          !this.cierreService.estaEnCierre(dateToStr(fecha), this.cierres()),
+        fechaStr,
+        esHoy:       dateToStr(fecha) === dateToStr(hoy),
+        esPasado:    fecha < hoy,
+        esLaborable: diasLab.includes(fecha.getDay()) && !feriadoNombre && !cierreMotivo,
+        feriadoNombre,
+        cierreMotivo,
       } as DiaCalendario;
     });
   });
@@ -111,12 +118,16 @@ export class DisponibilidadGridComponent {
 
     this.loadingDisp.set(true);
     const sucId = suc.id ?? '';
-    const [feriados, cierres] = await Promise.all([
+
+    const [feriados, cierres, ausencias] = await Promise.all([
       firstValueFrom(this.feriadoService.feriados$(sucId)),
       firstValueFrom(this.cierreService.cierres$(sucId)),
+      firstValueFrom(this.ausenciaService.ausenciasPorSucursal$(sucId)),
     ]);
     this.feriados.set(feriados);
     this.cierres.set(cierres);
+    this.ausencias.set(ausencias.filter(a => a.estado !== 'rechazado'));
+
     const newMap = new Map<string, SlotDisp[]>();
     const ahora     = new Date();
     const horaAhora = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
@@ -125,6 +136,7 @@ export class DisponibilidadGridComponent {
     for (const inst of insts) {
       for (const dia of dias) {
         if (!dia.esLaborable) continue;
+        if (this.tieneAusencia(inst.uid, dia.fechaStr)) continue;
         const horario = inst.instructorData?.horariosDisponibles?.find(h => h.dia === dia.fecha.getDay());
         if (!horario) continue;
         const apertura = horario.horaInicio > suc.configuracionHorarios.horarioApertura
@@ -150,6 +162,28 @@ export class DisponibilidadGridComponent {
     this.loadingDisp.set(false);
   }
 
+  private getFeriadoNombre(fechaStr: string): string | null {
+    const mmdd = fechaStr.slice(5);
+    return this.feriados().find(f =>
+      f.activo && (f.recurrente ? f.fecha.slice(5) === mmdd : f.fecha === fechaStr)
+    )?.nombre ?? null;
+  }
+
+  private getCierreMotivo(fechaStr: string): string | null {
+    return this.cierres().find(c =>
+      c.activo && fechaStr >= c.fechaInicio && fechaStr <= c.fechaFin
+    )?.motivo ?? null;
+  }
+
+  tieneAusencia(instUid: string, fechaStr: string): InstructorAusencia | null {
+    return this.ausencias().find(a => {
+      if (a.instructorUid !== instUid) return false;
+      const ini = a.fechaInicio ? dateToStr(a.fechaInicio.toDate()) : '';
+      const fin = a.fechaFin   ? dateToStr(a.fechaFin.toDate())   : '';
+      return fechaStr >= ini && fechaStr <= fin;
+    }) ?? null;
+  }
+
   getCeldaSlots(instUid: string, fechaStr: string): SlotDisp[] {
     return this.dispData().get(`${instUid}|${fechaStr}`) ?? [];
   }
@@ -170,7 +204,8 @@ export class DisponibilidadGridComponent {
 
   toggleCelda(key: string, laboral: boolean, instUid: string, fechaStr: string): void {
     if (!laboral) return;
-    if (this.esCeldaTodoOcupado(instUid, fechaStr)) return; // all red → no expand
+    if (this.tieneAusencia(instUid, fechaStr)) return;
+    if (this.esCeldaTodoOcupado(instUid, fechaStr)) return;
     this.celdaExpandida.update(v => v === key ? null : key);
   }
 }

@@ -121,19 +121,14 @@ export class AlumnoDetalleComponent implements OnInit {
     Swal.fire({ icon: 'success', title: `${cant} clases quitadas`, timer: 1500, showConfirmButton: false });
   }
 
-  /** Carga planes: primero los de la sucursal, luego los globales que no estén en la sucursal. */
   private async cargarPlanesDisponibles(): Promise<PreciosPlan[]> {
     const sucursalId = this.alumno()?.sucursalId;
-    const [global, sucursal] = await Promise.all([
+    const [global, override] = await Promise.all([
       this.configService.getOnce(),
       sucursalId ? this.configService.getSucursalOnce(sucursalId) : Promise.resolve(null),
     ]);
-
-    const planesSucursal = sucursal?.precios?.planes?.filter(p => p.activo) ?? [];
-    const idsEnSucursal = new Set(planesSucursal.map(p => p.id));
-    const planesGlobal = (global.precios.planes ?? []).filter(p => p.activo && !idsEnSucursal.has(p.id));
-
-    return [...planesSucursal, ...planesGlobal];
+    const precios = this.configService.getPreciosEfectivos(global, override);
+    return precios.planes.filter(p => p.activo);
   }
 
   async asignarPlan(): Promise<void> {

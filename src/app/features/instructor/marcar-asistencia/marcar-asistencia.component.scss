@@ -6,7 +6,7 @@
 .qr-reader { width: 100%; max-width: 400px; margin: 0 auto; }
 .scan-btn { display: block; margin: 16px auto 0; }
 .loading-center { display: flex; justify-content: center; padding: 32px; }
-.turno-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: #f8f9fa; margin-bottom: 8px; flex-wrap: wrap;
+.turno-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: #f8f9fa; margin-bottom: 8px; flex-wrap: wrap; cursor: pointer;
   &.verificada { background: #e8f5e9; }
   .turno-info { flex: 1; strong { display: block; } span { font-size: 0.8rem; color: #666; } }
   .verificada-label { font-size: 0.8rem; color: #2e7d32; }

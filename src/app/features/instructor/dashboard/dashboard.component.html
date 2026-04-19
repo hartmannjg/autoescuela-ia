@@ -10,25 +10,32 @@
 
   <!-- Resumen del día -->
   <div class="stats-row">
-    <mat-card class="stat-card">
+    <mat-card class="stat-card" routerLink="/instructor/mis-clases">
       <mat-card-content>
         <mat-icon color="primary">today</mat-icon>
         <span class="stat-num">{{ turnosHoy().length }}</span>
         <span class="stat-label">Clases hoy</span>
       </mat-card-content>
     </mat-card>
-    <mat-card class="stat-card warn" [matBadge]="pendientesConfirmacion().length || null" matBadgeColor="warn">
+    <mat-card class="stat-card warn" routerLink="." fragment="pendientes" [matBadge]="pendientesConfirmacion().length || null" matBadgeColor="warn">
       <mat-card-content>
         <mat-icon>pending_actions</mat-icon>
         <span class="stat-num">{{ pendientesConfirmacion().length }}</span>
         <span class="stat-label">Por confirmar</span>
       </mat-card-content>
     </mat-card>
-    <mat-card class="stat-card">
+    <mat-card class="stat-card" routerLink="/instructor/mis-clases">
       <mat-card-content>
         <mat-icon color="accent">event</mat-icon>
         <span class="stat-num">{{ proximasConfirmadas().length }}</span>
         <span class="stat-label">Próximas</span>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card asistencia" [class.pulsing]="clasesParaMarcar().length > 0" routerLink="/instructor/marcar-asistencia">
+      <mat-card-content>
+        <mat-icon>qr_code_scanner</mat-icon>
+        <span class="stat-num">{{ clasesParaMarcar().length }}</span>
+        <span class="stat-label">Marcar asistencia</span>
       </mat-card-content>
     </mat-card>
   </div>
@@ -46,9 +53,9 @@
         @for (turno of pendientesConfirmacion(); track turno.id) {
           <div class="turno-item pendiente">
             <div class="turno-info">
-              <strong>{{ turno.fecha | fechaHora: 'fecha' }}</strong>
+              <strong>{{ turno.fecha | fechaHora: 'conDia' }}</strong>
               <span>{{ turno.horaInicio }} - {{ turno.horaFin }} ({{ turno.duracionMinutos | duracion }})</span>
-              <span class="alumno-id">Alumno: {{ turno.alumnoUid | slice:0:8 }}...</span>
+              <span class="alumno-id">Alumno: {{ getNombreAlumno(turno.alumnoUid) }}</span>
             </div>
             <div class="turno-actions">
               <button mat-stroked-button color="warn" (click)="rechazar(turno)" [disabled]="loading()">
@@ -64,6 +71,40 @@
     </mat-card>
   }
 
+  <!-- Alerta marcar asistencia -->
+  @if (clasesParaMarcar().length > 0) {
+    <mat-card class="section-card asistencia-alert">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>qr_code_scanner</mat-icon>
+          Tenés {{ clasesParaMarcar().length }} clase{{ clasesParaMarcar().length !== 1 ? 's' : '' }} sin marcar asistencia hoy
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @for (turno of clasesParaMarcar(); track turno.id) {
+          <div class="turno-item asistencia-row">
+            <div class="turno-hora">
+              <strong>{{ turno.horaInicio }}</strong>
+              <span>{{ turno.horaFin }}</span>
+            </div>
+            <div class="turno-info">
+              <strong>{{ getNombreAlumno(turno.alumnoUid) }}</strong>
+              <span>{{ turno.duracionMinutos | duracion }}</span>
+            </div>
+            @if (estaEnCurso(turno)) {
+              <span class="chip-en-curso">● En curso</span>
+            }
+          </div>
+        }
+        <div class="asistencia-actions">
+          <a mat-raised-button color="primary" routerLink="/instructor/marcar-asistencia">
+            <mat-icon>qr_code_scanner</mat-icon> Marcar asistencia
+          </a>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
   <!-- Clases de hoy -->
   <mat-card class="section-card">
     <mat-card-header>
@@ -71,7 +112,7 @@
         <mat-icon>today</mat-icon>
         Clases de hoy
       </mat-card-title>
-      <a mat-button routerLink="/instructor/marcar-asistencia">Escanear QR →</a>
+      <a mat-button routerLink="/instructor/marcar-asistencia">Generar QR →</a>
     </mat-card-header>
     <mat-card-content>
       @if (turnosHoy().length === 0) {
@@ -90,7 +131,11 @@
           <div class="turno-info">
             <span>{{ turno.duracionMinutos | duracion }} · {{ turno.tipoClase }}</span>
           </div>
-          <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+          @if (turno.estado === 'CONFIRMADA' && estaEnCurso(turno)) {
+            <span class="chip-en-curso">● En curso</span>
+          } @else {
+            <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+          }
           @if (turno.estado === 'CONFIRMADA') {
             <a mat-icon-button [routerLink]="['/instructor/evaluar-alumno', turno.id]" color="primary">
               <mat-icon>edit_note</mat-icon>
@@ -120,7 +165,7 @@
       @for (turno of proximasConfirmadas(); track turno.id) {
         <div class="turno-item">
           <div class="turno-hora">
-            <strong>{{ turno.fecha | fechaHora: 'fecha' }}</strong>
+            <strong>{{ turno.fecha | fechaHora: 'conDia' }}</strong>
             <span>{{ turno.horaInicio }}</span>
           </div>
           <div class="turno-info">
@@ -145,7 +190,7 @@
         @for (turno of historial(); track turno.id) {
           <div class="turno-item">
             <div class="turno-hora">
-              <strong>{{ turno.fecha | fechaHora: 'fecha' }}</strong>
+              <strong>{{ turno.fecha | fechaHora: 'conDia' }}</strong>
               <span>{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
             </div>
             <div class="turno-info">

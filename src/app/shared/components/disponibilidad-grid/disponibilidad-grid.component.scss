@@ -33,9 +33,12 @@
       display: block;
       flex-shrink: 0;
     }
-    &.libre::before   { background: #4caf50; }
-    &.ocupado::before { background: #ef5350; }
-    &.pasado::before  { background: #e0e0e0; }
+    &.libre::before    { background: #4caf50; }
+    &.ocupado::before  { background: #ef5350; }
+    &.pasado::before   { background: #e0e0e0; }
+    &.feriado::before  { background: #ff9800; }
+    &.cierre::before   { background: #e91e63; }
+    &.ausencia::before { background: #9c27b0; }
   }
 }
 
@@ -67,13 +70,33 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  border-radius: 6px;
 
   .dia-nombre { font-size: 0.68rem; font-weight: 600; color: #888; text-transform: capitalize; }
   .dia-num    { font-size: 1.1rem; font-weight: 700; color: #333; }
 
-  &.today    { .dia-nombre, .dia-num { color: #1976d2; } }
-  &.past-day { .dia-nombre, .dia-num { color: #ccc; } }
+  &.today     { .dia-nombre, .dia-num { color: #1976d2; } }
+  &.past-day  { .dia-nombre, .dia-num { color: #ccc; } }
+  &.feriado-th {
+    background: #fff3e0;
+    .dia-nombre, .dia-num { color: #e65100; }
+  }
+  &.cierre-th {
+    background: #fce4ec;
+    .dia-nombre, .dia-num { color: #880e4f; }
+  }
 }
+
+.dia-badge {
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.feriado-badge { background: #ff9800; color: white; }
+.cierre-badge  { background: #e91e63; color: white; }
 
 // Instructor label
 .disp-inst-label {
@@ -126,6 +149,30 @@
     .disp-na { font-size: 1.1rem; color: #ddd; }
   }
 
+  &.feriado-cell {
+    background: #fff8e1;
+    border-color: #ffcc80;
+    cursor: default;
+    justify-content: center;
+    align-items: center;
+  }
+
+  &.cierre-cell {
+    background: #fce4ec;
+    border-color: #f48fb1;
+    cursor: default;
+    justify-content: center;
+    align-items: center;
+  }
+
+  &.ausencia-cell {
+    background: #f3e5f5;
+    border-color: #ce93d8;
+    cursor: default;
+    justify-content: center;
+    align-items: center;
+  }
+
   &.sin-datos {
     justify-content: center;
     align-items: center;
@@ -138,7 +185,7 @@
     &:hover { background: #fff5f5; border-color: #ffcdd2; }
   }
 
-  &:not(.no-laboral):not(.sin-datos):not(.todo-ocupado):hover {
+  &:not(.no-laboral):not(.sin-datos):not(.todo-ocupado):not(.feriado-cell):not(.cierre-cell):not(.ausencia-cell):hover {
     border-color: #9fa8da;
     background: #f5f6ff;
   }
@@ -147,6 +194,24 @@
     border-color: #1a237e;
     background: #f0f2ff;
   }
+}
+
+// Especial cell content (feriado / cierre / ausencia)
+.disp-especial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  mat-icon { font-size: 22px; width: 22px; height: 22px; }
+}
+.feriado-cell .disp-especial mat-icon { color: #e65100; }
+.cierre-cell  .disp-especial mat-icon { color: #880e4f; }
+.ausencia-cell .disp-especial mat-icon { color: #6a1b9a; }
+.ausencia-tipo {
+  font-size: 0.65rem;
+  color: #6a1b9a;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
 // Colored segment bar

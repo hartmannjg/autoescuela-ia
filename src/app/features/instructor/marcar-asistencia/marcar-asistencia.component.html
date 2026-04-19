@@ -23,7 +23,7 @@
       <mat-card class="qr-display-card">
         <mat-card-header>
           <mat-card-title><mat-icon>qr_code</mat-icon> QR · {{ getNombreAlumno(turno.alumnoUid) }}</mat-card-title>
-          <mat-card-subtitle>{{ formatFecha(turno.fechaStr) }} · {{ turno.horaInicio }} - {{ turno.horaFin }}</mat-card-subtitle>
+          <mat-card-subtitle>{{ turno.fechaStr | fechaHora: 'conDia' }} · {{ turno.horaInicio }} - {{ turno.horaFin }}</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <p class="instrucciones">Mostrá este código al alumno para que lo escanee con su celular.</p>
@@ -53,8 +53,7 @@
               <div class="turno-item" (click)="seleccionarTurno(turno)">
                 <div class="turno-info">
                   <strong>{{ getNombreAlumno(turno.alumnoUid) }}</strong>
-                  <span>{{ formatFecha(turno.fechaStr) }} · {{ turno.horaInicio }} - {{ turno.horaFin }}</span>
-                  <span>{{ turno.estado | estadoTurno }}</span>
+                  <span>{{ turno.fechaStr | fechaHora: 'conDia' }} · {{ turno.horaInicio }} - {{ turno.horaFin }} · {{ turno.estado | estadoTurno }}</span>
                 </div>
                 <mat-icon color="primary">qr_code_2</mat-icon>
               </div>
@@ -84,7 +83,7 @@
           <div class="turno-item" [class.verificada]="turno.asistenciaVerificada">
             <div class="turno-info">
               <strong>{{ getNombreAlumno(turno.alumnoUid) }}</strong>
-              <span>{{ formatFecha(turno.fechaStr) }} · {{ turno.horaInicio }} - {{ turno.horaFin }}</span>
+              <span>{{ turno.fechaStr | fechaHora: 'conDia' }} · {{ turno.horaInicio }} - {{ turno.horaFin }}</span>
               <span>{{ turno.estado | estadoTurno }}</span>
             </div>
             @if (turno.asistenciaVerificada) {

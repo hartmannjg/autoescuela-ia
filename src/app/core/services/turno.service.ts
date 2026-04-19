@@ -4,6 +4,7 @@ import {
   collection,
   doc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -19,11 +20,13 @@ import { Observable } from 'rxjs';
 import { Turno, TurnoEstado, MetodoVerificacion, User } from '../../shared/models';
 import { generarSlots, calcularHoraFin, getSemanaStr, getSemanaBounds } from '../../shared/utils/date-utils';
 import { NotificacionService } from './notificacion.service';
+import { ConfiguracionService } from './configuracion.service';
 
 @Injectable({ providedIn: 'root' })
 export class TurnoService {
   private firestore = inject(Firestore);
   private notificacionService = inject(NotificacionService);
+  private configuracionService = inject(ConfiguracionService);
   private colRef = () => collection(this.firestore, 'turnos');
 
   turnosAlumno$(alumnoUid: string, estado?: TurnoEstado): Observable<Turno[]> {
@@ -72,17 +75,24 @@ export class TurnoService {
 
     // ── VALIDACIÓN DE SLOTS (fuera de la transacción — getDocs no es compatible con tx) ──
     const semanaStr = getSemanaStr(turno.fechaStr);
-    const [slotsOcupados, slotsAlumno, clasesDia, clasesSemana] = await Promise.all([
+    const [slotsOcupados, slotsAlumno, clasesDia, clasesSemana, reagendasSemana, config] = await Promise.all([
       this.getSlotsOcupados(turno.instructorUid, turno.fechaStr),
       this.getSlotsAlumno(turno.alumnoUid, turno.fechaStr),
       this.contarClasesAlumnoEnFecha(turno.alumnoUid, turno.fechaStr),
       this.contarClasesAlumnoEnSemana(turno.alumnoUid, semanaStr),
+      this.contarReagendasAlumnoEnSemana(turno.alumnoUid, semanaStr),
+      this.configuracionService.getOnce(),
     ]);
     if (slots.some(s => slotsOcupados.has(s))) {
       throw new Error('El horario seleccionado ya no está disponible. Por favor elegí otro.');
     }
     if (slots.some(s => slotsAlumno.has(s))) {
       throw new Error('Ya tenés una clase agendada que se solapa con ese horario.');
+    }
+    const configSuc = await this.configuracionService.getSucursalOnce(turno.sucursalId);
+    const maxReagendas = configSuc?.maxReagendasPorSemana ?? config?.limites?.maxReagendasPorSemana ?? 4;
+    if (reagendasSemana >= maxReagendas) {
+      throw new Error(`Alcanzaste el límite de ${maxReagendas} reagendas por semana. Podés volver a agendar el próximo lunes.`);
     }
 
     // ── VALIDACIÓN DE LÍMITES DEL PLAN ──────────────────────────────────────────
@@ -101,8 +111,12 @@ export class TurnoService {
       }
     }
 
+    const alumnoDocSnap = await getDoc(doc(this.firestore, 'users', turno.alumnoUid));
+    const alumnoNombre = alumnoDocSnap.exists() ? (alumnoDocSnap.data() as User).nombre : turno.alumnoUid;
+
     const nuevoTurno: Omit<Turno, 'id'> = {
       ...turno,
+      alumnoNombre,
       slots,
       horaFin,
       asistenciaVerificada: false,
@@ -112,7 +126,7 @@ export class TurnoService {
     };
 
     // ── TRANSACCIÓN: solo tx.get + tx.update + tx.set ───────────────────────
-    return runTransaction(this.firestore, async (tx) => {
+    const turnoId = await runTransaction(this.firestore, async (tx) => {
       const alumnoRef  = doc(this.firestore, 'users', turno.alumnoUid);
       const alumnoSnap = await tx.get(alumnoRef);
       if (!alumnoSnap.exists()) throw new Error('Alumno no encontrado.');
@@ -142,6 +156,18 @@ export class TurnoService {
       tx.set(ref, nuevoTurno);
       return ref.id;
     });
+
+    // Notificar al instructor fuera de la transacción
+    const fechaLegible = new Date(turno.fechaStr + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    await this.notificacionService.enviar(
+      turno.instructorUid,
+      'nueva_solicitud',
+      'Nueva clase agendada',
+      `${alumnoNombre} agendó una clase para el ${fechaLegible} a las ${turno.horaInicio} (${turno.duracionMinutos} min).`,
+      turnoId,
+    );
+
+    return turnoId;
   }
 
   async actualizarEstado(turnoId: string, estado: TurnoEstado, datos?: Partial<Turno>): Promise<void> {
@@ -199,6 +225,15 @@ export class TurnoService {
 
   async confirmarTurno(turnoId: string): Promise<void> {
     await this.actualizarEstado(turnoId, 'CONFIRMADA');
+  }
+
+  /** Elimina un turno CANCELADA. El saldo ya fue devuelto al cancelar. */
+  async eliminarTurnoCancelado(turnoId: string): Promise<void> {
+    const snap = await getDoc(doc(this.firestore, 'turnos', turnoId));
+    if (!snap.exists()) throw new Error('Turno no encontrado.');
+    if ((snap.data() as Turno).estado !== 'CANCELADA')
+      throw new Error('Solo se pueden eliminar turnos cancelados.');
+    await deleteDoc(doc(this.firestore, 'turnos', turnoId));
   }
 
   async rechazarTurno(turnoId: string, motivo: string, horarioSugerido?: string): Promise<void> {
@@ -327,6 +362,19 @@ export class TurnoService {
     return snap.size;
   }
 
+  private async contarReagendasAlumnoEnSemana(alumnoUid: string, semanaStr: string): Promise<number> {
+    const { lunes, domingo } = getSemanaBounds(semanaStr);
+    const q = query(
+      this.colRef(),
+      where('alumnoUid', '==', alumnoUid),
+      where('fechaStr', '>=', lunes),
+      where('fechaStr', '<=', domingo),
+      where('estado', '==', 'CANCELADA')
+    );
+    const snap = await getDocs(q);
+    return snap.size;
+  }
+
   async getSlotsAlumno(alumnoUid: string, fechaStr: string): Promise<Set<string>> {
     const map = await this.getSlotsAlumnoConInstructor(alumnoUid, fechaStr);
     return new Set(map.keys());
@@ -426,7 +474,7 @@ export class TurnoService {
     };
   }
 
-  /** True si la hora de inicio de la clase ya pasó (el instructor no confirmó a tiempo) */
+  /** True si el horario de inicio ya pasó y la clase nunca fue confirmada */
   private inicioYaPaso(turno: Turno): boolean {
     const [h, m] = turno.horaInicio.split(':').map(Number);
     const [y, mo, d] = turno.fechaStr.split('-').map(Number);
@@ -470,11 +518,28 @@ export class TurnoService {
 
     for (const d of snapPend.docs) {
       const t = { id: d.id, ...d.data() } as Turno;
-      if (this.inicioYaPaso(t)) {
-        // El instructor no confirmó antes del inicio → cancelar y devolver saldo
-        await this.cancelarTurno(t.id!, 'El instructor no confirmó la clase antes del horario de inicio.')
-          .catch(e => console.error(`[cancelarPendiente] ${t.id}:`, e));
+      if (!this.inicioYaPaso(t)) continue;
+      await this.cancelarTurno(t.id!, 'El instructor no confirmó la clase a tiempo.')
+        .catch(e => console.error(`[cancelarPendiente] ${t.id}:`, e));
+      const fechaLegible = new Date(t.fechaStr + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const devolucion = t.consumidoDe === 'plan' ? 'Tu clase fue devuelta al plan.' : 'Tu crédito fue reintegrado.';
+      let alumnoNombre = t.alumnoNombre;
+      if (!alumnoNombre) {
+        const snap = await getDoc(doc(this.firestore, 'users', t.alumnoUid)).catch(() => null);
+        alumnoNombre = snap?.exists() ? (snap.data() as User).nombre : t.alumnoUid;
       }
+      await Promise.all([
+        this.notificacionService.enviar(
+          t.alumnoUid, 'rechazo_turno', 'Clase cancelada automáticamente',
+          `Tu clase del ${fechaLegible} a las ${t.horaInicio} fue cancelada porque el instructor no la confirmó a tiempo. ${devolucion}`,
+          t.id,
+        ).catch(() => {}),
+        this.notificacionService.enviar(
+          t.instructorUid, 'rechazo_turno', 'Clase cancelada automáticamente',
+          `La clase de ${alumnoNombre} del ${fechaLegible} a las ${t.horaInicio} fue cancelada por falta de confirmación.`,
+          t.id,
+        ).catch(() => {}),
+      ]);
     }
   }
 }

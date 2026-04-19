@@ -85,8 +85,12 @@ export class AlumnosComponent implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    const config = await this.configService.getOnce();
-    this.planesDisponibles.set(config.precios.planes.filter(p => p.activo));
+    const [global, override] = await Promise.all([
+      this.configService.getOnce(),
+      this.sucursalId ? this.configService.getSucursalOnce(this.sucursalId) : Promise.resolve(null),
+    ]);
+    const precios = this.configService.getPreciosEfectivos(global, override);
+    this.planesDisponibles.set(precios.planes.filter(p => p.activo));
   }
 
   get asignarIndividual() { return this.form.get('asignarIndividual')?.value; }

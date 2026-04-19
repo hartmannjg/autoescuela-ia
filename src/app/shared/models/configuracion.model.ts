@@ -18,14 +18,16 @@ export interface PreciosOverride {
 export interface ConfiguracionSucursal {
   id?: string;
   precios: PreciosOverride;
+  usarPlanesBase?: boolean;
+  maxReagendasPorSemana?: number | null;
 }
 
 export interface ConfiguracionGlobal {
   id?: string;
   limites: {
-    semanasSinClaseParaBloqueo: number;
     horasAntesParaCancelar: number;
     minutosQrValidez: number;
+    maxReagendasPorSemana: number;
   };
   precios: {
     planes: PreciosPlan[];

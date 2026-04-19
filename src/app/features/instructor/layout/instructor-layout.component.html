@@ -44,9 +44,8 @@
         <mat-icon>menu</mat-icon>
       </button>
       <span class="toolbar-spacer"></span>
-      <button mat-icon-button [matMenuTriggerFor]="notifMenu"
-        [matBadge]="notifCount() || null" matBadgeColor="warn" matBadgeSize="small">
-        <mat-icon>notifications</mat-icon>
+      <button mat-icon-button [matMenuTriggerFor]="notifMenu" class="notif-btn">
+        <mat-icon [matBadge]="notifCount() || null" matBadgeColor="warn" matBadgeSize="small" matBadgeOverlap="true">notifications</mat-icon>
       </button>
       <mat-menu #notifMenu="matMenu" class="notif-panel" xPosition="before">
         <div class="notif-header" (click)="$event.stopPropagation()">

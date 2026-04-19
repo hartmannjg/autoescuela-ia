@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -13,6 +13,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../../core/services/auth.service';
 import { TurnoService } from '../../../core/services/turno.service';
+import { UsuarioService } from '../../../core/services/usuario.service';
 import { Turno } from '../../../shared/models';
 import { EstadoTurnoPipe } from '../../../shared/pipes/estado-turno.pipe';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
@@ -27,8 +28,9 @@ import { dateToStr } from '../../../shared/utils/date-utils';
   styleUrl: './dashboard.component.scss',
 })
 export class InstructorDashboardComponent {
-  private authService = inject(AuthService);
-  private turnoService = inject(TurnoService);
+  private authService   = inject(AuthService);
+  private turnoService  = inject(TurnoService);
+  private usuarioService = inject(UsuarioService);
 
   readonly user = this.authService.currentUser;
   readonly loading = signal(false);
@@ -36,6 +38,8 @@ export class InstructorDashboardComponent {
   readonly hoyStr = dateToStr(new Date());
   private _pending = 2;
   private readonly _markLoaded = () => { if (--this._pending === 0) this.loadingData.set(false); };
+
+  readonly alumnoNombres = signal<Map<string, string>>(new Map());
 
   // Hora actual como "HH:MM" — se recalcula al renderizar
   get horaActual(): string {
@@ -57,14 +61,41 @@ export class InstructorDashboardComponent {
     this.todosTurnos().filter(t => t.estado === 'PENDIENTE_CONFIRMACION')
   );
 
-  /** Clases futuras: fecha posterior a hoy, o mismo día pero horaFin aún no pasó */
+  /** Clases de hoy CONFIRMADAS que aún no tienen asistencia verificada */
+  readonly clasesParaMarcar = computed(() =>
+    this.turnosHoy().filter(t => t.estado === 'CONFIRMADA' && !t.asistenciaVerificada)
+  );
+
+  estaEnCurso(turno: { horaInicio: string; horaFin: string }): boolean {
+    const ahora = this.horaActual;
+    return ahora >= turno.horaInicio && ahora < turno.horaFin;
+  }
+
+  constructor() {
+    effect(() => {
+      const uids = [...new Set(this.todosTurnos().map(t => t.alumnoUid))];
+      uids.forEach(uid => {
+        if (!this.alumnoNombres().has(uid)) {
+          this.usuarioService.getByIdOnce(uid).then(u => {
+            if (u) this.alumnoNombres.update(m => new Map(m).set(uid, u.nombre));
+          });
+        }
+      });
+    });
+  }
+
+  getNombreAlumno(uid: string): string {
+    return this.alumnoNombres().get(uid) ?? uid;
+  }
+
+  /** Clases futuras: fecha posterior a hoy, o mismo día pero que aún no empezaron */
   readonly proximasConfirmadas = computed(() => {
     const hoy = this.hoyStr;
     const ahora = this.horaActual;
     return this.todosTurnos()
       .filter(t =>
         t.estado === 'CONFIRMADA' &&
-        (t.fechaStr > hoy || (t.fechaStr === hoy && t.horaFin > ahora))
+        (t.fechaStr > hoy || (t.fechaStr === hoy && t.horaInicio > ahora))
       )
       .slice(0, 5);
   });

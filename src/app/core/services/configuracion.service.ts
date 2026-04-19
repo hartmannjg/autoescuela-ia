@@ -16,9 +16,9 @@ const GLOBAL_DOC_ID = 'global';
 
 const DEFAULT_CONFIG: Omit<ConfiguracionGlobal, 'id'> = {
   limites: {
-    semanasSinClaseParaBloqueo: 4,
     horasAntesParaCancelar: 24,
     minutosQrValidez: 30,
+    maxReagendasPorSemana: 4,
   },
   precios: {
     planes: [],
@@ -75,13 +75,20 @@ export class ConfiguracionService {
     return snap.exists() ? { id: snap.id, ...snap.data() } as ConfiguracionSucursal : null;
   }
 
-  async guardarSucursal(sucursalId: string, precios: PreciosOverride): Promise<void> {
+  async guardarSucursal(
+    sucursalId: string,
+    precios: PreciosOverride,
+    usarPlanesBase: boolean,
+    maxReagendasPorSemana?: number | null
+  ): Promise<void> {
     const ref = this.sucursalRef(sucursalId);
     const snap = await getDoc(ref);
+    const data: Record<string, any> = { precios, usarPlanesBase, actualizadoEn: serverTimestamp() };
+    if (maxReagendasPorSemana !== undefined) data['maxReagendasPorSemana'] = maxReagendasPorSemana;
     if (snap.exists()) {
-      await updateDoc(ref, { precios, actualizadoEn: serverTimestamp() });
+      await updateDoc(ref, data);
     } else {
-      await setDoc(ref, { precios, creadoEn: serverTimestamp() });
+      await setDoc(ref, { ...data, creadoEn: serverTimestamp() });
     }
   }
 
@@ -91,14 +98,19 @@ export class ConfiguracionService {
 
   // ── Helper ────────────────────────────────────────────────
 
-  /** Devuelve los precios efectivos: override de sucursal si existe, sino global. */
+  /** Devuelve los precios efectivos: merge de sucursal + global según usarPlanesBase. */
   getPreciosEfectivos(
     global: ConfiguracionGlobal,
     override?: ConfiguracionSucursal | null
   ): ConfiguracionGlobal['precios'] {
     if (!override) return global.precios;
+    const usarBase = override.usarPlanesBase !== false;
+    const planesSucursal = override.precios.planes ?? [];
+    const planesBase = usarBase
+      ? global.precios.planes.filter(g => !planesSucursal.some(s => s.id === g.id))
+      : [];
     return {
-      planes:           override.precios.planes           ?? global.precios.planes,
+      planes:           [...planesSucursal, ...planesBase],
       precioClase40min: override.precios.precioClase40min ?? global.precios.precioClase40min,
     };
   }

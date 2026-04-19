@@ -24,7 +24,7 @@
                 <div class="turno-fecha">
                   <mat-icon>calendar_today</mat-icon>
                   <div>
-                    <strong>{{ turno.fecha | fechaHora: 'fecha' }}</strong>
+                    <strong>{{ turno.fecha | fechaHora: 'conDia' }}</strong>
                     <span>{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
                   </div>
                 </div>
@@ -73,7 +73,7 @@
                 <div class="turno-fecha">
                   <mat-icon>history</mat-icon>
                   <div>
-                    <strong>{{ turno.fecha | fechaHora: 'fecha' }}</strong>
+                    <strong>{{ turno.fecha | fechaHora: 'conDia' }}</strong>
                     <span>{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
                   </div>
                 </div>

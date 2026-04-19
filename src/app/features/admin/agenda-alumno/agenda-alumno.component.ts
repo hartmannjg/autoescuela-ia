@@ -399,7 +399,7 @@ export class AgendaAlumnoComponent implements OnInit {
         alumnoUid: alumno.uid, instructorUid: instructor.uid, sucursalId: alumno.sucursalId,
         fecha: strToDate(fecha) as any, fechaStr: fecha,
         horaInicio: slot.horaInicio, duracionMinutos: this.duracionClaseIndividual(),
-        estado: 'CONFIRMADA', tipoClase: consumidoDe === 'plan' ? 'plan' : 'individual',
+        estado: 'PENDIENTE_CONFIRMACION', tipoClase: consumidoDe === 'plan' ? 'plan' : 'individual',
         consumidoDe, asistenciaVerificada: false,
       });
       const actualizado = await this.usuarioService.getByIdOnce(alumno.uid);
@@ -407,7 +407,7 @@ export class AgendaAlumnoComponent implements OnInit {
       this.slotSeleccionado.set(null);
       this.fechaSeleccionada.set(null);
       this.slotsDelDia.set([]);
-      Swal.fire({ icon: 'success', title: '¡Clase asignada!', text: `${alumno.nombre} — ${strToDate(fecha).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${slot.horaInicio}`, confirmButtonColor: '#1a237e' });
+      Swal.fire({ icon: 'success', title: '¡Clase agendada!', text: `Pendiente de confirmación por el instructor. ${alumno.nombre} — ${strToDate(fecha).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${slot.horaInicio}`, confirmButtonColor: '#1a237e' });
     } catch (error: any) {
       Swal.fire({ icon: 'error', title: 'Error', text: error.message ?? 'No se pudo asignar la clase.', confirmButtonColor: '#1a237e' });
     } finally {
@@ -553,7 +553,7 @@ export class AgendaAlumnoComponent implements OnInit {
         alumnoUid: alumno.uid, instructorUid: t.instructorUid,
         sucursalId: alumno.sucursalId, fecha: t.fecha as any,
         fechaStr: t.fechaStr, horaInicio: t.horaInicio,
-        duracionMinutos: duracion, estado: 'CONFIRMADA',
+        duracionMinutos: duracion, estado: 'PENDIENTE_CONFIRMACION',
         tipoClase: 'plan', consumidoDe: 'plan', asistenciaVerificada: false,
       });
       creados++;

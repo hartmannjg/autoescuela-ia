@@ -13,14 +13,12 @@ import { AuthService } from '../../../core/services/auth.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { TurnoService } from '../../../core/services/turno.service';
 import { Turno, User } from '../../../shared/models';
-import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
-import { EstadoTurnoPipe } from '../../../shared/pipes/estado-turno.pipe';
 import { dateToStr } from '../../../shared/utils/date-utils';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatCardModule, MatButtonModule, MatIconModule, MatChipsModule, MatDividerModule, MatProgressSpinnerModule, FechaHoraPipe, EstadoTurnoPipe],
+  imports: [CommonModule, RouterLink, MatCardModule, MatButtonModule, MatIconModule, MatChipsModule, MatDividerModule, MatProgressSpinnerModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })

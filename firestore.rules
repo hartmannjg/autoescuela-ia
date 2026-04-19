@@ -43,7 +43,8 @@ service cloud.firestore {
       allow read: if isLoggedIn() && (
         request.auth.uid == userId ||
         isAdmin() ||
-        isInstructor()  // instructores ven datos básicos de alumnos de su sucursal
+        isInstructor() ||
+        (isAlumno() && resource.data.rol == 'instructor')  // alumnos ven instructores para agendar
       );
 
       // Solo el propio usuario puede crear su perfil (al registrarse)
@@ -57,22 +58,24 @@ service cloud.firestore {
           .hasAny(['rol', 'sucursalId', 'alumnoData.bloqueado', 'alumnoData.planContratado'])
       ) || isAdmin();
 
-      allow delete: if isSuperAdmin();
+      allow delete: if isAdmin();
     }
 
     // ─── Colección: turnos ────────────────────────────────────────────────────
     match /turnos/{turnoId} {
-      // Lectura: el propio alumno, el instructor asignado, o admin
+      // Lectura: el propio alumno, el instructor asignado, admin, o cualquier alumno (para ver disponibilidad)
       allow read: if isLoggedIn() && (
         resource.data.alumnoUid == request.auth.uid ||
         resource.data.instructorUid == request.auth.uid ||
-        isAdmin()
+        isAdmin() ||
+        isAlumno()
       );
 
-      // Creación: solo el alumno puede crear (y solo para sí mismo)
-      allow create: if isAlumno() &&
-        request.resource.data.alumnoUid == request.auth.uid &&
-        request.resource.data.estado == 'PENDIENTE_CONFIRMACION';
+      // Creación: alumno (para sí mismo) o admin
+      allow create: if isAdmin() ||
+        (isAlumno() &&
+          request.resource.data.alumnoUid == request.auth.uid &&
+          request.resource.data.estado == 'PENDIENTE_CONFIRMACION');
 
       // Actualización:
       // - Alumno: solo puede cancelar sus propios turnos
@@ -143,8 +146,8 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['leida']);
 
-      // Solo Cloud Functions crean notificaciones (y admins)
-      allow create: if isAdmin();
+      // Cualquier usuario logueado puede crear notificaciones (para enviar a otros)
+      allow create: if isLoggedIn();
       allow delete: if isLoggedIn() && resource.data.userId == request.auth.uid;
     }
 
@@ -152,7 +155,8 @@ service cloud.firestore {
     match /ausencias/{ausenciaId} {
       allow read: if isLoggedIn() && (
         resource.data.instructorUid == request.auth.uid ||
-        isAdmin()
+        isAdmin() ||
+        isAlumno()  // alumnos ven ausencias para calcular disponibilidad
       );
 
       // Instructor registra su propia ausencia
@@ -171,6 +175,12 @@ service cloud.firestore {
 
     // ─── Colección: feriados ──────────────────────────────────────────────────
     match /feriados/{feriadoId} {
+      allow read: if isLoggedIn();
+      allow write: if isAdmin();
+    }
+
+    // ─── Colección: cierres ───────────────────────────────────────────────────
+    match /cierres/{cierreId} {
       allow read: if isLoggedIn();
       allow write: if isAdmin();
     }

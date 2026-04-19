@@ -12,13 +12,14 @@ import { TurnoService } from '../../../core/services/turno.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { QrService } from '../../../core/services/qr.service';
 import { Turno } from '../../../shared/models';
-import { dateToStr, strToDate } from '../../../shared/utils/date-utils';
+import { dateToStr } from '../../../shared/utils/date-utils';
 import { EstadoTurnoPipe } from '../../../shared/pipes/estado-turno.pipe';
+import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 
 @Component({
   selector: 'app-marcar-asistencia',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, EstadoTurnoPipe],
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, EstadoTurnoPipe, FechaHoraPipe],
   templateUrl: './marcar-asistencia.component.html',
   styleUrl: './marcar-asistencia.component.scss',
 })
@@ -62,10 +63,6 @@ export class MarcarAsistenciaComponent {
 
   getNombreAlumno(uid: string): string {
     return this.alumnoNombres().get(uid) ?? uid;
-  }
-
-  formatFecha(fechaStr: string): string {
-    return strToDate(fechaStr).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
   async seleccionarTurno(turno: Turno): Promise<void> {

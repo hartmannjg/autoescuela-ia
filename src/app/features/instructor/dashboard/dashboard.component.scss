@@ -1,7 +1,7 @@
 .dashboard { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
 .page-header { h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #1b5e20; } p { margin: 4px 0 0; color: #666; } }
-.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.stat-card { border-radius: 12px !important; mat-card-content { display: flex; flex-direction: column; align-items: center; padding: 20px !important; gap: 4px; mat-icon { font-size: 32px; width: 32px; height: 32px; } .stat-num { font-size: 2.5rem; font-weight: 700; line-height: 1; } .stat-label { font-size: 0.8rem; color: #666; } } &.warn mat-icon { color: #e65100; } }
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.stat-card { border-radius: 12px !important; cursor: pointer; mat-card-content { display: flex; flex-direction: column; align-items: center; padding: 20px !important; gap: 4px; mat-icon { font-size: 32px; width: 32px; height: 32px; } .stat-num { font-size: 2.5rem; font-weight: 700; line-height: 1; } .stat-label { font-size: 0.8rem; color: #666; } } &.warn mat-icon { color: #e65100; } }
 .section-card { border-radius: 12px !important; mat-card-title { display: flex; align-items: center; gap: 8px; font-size: 1.1rem; } mat-card-header { display: flex; justify-content: space-between; align-items: center; } }
 .turno-item { display: flex; align-items: center; gap: 16px; padding: 12px; border-radius: 8px; margin-bottom: 8px; background: #f8f9fa; flex-wrap: wrap;
   &.pendiente { background: #fff8e1; border-left: 3px solid #f57c00; }
@@ -9,6 +9,33 @@
   .turno-info { flex: 1; display: flex; flex-direction: column; gap: 2px; strong { font-size: 0.95rem; } span { font-size: 0.8rem; color: #666; } .alumno-id { font-size: 0.75rem; color: #aaa; } }
   .turno-actions { display: flex; gap: 8px; margin-left: auto; }
 }
+.stat-card {
+  &.asistencia { cursor: pointer; mat-icon { color: #1565c0; } .stat-num { color: #1565c0; } }
+  &.pulsing { animation: pulse-border 1.5s ease-in-out infinite; box-shadow: 0 0 0 0 rgba(21,101,192,0.4); }
+}
+@keyframes pulse-border {
+  0%   { box-shadow: 0 0 0 0 rgba(21,101,192,0.35); }
+  70%  { box-shadow: 0 0 0 8px rgba(21,101,192,0); }
+  100% { box-shadow: 0 0 0 0 rgba(21,101,192,0); }
+}
+.asistencia-alert {
+  border-left: 4px solid #1565c0 !important;
+  background: #e3f2fd !important;
+  mat-card-title { color: #0d47a1; font-size: 1rem !important; }
+  mat-icon { color: #1565c0; }
+}
+.asistencia-row { background: #fff !important; }
+.asistencia-actions { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.chip-en-curso {
+  font-size: 0.72rem; font-weight: 700; color: #2e7d32;
+  background: #e8f5e9; border: 1px solid #a5d6a7;
+  padding: 2px 10px; border-radius: 12px;
+  animation: pulse-text 1.5s ease-in-out infinite;
+}
+@keyframes pulse-text {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
 .empty-state { display: flex; flex-direction: column; align-items: center; padding: 32px; gap: 8px; color: #aaa; mat-icon { font-size: 40px; width: 40px; height: 40px; } }
-@media (max-width: 599px) { .stats-row { grid-template-columns: 1fr; } }
+@media (max-width: 599px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
 .loading-center { display: flex; justify-content: center; align-items: center; padding: 80px 0; }

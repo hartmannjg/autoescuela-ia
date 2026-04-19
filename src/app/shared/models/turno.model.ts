@@ -16,6 +16,7 @@ export type MetodoVerificacion = 'qr' | 'manual' | 'auto';
 export interface Turno {
   id?: string;
   alumnoUid: string;
+  alumnoNombre?: string;
   instructorUid: string;
   sucursalId: string;
   fecha: Timestamp;

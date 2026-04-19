@@ -97,16 +97,22 @@
           <mat-card-content formGroupName="limites">
             <div class="form-grid">
               <mat-form-field appearance="outline">
-                <mat-label>Semanas sin clase para bloqueo</mat-label>
-                <input matInput type="number" formControlName="semanasSinClaseParaBloqueo" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
                 <mat-label>Horas antes para cancelar</mat-label>
                 <input matInput type="number" formControlName="horasAntesParaCancelar" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Validez QR (minutos)</mat-label>
                 <input matInput type="number" formControlName="minutosQrValidez" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="field-full-width">
+                <mat-label>Máximo de reagendas por semana (por alumno)</mat-label>
+                <input matInput type="number" formControlName="maxReagendasPorSemana" min="1" />
+                <mat-hint>
+                  Límite de veces que un alumno puede cancelar una clase ya agendada y volver a agendar otra en la misma semana (lunes a domingo).
+                  Si un alumno cancela y reagenda más de este número de veces en una semana, el sistema bloquea nuevas reservas hasta el lunes siguiente.
+                  Esto evita que los alumnos monopolicen horarios reservando y cancelando repetidamente.
+                  Valor recomendado: 4.
+                </mat-hint>
               </mat-form-field>
             </div>
           </mat-card-content>
@@ -171,17 +177,6 @@
               <strong>{{ precioGlobal('precioClase40min') | moneda }}</strong>
             </div>
           </div>
-          @if (configGlobal()?.precios?.planes?.length) {
-            <mat-divider />
-            <p class="ref-planes-label">Planes globales base:</p>
-            <div class="ref-planes">
-              @for (p of configGlobal()!.precios.planes; track p.id) {
-                @if (p.activo) {
-                  <span class="plan-chip">{{ p.nombre }} · {{ p.cantidadClases }} clases · {{ p.precio | moneda }}</span>
-                }
-              }
-            </div>
-          }
         </mat-card-content>
       </mat-card>
 
@@ -206,69 +201,122 @@
           </mat-card-content>
         </mat-card>
 
-        <!-- Planes de la sucursal -->
+        <!-- Planes base globales -->
         <mat-card>
           <mat-card-header>
-            <mat-card-title><mat-icon>card_membership</mat-icon> Planes de suscripción</mat-card-title>
+            <mat-card-title><mat-icon>public</mat-icon> Planes base del sistema</mat-card-title>
+            <mat-card-subtitle>Planes configurados globalmente. Se muestran a los alumnos junto con los planes propios de la sucursal.</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
             <div class="toggle-planes">
-              <mat-slide-toggle formControlName="usarPlanesPersonalizados">
-                Usar planes propios para esta sucursal
+              <mat-slide-toggle formControlName="usarPlanesBase">
+                Usar planes base del sistema
               </mat-slide-toggle>
-              @if (!formSucursal.value.usarPlanesPersonalizados) {
-                <p class="hint-text">Se usarán los planes globales base.</p>
-              }
             </div>
-
-            @if (formSucursal.value.usarPlanesPersonalizados) {
-              <mat-divider />
-              <div formArrayName="planes" class="planes-list">
-                @for (plan of planesSucursalArray.controls; track $index; let i = $index) {
-                  <div [formGroupName]="i" class="plan-row">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Nombre</mat-label>
-                      <input matInput formControlName="nombre" />
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                      <mat-label>Duración</mat-label>
-                      <mat-select formControlName="duracionClase">
-                        <mat-option [value]="40">40 min</mat-option>
-                        <mat-option [value]="80">1 h 20 min</mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                      <mat-label>Cant. clases</mat-label>
-                      <input matInput type="number" formControlName="cantidadClases" min="1" />
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                      <mat-label>Precio ($)</mat-label>
-                      <input matInput type="text" appMonedaInput formControlName="precio" />
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                      <mat-label>Máx. clases/día</mat-label>
-                      <mat-select formControlName="maxClasesPorDia">
-                        <mat-option [value]="null">Sin límite</mat-option>
-                        <mat-option [value]="1">1 por día</mat-option>
-                        <mat-option [value]="2">2 por día</mat-option>
-                        <mat-option [value]="3">3 por día</mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                    <mat-form-field appearance="outline">
-                      <mat-label>Máx. clases/semana</mat-label>
-                      <input matInput type="number" formControlName="maxClasesPorSemana" min="1" max="20" />
-                    </mat-form-field>
-                    <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
-                    <button mat-icon-button color="warn" type="button" (click)="quitarPlanSucursal(i)">
-                      <mat-icon>delete</mat-icon>
-                    </button>
+            @if (formSucursal.value.usarPlanesBase) {
+              <div class="global-plans-preview">
+                @if (configGlobal()?.precios?.planes?.length) {
+                  <div class="plan-preview-list">
+                    @for (p of configGlobal()!.precios.planes; track p.id) {
+                      <div class="plan-preview-row" [class.plan-inactivo]="!p.activo">
+                        <mat-icon>card_membership</mat-icon>
+                        <div class="plan-preview-info">
+                          <strong>{{ p.nombre }}</strong>
+                          <span>{{ p.cantidadClases }} clases · {{ p.duracionClase }} min · {{ p.precio | moneda }}</span>
+                        </div>
+                        @if (!p.activo) { <span class="badge-inactivo">Inactivo</span> }
+                      </div>
+                    }
                   </div>
+                } @else {
+                  <p class="hint-warn">
+                    <mat-icon>warning</mat-icon>
+                    El super-admin no configuró planes base todavía.
+                  </p>
                 }
               </div>
-              <button mat-stroked-button type="button" (click)="agregarPlanSucursal()">
-                <mat-icon>add</mat-icon> Agregar plan
-              </button>
             }
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Planes propios de la sucursal -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title><mat-icon>card_membership</mat-icon> Planes propios de la sucursal</mat-card-title>
+            <mat-card-subtitle>Planes específicos de esta sucursal. Se muestran junto a los planes base (si están activos arriba).</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div formArrayName="planes" class="planes-list">
+              @for (plan of planesSucursalArray.controls; track $index; let i = $index) {
+                <div [formGroupName]="i" class="plan-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Nombre</mat-label>
+                    <input matInput formControlName="nombre" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Duración</mat-label>
+                    <mat-select formControlName="duracionClase">
+                      <mat-option [value]="40">40 min</mat-option>
+                      <mat-option [value]="80">1 h 20 min</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Cant. clases</mat-label>
+                    <input matInput type="number" formControlName="cantidadClases" min="1" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Precio ($)</mat-label>
+                    <input matInput type="text" appMonedaInput formControlName="precio" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Máx. clases/día</mat-label>
+                    <mat-select formControlName="maxClasesPorDia">
+                      <mat-option [value]="null">Sin límite</mat-option>
+                      <mat-option [value]="1">1 por día</mat-option>
+                      <mat-option [value]="2">2 por día</mat-option>
+                      <mat-option [value]="3">3 por día</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Máx. clases/semana</mat-label>
+                    <input matInput type="number" formControlName="maxClasesPorSemana" min="1" max="20" />
+                  </mat-form-field>
+                  <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
+                  <button mat-icon-button color="warn" type="button" (click)="quitarPlanSucursal(i)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+            @if (!planesSucursalArray.length) {
+              <p class="hint-text">Sin planes propios. Los alumnos verán solo los planes base (si están activos arriba).</p>
+            }
+            <div class="agregar-plan-row">
+              <button mat-stroked-button type="button" (click)="agregarPlanSucursal()">
+                <mat-icon>add</mat-icon> Agregar plan propio
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Límites de reagendas -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title><mat-icon>tune</mat-icon> Límites operativos</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="form-grid">
+              <mat-form-field appearance="outline" class="field-full-width">
+                <mat-label>Máximo de reagendas por semana (por alumno)</mat-label>
+                <input matInput type="number" formControlName="maxReagendasPorSemana" min="1" placeholder="{{ configGlobal()?.limites?.maxReagendasPorSemana ?? 4 }}" />
+                <mat-hint>
+                  Límite de veces que un alumno puede cancelar y volver a agendar una clase en la misma semana (lunes a domingo).
+                  Si supera este número, el sistema bloquea nuevas reservas hasta el próximo lunes.
+                  Dejá vacío para usar el valor global ({{ configGlobal()?.limites?.maxReagendasPorSemana ?? 4 }}).
+                  Valor recomendado: 4.
+                </mat-hint>
+              </mat-form-field>
+            </div>
           </mat-card-content>
         </mat-card>
 

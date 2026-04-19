@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 $gold:   #e6a817;
 $navy:   #1c2536;
 $navy-2: #242f45;
@@ -17,7 +19,7 @@ $navy-3: #2d3a52;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: darken($navy, 4%);
+    background: color.adjust($navy, $lightness: -4%);
     border-bottom: 1px solid rgba(230,168,23,0.3);
 
     .brand-logo {
@@ -92,6 +94,8 @@ $navy-3: #2d3a52;
   box-shadow: 0 1px 8px rgba(0,0,0,0.3) !important;
 
   .toolbar-spacer { flex: 1; }
+
+  .notif-btn { overflow: visible; }
 
   .avatar-small {
     width: 32px; height: 32px; border-radius: 50%;

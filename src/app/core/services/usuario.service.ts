@@ -4,6 +4,7 @@ import {
   collection,
   doc,
   getDoc,
+  deleteDoc,
   updateDoc,
   query,
   where,
@@ -144,12 +145,12 @@ export class UsuarioService {
   }
 
   /**
-   * Elimina permanentemente un usuario: borra Auth + documento Firestore.
-   * Los turnos quedan como historial.
+   * Elimina permanentemente un usuario.
+   * TODO (Blaze): reemplazar por httpsCallable('eliminarUsuario') para borrar también el Auth account.
+   * Por ahora solo borra el doc de Firestore; el Auth account queda huérfano pero sin acceso a la app.
    */
   async eliminar(uid: string): Promise<void> {
-    const fn = httpsCallable<{ uid: string }, { success: boolean }>(this.functions, 'eliminarUsuario');
-    await fn({ uid });
+    await deleteDoc(doc(this.firestore, 'users', uid));
   }
 
   /** Quita el plan actual del alumno. */

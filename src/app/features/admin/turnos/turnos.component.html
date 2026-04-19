@@ -34,7 +34,7 @@
       @for (turno of turnosFiltrados(); track turno.id) {
         <div class="turno-row">
           <div class="turno-info">
-            <strong>{{ turno.fechaStr }}</strong>
+            <strong>{{ turno.fechaStr | fechaHora: 'conDia' }}</strong>
             <span>{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
             <span>{{ turno.duracionMinutos | duracion }}</span>
           </div>
@@ -50,7 +50,38 @@
               <span class="persona-email">{{ instructorMap().get(turno.instructorUid)?.email ?? '' }}</span>
             </div>
           </div>
-          <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+          <div class="estado-col">
+            @if (turno.estado === 'CONFIRMADA' && estaEnCurso(turno)) {
+              <span class="chip-en-curso">● En curso</span>
+            } @else {
+              <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+            }
+            @if (turno.estado === 'CANCELADA' && turno.motivoRechazo) {
+              <span class="motivo-cancelacion">{{ turno.motivoRechazo }}</span>
+            }
+          </div>
+          @if (CANCELABLES.has(turno.estado) && !estaEnCurso(turno)) {
+            <button mat-icon-button color="warn" (click)="cancelar(turno)"
+              [disabled]="loadingCancel() === turno.id"
+              matTooltip="Cancelar clase">
+              @if (loadingCancel() === turno.id) {
+                <mat-spinner diameter="18" />
+              } @else {
+                <mat-icon>cancel</mat-icon>
+              }
+            </button>
+          }
+          @if (turno.estado === 'CANCELADA') {
+            <button mat-icon-button color="warn" (click)="eliminar(turno)"
+              [disabled]="loadingRestore() === turno.id"
+              matTooltip="Eliminar turno cancelado">
+              @if (loadingRestore() === turno.id) {
+                <mat-spinner diameter="18" />
+              } @else {
+                <mat-icon>delete_outline</mat-icon>
+              }
+            </button>
+          }
         </div>
       }
       @if (turnosFiltrados().length === 0) {

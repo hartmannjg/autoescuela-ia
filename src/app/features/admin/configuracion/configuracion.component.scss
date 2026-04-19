@@ -3,7 +3,7 @@
 .loading-center { display: flex; justify-content: center; padding: 64px; }
 mat-card { border-radius: 12px !important; }
 mat-card-header { mat-card-title { display: flex; align-items: center; gap: 8px; } }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-top: 8px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-top: 8px; .field-full-width { grid-column: 1 / -1; } }
 .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding-top: 8px; }
 .toggles-grid { display: flex; flex-direction: column; gap: 16px; padding: 8px 0; }
 .toggle-row { display: flex; align-items: center; }
@@ -28,7 +28,40 @@ button[mat-flat-button]    { gap: 8px; }
   .plan-chip { background: #e3f2fd; color: #1565c0; border-radius: 16px; padding: 4px 12px; font-size: 0.82rem; }
 }
 
-.toggle-planes { padding: 8px 0 12px; p.hint-text { margin: 8px 0 0; font-size: 0.85rem; color: #888; } }
-.planes-list { padding-top: 16px; }
+.toggle-planes { padding: 8px 0 12px; }
+.planes-list { padding-top: 4px; }
+.agregar-plan-row { padding-top: 12px; }
+
+.global-plans-preview {
+  padding-top: 4px;
+  .hint-text { margin: 0 0 12px; font-size: 0.85rem; color: #666; }
+  .hint-warn {
+    display: flex; align-items: center; gap: 8px;
+    margin: 8px 0 0; font-size: 0.875rem; color: #e65100;
+    mat-icon { font-size: 18px; width: 18px; height: 18px; }
+  }
+}
+
+.plan-preview-list {
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.plan-preview-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: 8px;
+  background: #f5f5f5; border: 1px solid #e0e0e0;
+  mat-icon { color: #78909c; font-size: 20px; width: 20px; height: 20px; }
+  .plan-preview-info {
+    flex: 1; display: flex; flex-direction: column;
+    strong { font-size: 0.95rem; color: #37474f; }
+    span { font-size: 0.82rem; color: #888; }
+  }
+  &.plan-inactivo { opacity: 0.5; }
+}
+
+.badge-inactivo {
+  font-size: 0.75rem; padding: 2px 8px; border-radius: 12px;
+  background: #eeeeee; color: #757575;
+}
 
 @media (max-width: 599px) { .form-grid, .form-grid-3 { grid-template-columns: 1fr; } .plan-row { flex-direction: column; align-items: stretch; } }

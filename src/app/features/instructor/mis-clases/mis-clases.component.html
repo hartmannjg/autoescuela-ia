@@ -16,7 +16,7 @@
         }
         @for (grupo of agrupadoPorFecha(); track grupo[0]) {
           <div class="fecha-grupo">
-            <h3 class="fecha-label">{{ grupo[0] | date:'dd/MM/yyyy' }}</h3>
+            <h3 class="fecha-label">{{ grupo[0] | fechaHora: 'conDia' }}</h3>
             @for (turno of grupo[1]; track turno.id) {
               <div class="turno-item">
                 <div class="turno-hora">
@@ -44,11 +44,16 @@
         @for (turno of historial(); track turno.id) {
           <div class="turno-item">
             <div class="turno-hora">
-              <strong>{{ turno.fecha | fechaHora: 'fecha' }}</strong>
+              <strong>{{ turno.fecha | fechaHora: 'conDia' }}</strong>
               <span>{{ turno.horaInicio }}</span>
             </div>
             <div class="turno-info"><span>{{ turno.duracionMinutos | duracion }}</span></div>
-            <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+            <div class="estado-col">
+              <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+              @if (turno.estado === 'CANCELADA' && turno.motivoRechazo) {
+                <span class="motivo-cancelacion">{{ turno.motivoRechazo }}</span>
+              }
+            </div>
             @if (turno.estado === 'COMPLETADA') {
               <a mat-icon-button [routerLink]="['/instructor/evaluar-alumno', turno.id]">
                 <mat-icon>visibility</mat-icon>

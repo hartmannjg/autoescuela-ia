@@ -3,7 +3,7 @@ import { Timestamp } from '@angular/fire/firestore';
 
 @Pipe({ name: 'fechaHora', standalone: true })
 export class FechaHoraPipe implements PipeTransform {
-  transform(value: Timestamp | Date | string | null | undefined, formato: 'fecha' | 'hora' | 'fechaHora' | 'relativo' = 'fechaHora'): string {
+  transform(value: Timestamp | Date | string | null | undefined, formato: 'fecha' | 'hora' | 'fechaHora' | 'relativo' | 'conDia' = 'fechaHora'): string {
     if (!value) return '';
 
     let date: Date;
@@ -11,6 +11,10 @@ export class FechaHoraPipe implements PipeTransform {
       date = value.toDate();
     } else if (value instanceof Date) {
       date = value;
+    } else if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      // Parse YYYY-MM-DD in local timezone to avoid UTC offset shifting the day
+      const [y, m, d] = value.split('-').map(Number);
+      date = new Date(y, m - 1, d);
     } else {
       date = new Date(value);
     }
@@ -26,6 +30,11 @@ export class FechaHoraPipe implements PipeTransform {
         return date.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
       case 'relativo':
         return this.relativo(date);
+      case 'conDia': {
+        const dia = date.toLocaleDateString('es-AR', { weekday: 'long' });
+        const fecha = date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return `${dia.charAt(0).toUpperCase() + dia.slice(1)}, ${fecha}`;
+      }
       default:
         return date.toLocaleString('es-AR');
     }

@@ -49,9 +49,9 @@ export class ConfiguracionComponent implements OnInit {
   // ── Formulario global (super-admin) ─────────────────────────
   formGlobal = this.fb.group({
     limites: this.fb.group({
-      semanasSinClaseParaBloqueo: [4,  [Validators.required, Validators.min(1)]],
       horasAntesParaCancelar:     [24, [Validators.required, Validators.min(1)]],
       minutosQrValidez:           [30, [Validators.required, Validators.min(5)]],
+      maxReagendasPorSemana:      [4,  [Validators.required, Validators.min(1)]],
     }),
     precios: this.fb.group({
       precioClase40min: [0, [Validators.required, Validators.min(0)]],
@@ -69,8 +69,9 @@ export class ConfiguracionComponent implements OnInit {
   // ── Formulario override de sucursal (admin) ─────────────────
   formSucursal = this.fb.group({
     precioClase40min: [null as number | null],
-    usarPlanesPersonalizados: [false],
+    usarPlanesBase: [true],
     planes: this.fb.array([]),
+    maxReagendasPorSemana: [null as number | null, [Validators.min(1)]],
   });
 
   get planesGlobalArray(): FormArray  { return this.formGlobal.get('planes') as FormArray; }
@@ -103,16 +104,13 @@ export class ConfiguracionComponent implements OnInit {
   }
 
   private cargarFormSucursal(override: ConfiguracionSucursal | null): void {
-    const tieneOverride = override !== null;
-    const tieneePlanes  = tieneOverride && override!.precios.planes !== null;
     this.formSucursal.patchValue({
       precioClase40min: override?.precios.precioClase40min ?? null,
-      usarPlanesPersonalizados: tieneePlanes,
+      usarPlanesBase: override?.usarPlanesBase ?? true,
+      maxReagendasPorSemana: override?.maxReagendasPorSemana ?? null,
     });
     this.planesSucursalArray.clear();
-    if (tieneePlanes) {
-      override!.precios.planes!.forEach(p => this.planesSucursalArray.push(this.crearPlanGroup(p)));
-    }
+    (override?.precios.planes ?? []).forEach(p => this.planesSucursalArray.push(this.crearPlanGroup(p)));
   }
 
   private crearPlanGroup(p?: Partial<PreciosPlan>) {
@@ -166,15 +164,14 @@ export class ConfiguracionComponent implements OnInit {
   async guardarSucursal(): Promise<void> {
     if (this.formSucursal.invalid) { this.formSucursal.markAllAsTouched(); return; }
     const v = this.formSucursal.getRawValue();
-    const usaPlanes = v.usarPlanesPersonalizados;
     this.guardando.set(true);
     try {
       const precios = {
         precioClase40min: v.precioClase40min,
-        planes: usaPlanes ? (v.planes as any) : null,
+        planes: v.planes as any,
       };
-      await this.configService.guardarSucursal(this.sucursalId(), precios);
-      Swal.fire({ icon: 'success', title: 'Precios de la sucursal guardados', timer: 1500, showConfirmButton: false });
+      await this.configService.guardarSucursal(this.sucursalId(), precios, v.usarPlanesBase ?? true, v.maxReagendasPorSemana);
+      Swal.fire({ icon: 'success', title: 'Configuración de la sucursal guardada', timer: 1500, showConfirmButton: false });
     } catch (e: any) {
       Swal.fire({ icon: 'error', title: 'Error', text: e.message });
     } finally {
