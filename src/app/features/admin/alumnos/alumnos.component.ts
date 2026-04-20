@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -14,6 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, setPersistence, inMemoryPersistence } from 'firebase/auth';
@@ -25,6 +26,7 @@ import { ConfiguracionService } from '../../../core/services/configuracion.servi
 import { User, AlumnoData, PlanContratado, PreciosPlan } from '../../../shared/models';
 import { MonedaPipe } from '../../../shared/pipes/moneda.pipe';
 import { DuracionPipe } from '../../../shared/pipes/duracion.pipe';
+import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -34,7 +36,8 @@ import { environment } from '../../../../environments/environment';
     CommonModule, RouterLink, FormsModule, ReactiveFormsModule,
     MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule,
     MatInputModule, MatSelectModule, MatTableModule,
-    MatTooltipModule, MatProgressSpinnerModule, MatDividerModule, MatSlideToggleModule, MonedaPipe, DuracionPipe,
+    MatTooltipModule, MatProgressSpinnerModule, MatDividerModule, MatSlideToggleModule,
+    MonedaPipe, DuracionPipe, FechaHoraPipe, MatPaginatorModule,
   ],
   templateUrl: './alumnos.component.html',
   styleUrl: './alumnos.component.scss',
@@ -54,6 +57,8 @@ export class AlumnosComponent implements OnInit {
   readonly showPassword = signal(false);
   readonly planesDisponibles = signal<PreciosPlan[]>([]);
   readonly loading = signal(true);
+  readonly pagina = signal(0);
+  readonly pageSize = 20;
 
   readonly alumnos = toSignal(
     this.usuarioService.alumnosPorSucursal$(this.sucursalId).pipe(tap(() => this.loading.set(false))),
@@ -69,7 +74,23 @@ export class AlumnosComponent implements OnInit {
     });
   });
 
-  readonly columnas = ['nombre', 'email', 'credito', 'estado', 'acciones'];
+  readonly alumnosPaginados = computed(() =>
+    this.alumnosFiltrados().slice(this.pagina() * this.pageSize, (this.pagina() + 1) * this.pageSize)
+  );
+
+  readonly columnas = computed(() =>
+    this.filtroBloqueado() === true
+      ? ['nombre', 'email', 'bloqueo', 'acciones']
+      : ['nombre', 'email', 'credito', 'estado', 'acciones']
+  );
+
+  constructor() {
+    effect(() => {
+      this.filtro();
+      this.filtroBloqueado();
+      untracked(() => this.pagina.set(0));
+    });
+  }
 
   form = this.fb.group({
     nombre:             ['', [Validators.required, Validators.minLength(3)]],

@@ -69,7 +69,6 @@ export const routes: Routes = [
       { path: 'turnos', loadComponent: () => import('./features/admin/turnos/turnos.component').then(m => m.AdminTurnosComponent) },
       { path: 'agenda-alumno', loadComponent: () => import('./features/admin/agenda-alumno/agenda-alumno.component').then(m => m.AgendaAlumnoComponent) },
       { path: 'reportes', loadComponent: () => import('./features/admin/reportes/reportes.component').then(m => m.ReportesComponent) },
-      { path: 'excepciones', loadComponent: () => import('./features/admin/excepciones/excepciones.component').then(m => m.ExcepcionesComponent) },
       { path: 'sucursales', loadComponent: () => import('./features/admin/sucursales/sucursales.component').then(m => m.SucursalesComponent) },
       { path: 'administradores', loadComponent: () => import('./features/admin/administradores/administradores.component').then(m => m.AdministradoresComponent) },
       { path: 'feriados', loadComponent: () => import('./features/admin/feriados/feriados.component').then(m => m.FeriadosComponent) },

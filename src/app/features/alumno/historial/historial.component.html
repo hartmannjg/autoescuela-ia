@@ -15,7 +15,7 @@
   }
 
   <mat-accordion>
-    @for (item of historial(); track item.turno.id) {
+    @for (item of historialPaginado(); track item.turno.id) {
       <mat-expansion-panel class="clase-panel">
         <mat-expansion-panel-header>
           <mat-panel-title>
@@ -92,6 +92,17 @@
       </mat-expansion-panel>
     }
   </mat-accordion>
+
+  @if (historial().length > pageSize) {
+    <mat-paginator
+      [length]="historial().length"
+      [pageSize]="pageSize"
+      [pageIndex]="pagina()"
+      (page)="pagina.set($event.pageIndex)"
+      [hidePageSize]="true"
+      [showFirstLastButtons]="true">
+    </mat-paginator>
+  }
 
   }
 </div>

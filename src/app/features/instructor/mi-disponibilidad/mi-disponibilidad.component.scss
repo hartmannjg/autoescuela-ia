@@ -2,7 +2,7 @@
 .page-header { h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #1b5e20; } p { margin: 4px 0 0; color: #666; } }
 .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 mat-card { border-radius: 12px !important; mat-card-title { display: flex; align-items: center; gap: 8px; } }
-form { display: flex; flex-direction: column; gap: 16px; }
+form { display: flex; flex-direction: column; gap: 16px; padding-top: 8px; }
 .full-width { width: 100%; }
 .fecha-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .checkboxes { display: flex; flex-direction: column; gap: 8px; }

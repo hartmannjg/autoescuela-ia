@@ -48,8 +48,14 @@
                 <button mat-raised-button
                   [color]="esActual(s) ? 'accent' : 'primary'"
                   (click)="seleccionar(s)"
-                  [disabled]="guardando() || !s.activo">
-                  @if (esActual(s)) { Continuar } @else { Seleccionar }
+                  [disabled]="guardando() !== null || !s.activo">
+                  @if (guardando() === s.id) {
+                    <mat-spinner diameter="18" />
+                  } @else if (esActual(s)) {
+                    Continuar
+                  } @else {
+                    Seleccionar
+                  }
                 </button>
               </div>
             }
@@ -106,8 +112,8 @@
 
             <button mat-raised-button color="primary"
               (click)="crearYSeleccionar()"
-              [disabled]="form.invalid || guardando()">
-              @if (guardando()) { <mat-spinner diameter="18" /> } @else {
+              [disabled]="form.invalid || guardando() !== null">
+              @if (guardando() === 'nueva') { <mat-spinner diameter="18" /> } @else {
                 <ng-container><mat-icon>check</mat-icon> Crear y seleccionar</ng-container>
               }
             </button>

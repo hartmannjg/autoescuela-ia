@@ -14,7 +14,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificacionService } from '../../../core/services/notificacion.service';
-import { TurnoService } from '../../../core/services/turno.service';
 import { Notificacion, TipoNotificacion } from '../../../shared/models';
 
 @Component({
@@ -31,7 +30,6 @@ import { Notificacion, TipoNotificacion } from '../../../shared/models';
 export class InstructorLayoutComponent {
   private authService = inject(AuthService);
   private notifService = inject(NotificacionService);
-  private turnoService = inject(TurnoService);
   private breakpointObserver = inject(BreakpointObserver);
 
   readonly user = this.authService.currentUser;
@@ -41,13 +39,6 @@ export class InstructorLayoutComponent {
   );
   readonly sidenavOpened = signal(true);
 
-  constructor() {
-    const sucursalId = this.authService.currentUser()?.sucursalId;
-    if (sucursalId) {
-      this.turnoService.procesarClasesVencidas(sucursalId)
-        .catch(err => console.error('[procesarClasesVencidas instructor]', err));
-    }
-  }
   readonly notifCount = toSignal(
     this.notifService.noLeidas$(this.authService.currentUser()?.uid ?? ''),
     { initialValue: 0 }
@@ -77,7 +68,7 @@ export class InstructorLayoutComponent {
 
   readonly navItems = [
     { label: 'Dashboard', icon: 'dashboard', route: '/instructor/dashboard' },
-    { label: 'Mis Clases', icon: 'calendar_month', route: '/instructor/mis-clases' },
+    { label: 'Mi Agenda', icon: 'calendar_month', route: '/instructor/mis-clases' },
     { label: 'Marcar Asistencia', icon: 'qr_code_scanner', route: '/instructor/marcar-asistencia' },
     { label: 'Mi Disponibilidad', icon: 'event_busy', route: '/instructor/mi-disponibilidad' },
   ];

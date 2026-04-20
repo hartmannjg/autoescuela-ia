@@ -1,14 +1,74 @@
 <div class="mis-clases-page">
   <div class="page-header">
-    <h2>Mis Clases</h2>
-    <p>Calendario de todas tus clases</p>
+    <h2>Mi Agenda</h2>
+    <p>Tus clases confirmadas y pendientes</p>
   </div>
 
   @if (loading()) {
     <div class="loading-center"><mat-spinner diameter="48" /></div>
   } @else {
 
-  <mat-tab-group>
+  <mat-tab-group [selectedIndex]="tabSeleccionado()" (selectedIndexChange)="tabSeleccionado.set($event)">
+
+    <!-- ── Tab Calendario ─────────────────────────────────────────────── -->
+    <mat-tab label="Calendario">
+      <div class="tab-content">
+
+        <div class="cal-header">
+          <button mat-icon-button (click)="mesOffset.update(v => v - 1)">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <span class="cal-mes-label">{{ mesLabel() }}</span>
+          <button mat-icon-button (click)="mesOffset.update(v => v + 1)">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+
+        <div class="cal-leyenda">
+          <span class="punto confirmada"></span> Confirmada
+          <span class="punto pendiente"></span> Pendiente
+        </div>
+
+        <div class="cal-grid">
+          @for (d of diasSemana; track d) {
+            <div class="cal-dia-nombre">{{ d }}</div>
+          }
+          @for (dia of diasMes(); track dia?.fechaStr ?? $index) {
+            @if (dia === null) {
+              <div class="cal-celda vacia"></div>
+            } @else {
+              <div class="cal-celda"
+                [class.hoy]="dia.esHoy"
+                [class.seleccionado]="diaSeleccionado() === dia.fechaStr"
+                [class.con-clases]="turnosPorFecha().has(dia.fechaStr)"
+                (click)="turnosPorFecha().has(dia.fechaStr) && seleccionarDia(dia.fechaStr)">
+                <span class="cal-num">{{ dia.dia }}</span>
+                <div class="cal-puntos">
+                  @if (tieneConfirmadas(dia.fechaStr)) {
+                    <span class="punto confirmada" matTooltip="Confirmada"></span>
+                  }
+                  @if (tienePendientes(dia.fechaStr)) {
+                    <span class="punto pendiente" matTooltip="Pendiente"></span>
+                  }
+                </div>
+              </div>
+            }
+          }
+        </div>
+
+        @if (diaSeleccionado()) {
+          <div class="cal-detalle">
+            <h4>{{ diaSeleccionado() | fechaHora: 'conDia' }}</h4>
+            @for (turno of turnosDiaSeleccionado(); track turno.id) {
+              <ng-container *ngTemplateOutlet="turnoRow; context: { turno: turno }"></ng-container>
+            }
+          </div>
+        }
+
+      </div>
+    </mat-tab>
+
+    <!-- ── Tab Próximas ───────────────────────────────────────────────── -->
     <mat-tab label="Próximas ({{ proximas().length }})">
       <div class="tab-content">
         @if (proximas().length === 0) {
@@ -18,36 +78,28 @@
           <div class="fecha-grupo">
             <h3 class="fecha-label">{{ grupo[0] | fechaHora: 'conDia' }}</h3>
             @for (turno of grupo[1]; track turno.id) {
-              <div class="turno-item">
-                <div class="turno-hora">
-                  <strong>{{ turno.horaInicio }}</strong>
-                  <span>{{ turno.horaFin }}</span>
-                </div>
-                <div class="turno-info">
-                  <span>{{ turno.duracionMinutos | duracion }} · {{ turno.tipoClase }}</span>
-                </div>
-                <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
-                @if (turno.estado === 'CONFIRMADA') {
-                  <a mat-icon-button [routerLink]="['/instructor/evaluar-alumno', turno.id]" color="primary">
-                    <mat-icon>edit_note</mat-icon>
-                  </a>
-                }
-              </div>
+              <ng-container *ngTemplateOutlet="turnoRow; context: { turno: turno }"></ng-container>
             }
           </div>
         }
       </div>
     </mat-tab>
 
+    <!-- ── Tab Historial ─────────────────────────────────────────────── -->
     <mat-tab label="Historial ({{ historial().length }})">
       <div class="tab-content">
-        @for (turno of historial(); track turno.id) {
+        @for (turno of historialPaginado(); track turno.id) {
           <div class="turno-item">
             <div class="turno-hora">
               <strong>{{ turno.fecha | fechaHora: 'conDia' }}</strong>
               <span>{{ turno.horaInicio }}</span>
             </div>
-            <div class="turno-info"><span>{{ turno.duracionMinutos | duracion }}</span></div>
+            <div class="turno-info">
+              <span class="alumno-nombre"><mat-icon>person</mat-icon>{{ getNombreAlumno(turno.alumnoUid) }}</span>
+              <div class="turno-meta-row">
+                <span><mat-icon>schedule</mat-icon>{{ turno.duracionMinutos | duracion }}</span>
+              </div>
+            </div>
             <div class="estado-col">
               <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
               @if (turno.estado === 'CANCELADA' && turno.motivoRechazo) {
@@ -61,9 +113,43 @@
             }
           </div>
         }
+        @if (historial().length > pageSize) {
+          <mat-paginator
+            [length]="historial().length"
+            [pageSize]="pageSize"
+            [pageIndex]="paginaHistorial()"
+            (page)="paginaHistorial.set($event.pageIndex)"
+            [hidePageSize]="true"
+            [showFirstLastButtons]="true">
+          </mat-paginator>
+        }
       </div>
     </mat-tab>
+
   </mat-tab-group>
 
   }
 </div>
+
+<!-- ── Template reutilizable para turno (Calendario + Próximas) ────────── -->
+<ng-template #turnoRow let-turno="turno">
+  <div class="turno-item">
+    <div class="turno-hora">
+      <strong>{{ turno.horaInicio }}</strong>
+      <span>{{ turno.horaFin }}</span>
+    </div>
+    <div class="turno-info">
+      <span class="alumno-nombre"><mat-icon>person</mat-icon>{{ getNombreAlumno(turno.alumnoUid) }}</span>
+      <div class="turno-meta-row">
+        <span><mat-icon>schedule</mat-icon>{{ turno.duracionMinutos | duracion }}</span>
+        <span><mat-icon>category</mat-icon>{{ turno.tipoClase | titlecase }}</span>
+      </div>
+    </div>
+    <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+    @if (turno.estado === 'CONFIRMADA') {
+      <a mat-icon-button [routerLink]="['/instructor/evaluar-alumno', turno.id]" color="primary">
+        <mat-icon>edit_note</mat-icon>
+      </a>
+    }
+  </div>
+</ng-template>

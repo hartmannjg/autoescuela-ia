@@ -35,7 +35,7 @@ export class AdminSetupComponent implements OnInit {
 
   readonly sucursales = signal<Sucursal[]>([]);
   readonly loading = signal(true);
-  readonly guardando = signal(false);
+  readonly guardando = signal<string | null>(null);
   readonly mostrarFormNueva = signal(false);
 
   readonly currentUser = this.authService.currentUser;
@@ -65,7 +65,7 @@ export class AdminSetupComponent implements OnInit {
       this.router.navigate(['/admin/dashboard']);
       return;
     }
-    this.guardando.set(true);
+    this.guardando.set(sucursal.id!);
     try {
       const uid = this.currentUser()!.uid;
       await this.usuarioService.actualizar(uid, { sucursalId: sucursal.id! });
@@ -74,14 +74,14 @@ export class AdminSetupComponent implements OnInit {
     } catch (e: any) {
       Swal.fire({ icon: 'error', title: 'Error', text: e.message });
     } finally {
-      this.guardando.set(false);
+      this.guardando.set(null);
     }
   }
 
   async crearYSeleccionar(): Promise<void> {
     if (this.form.invalid) return;
     const v = this.form.value;
-    this.guardando.set(true);
+    this.guardando.set('nueva');
     try {
       const id = await this.sucursalService.crear({
         nombre:    v.nombre!,
@@ -104,7 +104,7 @@ export class AdminSetupComponent implements OnInit {
     } catch (e: any) {
       Swal.fire({ icon: 'error', title: 'Error', text: e.message });
     } finally {
-      this.guardando.set(false);
+      this.guardando.set(null);
     }
   }
 

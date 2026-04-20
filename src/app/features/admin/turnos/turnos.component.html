@@ -3,11 +3,11 @@
     <h2>Gestión de Turnos</h2>
   </div>
 
-  @if (loading()) {
+  @if (loadingBase()) {
     <div class="loading-center"><mat-spinner diameter="48" /></div>
   } @else {
 
-  <p class="page-subtitle">{{ turnosFiltrados().length }} turnos en el período</p>
+  <!-- Filtros compartidos ────────────────────────────────────────────── -->
   <mat-card class="filters-card">
     <mat-card-content class="filters-row">
       <mat-form-field appearance="outline">
@@ -19,76 +19,202 @@
           }
         </mat-select>
       </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Buscar alumno</mat-label>
-        <mat-icon matPrefix>search</mat-icon>
-        <input matInput [value]="busqueda()" (input)="busqueda.set($any($event.target).value)" placeholder="Nombre o email..." />
-        @if (busqueda()) {
-          <button matSuffix mat-icon-button (click)="busqueda.set('')"><mat-icon>close</mat-icon></button>
-        }
-      </mat-form-field>
-    </mat-card-content>
-  </mat-card>
-  <mat-card>
-    <mat-card-content>
-      @for (turno of turnosFiltrados(); track turno.id) {
-        <div class="turno-row">
-          <div class="turno-info">
-            <strong>{{ turno.fechaStr | fechaHora: 'conDia' }}</strong>
-            <span>{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
-            <span>{{ turno.duracionMinutos | duracion }}</span>
-          </div>
-          <div class="turno-personas">
-            <div class="persona">
-              <span class="persona-rol">Alumno</span>
-              <span class="persona-nombre">{{ alumnoMap().get(turno.alumnoUid)?.nombre ?? turno.alumnoUid }}</span>
-              <span class="persona-email">{{ alumnoMap().get(turno.alumnoUid)?.email ?? '' }}</span>
-            </div>
-            <div class="persona">
-              <span class="persona-rol">Instructor</span>
-              <span class="persona-nombre">{{ instructorMap().get(turno.instructorUid)?.nombre ?? turno.instructorUid }}</span>
-              <span class="persona-email">{{ instructorMap().get(turno.instructorUid)?.email ?? '' }}</span>
-            </div>
-          </div>
-          <div class="estado-col">
-            @if (turno.estado === 'CONFIRMADA' && estaEnCurso(turno)) {
-              <span class="chip-en-curso">● En curso</span>
-            } @else {
-              <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
-            }
-            @if (turno.estado === 'CANCELADA' && turno.motivoRechazo) {
-              <span class="motivo-cancelacion">{{ turno.motivoRechazo }}</span>
-            }
-          </div>
-          @if (CANCELABLES.has(turno.estado) && !estaEnCurso(turno)) {
-            <button mat-icon-button color="warn" (click)="cancelar(turno)"
-              [disabled]="loadingCancel() === turno.id"
-              matTooltip="Cancelar clase">
-              @if (loadingCancel() === turno.id) {
-                <mat-spinner diameter="18" />
-              } @else {
-                <mat-icon>cancel</mat-icon>
-              }
-            </button>
+      @if (!filtroAlumnoId()) {
+        <mat-form-field appearance="outline">
+          <mat-label>Buscar alumno</mat-label>
+          <mat-icon matPrefix>search</mat-icon>
+          <input matInput [value]="busqueda()" (input)="busqueda.set($any($event.target).value)" placeholder="Nombre o email..." />
+          @if (busqueda()) {
+            <button matSuffix mat-icon-button (click)="busqueda.set('')"><mat-icon>close</mat-icon></button>
           }
-          @if (turno.estado === 'CANCELADA') {
-            <button mat-icon-button color="warn" (click)="eliminar(turno)"
-              [disabled]="loadingRestore() === turno.id"
-              matTooltip="Eliminar turno cancelado">
-              @if (loadingRestore() === turno.id) {
-                <mat-spinner diameter="18" />
-              } @else {
-                <mat-icon>delete_outline</mat-icon>
-              }
+        </mat-form-field>
+      } @else {
+        <div class="chip-aligner">
+          <div class="alumno-filtro-chip">
+            <mat-icon class="chip-icon">person</mat-icon>
+            <span>{{ nombreAlumnoFiltro }}</span>
+            <button mat-icon-button (click)="filtroAlumnoId.set('')" matTooltip="Quitar filtro de alumno">
+              <mat-icon>close</mat-icon>
             </button>
-          }
+          </div>
         </div>
       }
-      @if (turnosFiltrados().length === 0) {
-        <div class="empty-state"><mat-icon>calendar_today</mat-icon><p>Sin turnos en este período</p></div>
-      }
     </mat-card-content>
   </mat-card>
+
+  <mat-tab-group>
+
+    <!-- ── Tab Calendario ────────────────────────────────────────────── -->
+    <mat-tab label="Calendario">
+      <div class="tab-content">
+
+        <div class="cal-header">
+          <button mat-icon-button (click)="mesOffset.update(v => v - 1)">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <span class="cal-mes-label">{{ mesLabel() }}</span>
+          <button mat-icon-button (click)="mesOffset.update(v => v + 1)">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+
+        <div class="cal-leyenda">
+          <span class="punto confirmada"></span> Confirmada
+          <span class="punto pendiente"></span> Pendiente
+          <span class="punto cancelada"></span> Cancelada
+        </div>
+
+        @if (loadingTurnos()) {
+          <div class="loading-center" style="padding: 48px 0"><mat-spinner diameter="36" /></div>
+        } @else {
+
+        <div class="cal-grid">
+          @for (d of diasSemana; track d) {
+            <div class="cal-dia-nombre">{{ d }}</div>
+          }
+          @for (dia of diasMes(); track dia?.fechaStr ?? $index) {
+            @if (dia === null) {
+              <div class="cal-celda vacia"></div>
+            } @else {
+              <div class="cal-celda"
+                [class.hoy]="dia.esHoy"
+                [class.seleccionado]="diaSeleccionado() === dia.fechaStr"
+                [class.con-clases]="turnosPorFecha().has(dia.fechaStr)"
+                (click)="turnosPorFecha().has(dia.fechaStr) && seleccionarDia(dia.fechaStr)">
+                <span class="cal-num">{{ dia.dia }}</span>
+                @if (turnosPorFecha().has(dia.fechaStr)) {
+                  <div class="cal-puntos">
+                    @if (tieneConfirmadas(dia.fechaStr)) {
+                      <span class="punto confirmada" [matTooltip]="'Confirmadas'"></span>
+                    }
+                    @if (tienePendientes(dia.fechaStr)) {
+                      <span class="punto pendiente" [matTooltip]="'Pendientes'"></span>
+                    }
+                    @if (tieneCanceladas(dia.fechaStr)) {
+                      <span class="punto cancelada" [matTooltip]="'Canceladas'"></span>
+                    }
+                  </div>
+                  <span class="cal-count">{{ contarTurnos(dia.fechaStr) }}</span>
+                }
+              </div>
+            }
+          }
+        </div>
+
+        @if (diaSeleccionado()) {
+          <div class="cal-detalle">
+            <h4>{{ diaSeleccionado() | fechaHora: 'conDia' }}</h4>
+            @for (turno of turnosDiaSeleccionado(); track turno.id) {
+              <div class="cal-turno-row">
+                <div class="cal-turno-hora">
+                  <strong>{{ turno.horaInicio }}</strong>
+                  <span>{{ turno.horaFin }}</span>
+                </div>
+                <div class="cal-turno-personas">
+                  <span class="cal-persona alumno">
+                    <mat-icon>person</mat-icon>{{ alumnoMap().get(turno.alumnoUid)?.nombre ?? '—' }}
+                  </span>
+                  @if (!filtroInstructor()) {
+                    <span class="cal-persona instructor">
+                      <mat-icon>directions_car</mat-icon>{{ instructorMap().get(turno.instructorUid)?.nombre ?? '—' }}
+                    </span>
+                  }
+                </div>
+                <div class="estado-col">
+                  @if (turno.estado === 'CONFIRMADA' && estaEnCurso(turno)) {
+                    <span class="chip-en-curso">● En curso</span>
+                  } @else {
+                    <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+                  }
+                </div>
+                @if (CANCELABLES.has(turno.estado) && !estaEnCurso(turno)) {
+                  <button mat-icon-button color="warn" (click)="cancelar(turno)"
+                    [disabled]="loadingCancel() === turno.id" matTooltip="Cancelar clase">
+                    @if (loadingCancel() === turno.id) { <mat-spinner diameter="18" /> }
+                    @else { <mat-icon>cancel</mat-icon> }
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        }
+      </div>
+    </mat-tab>
+
+    <!-- ── Tab Detalle ────────────────────────────────────────────────── -->
+    <mat-tab label="Detalle ({{ turnosFiltrados().length }})">
+      <div class="tab-content">
+
+        @if (loadingTurnos()) {
+          <div class="loading-center" style="padding: 48px 0"><mat-spinner diameter="36" /></div>
+        } @else {
+
+        @for (turno of turnosPaginados(); track turno.id) {
+          <div class="turno-row">
+            <div class="turno-info">
+              <strong>{{ turno.fechaStr | fechaHora: 'conDia' }}</strong>
+              <span>{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
+              <span>{{ turno.duracionMinutos | duracion }}</span>
+            </div>
+            <div class="turno-personas">
+              <div class="persona">
+                <span class="persona-rol">Alumno</span>
+                <span class="persona-nombre">{{ alumnoMap().get(turno.alumnoUid)?.nombre ?? turno.alumnoUid }}</span>
+                <span class="persona-email">{{ alumnoMap().get(turno.alumnoUid)?.email ?? '' }}</span>
+              </div>
+              <div class="persona">
+                <span class="persona-rol">Instructor</span>
+                <span class="persona-nombre">{{ instructorMap().get(turno.instructorUid)?.nombre ?? turno.instructorUid }}</span>
+                <span class="persona-email">{{ instructorMap().get(turno.instructorUid)?.email ?? '' }}</span>
+              </div>
+            </div>
+            <div class="estado-col">
+              @if (turno.estado === 'CONFIRMADA' && estaEnCurso(turno)) {
+                <span class="chip-en-curso">● En curso</span>
+              } @else {
+                <span class="estado-chip estado-{{ turno.estado | estadoTurno: 'color' }}">{{ turno.estado | estadoTurno }}</span>
+              }
+              @if (turno.estado === 'CANCELADA' && turno.motivoRechazo) {
+                <span class="motivo-cancelacion">{{ turno.motivoRechazo }}</span>
+              }
+            </div>
+            @if (CANCELABLES.has(turno.estado) && !estaEnCurso(turno)) {
+              <button mat-icon-button color="warn" (click)="cancelar(turno)"
+                [disabled]="loadingCancel() === turno.id" matTooltip="Cancelar clase">
+                @if (loadingCancel() === turno.id) { <mat-spinner diameter="18" /> }
+                @else { <mat-icon>cancel</mat-icon> }
+              </button>
+            }
+            @if (turno.estado === 'CANCELADA') {
+              <button mat-icon-button color="warn" (click)="eliminar(turno)"
+                [disabled]="loadingRestore() === turno.id" matTooltip="Eliminar turno cancelado">
+                @if (loadingRestore() === turno.id) { <mat-spinner diameter="18" /> }
+                @else { <mat-icon>delete_outline</mat-icon> }
+              </button>
+            }
+          </div>
+        }
+        @if (turnosFiltrados().length === 0) {
+          <div class="empty-state"><mat-icon>calendar_today</mat-icon><p>Sin turnos en este período</p></div>
+        }
+        @if (turnosFiltrados().length > pageSize) {
+          <mat-paginator
+            [length]="turnosFiltrados().length"
+            [pageSize]="pageSize"
+            [pageIndex]="pagina()"
+            (page)="pagina.set($event.pageIndex)"
+            [hidePageSize]="true"
+            [showFirstLastButtons]="true">
+          </mat-paginator>
+        }
+
+        }
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
 
   }
 </div>

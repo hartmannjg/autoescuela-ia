@@ -67,33 +67,52 @@
 
           <mat-divider />
 
-          <!-- Acciones de plan -->
+          <!-- Agendar clase / Ver turnos -->
           <div class="acciones-credito">
-            <button mat-stroked-button color="primary" (click)="asignarPlan()">
-              <mat-icon>card_membership</mat-icon>
-              {{ a.alumnoData?.planContratado ? 'Cambiar plan' : 'Asignar plan' }}
+            <a mat-raised-button color="primary"
+              [routerLink]="['/admin/agenda-alumno']"
+              [queryParams]="{ alumnoId: uid() }">
+              <mat-icon>event_available</mat-icon> Agendar clase
+            </a>
+            <a mat-stroked-button
+              [routerLink]="['/admin/turnos']"
+              [queryParams]="{ alumnoId: uid() }">
+              <mat-icon>calendar_month</mat-icon> Ver turnos
+            </a>
+          </div>
+
+          <mat-divider />
+
+          <!-- Acciones de plan -->
+          @if (!a.alumnoData?.planContratado) {
+            <div class="acciones-credito">
+              <button mat-stroked-button color="primary" (click)="asignarPlan()">
+                <mat-icon>card_membership</mat-icon> Asignar plan
+              </button>
+            </div>
+          }
+
+          <mat-divider />
+
+          <!-- Créditos individuales -->
+          <div class="acciones-credito">
+            <button mat-stroked-button color="primary" (click)="asignarClases()">
+              <mat-icon>confirmation_number</mat-icon> Cargar clases sueltas
             </button>
+            <button mat-stroked-button color="warn" (click)="quitarClases()" [disabled]="getSaldoIndividual() === 0">
+              <mat-icon>remove_circle_outline</mat-icon> Quitar clases sueltas
+            </button>
+          </div>
+
+          <mat-divider />
+
+          <!-- Acciones destructivas: Quitar plan + Bloqueo -->
+          <div class="acciones-peligro">
             @if (a.alumnoData?.planContratado) {
               <button mat-stroked-button color="warn" (click)="quitarPlan()">
                 <mat-icon>remove_circle</mat-icon> Quitar plan
               </button>
             }
-          </div>
-
-          <mat-divider />
-
-          <!-- Acciones de crédito individual -->
-          <div class="acciones-credito">
-            <button mat-stroked-button color="primary" (click)="asignarClases()">
-              <mat-icon>add</mat-icon> Asignar clases
-            </button>
-            <button mat-stroked-button color="warn" (click)="quitarClases()" [disabled]="getSaldoIndividual() === 0">
-              <mat-icon>remove</mat-icon> Quitar clases
-            </button>
-          </div>
-
-          <!-- Bloqueo -->
-          <div class="acciones">
             <button mat-stroked-button [color]="a.alumnoData?.bloqueado ? 'primary' : 'warn'" (click)="toggleBloqueo()">
               <mat-icon>{{ a.alumnoData?.bloqueado ? 'lock_open' : 'block' }}</mat-icon>
               {{ a.alumnoData?.bloqueado ? 'Desbloquear' : 'Bloquear' }}

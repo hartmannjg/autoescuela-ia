@@ -68,8 +68,9 @@ export class TurnoService {
     });
   }
 
-  /** Crea un turno, valida saldo disponible y lo descuenta al agendar. */
-  async crearTurno(turno: Omit<Turno, 'id' | 'creadoEn' | 'slots' | 'horaFin'>): Promise<string> {
+  /** Crea un turno, valida saldo disponible y lo descuenta al agendar.
+   *  @param omitirLimiteReagendas  true cuando lo crea un admin, saltea el chequeo de reagendas semanales. */
+  async crearTurno(turno: Omit<Turno, 'id' | 'creadoEn' | 'slots' | 'horaFin'>, omitirLimiteReagendas = false): Promise<string> {
     const slots = generarSlots(turno.fechaStr, turno.horaInicio, turno.duracionMinutos);
     const horaFin = calcularHoraFin(turno.horaInicio, turno.duracionMinutos);
 
@@ -91,7 +92,7 @@ export class TurnoService {
     }
     const configSuc = await this.configuracionService.getSucursalOnce(turno.sucursalId);
     const maxReagendas = configSuc?.maxReagendasPorSemana ?? config?.limites?.maxReagendasPorSemana ?? 4;
-    if (reagendasSemana >= maxReagendas) {
+    if (!omitirLimiteReagendas && reagendasSemana >= maxReagendas) {
       throw new Error(`Alcanzaste el límite de ${maxReagendas} reagendas por semana. Podés volver a agendar el próximo lunes.`);
     }
 
@@ -362,7 +363,7 @@ export class TurnoService {
     return snap.size;
   }
 
-  private async contarReagendasAlumnoEnSemana(alumnoUid: string, semanaStr: string): Promise<number> {
+  async contarReagendasAlumnoEnSemana(alumnoUid: string, semanaStr: string): Promise<number> {
     const { lunes, domingo } = getSemanaBounds(semanaStr);
     const q = query(
       this.colRef(),

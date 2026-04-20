@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -67,6 +68,7 @@ export class AgendaAlumnoComponent implements OnInit {
   private sucursalService = inject(SucursalService);
   private feriadoService  = inject(FeriadoService);
   private cierreService   = inject(CierreService);
+  private route           = inject(ActivatedRoute);
 
   private readonly admin = this.authService.currentUser;
 
@@ -260,6 +262,12 @@ export class AgendaAlumnoComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     const sucId = this.admin()?.sucursalId;
     if (sucId) this.sucursal.set(await this.sucursalService.getById(sucId));
+
+    const alumnoId = this.route.snapshot.queryParamMap.get('alumnoId');
+    if (alumnoId) {
+      const alumno = await this.usuarioService.getByIdOnce(alumnoId);
+      if (alumno) this.seleccionarAlumno(alumno);
+    }
   }
 
   // ── Selección de alumno ────────────────────────────────────────────────────
@@ -401,7 +409,7 @@ export class AgendaAlumnoComponent implements OnInit {
         horaInicio: slot.horaInicio, duracionMinutos: this.duracionClaseIndividual(),
         estado: 'PENDIENTE_CONFIRMACION', tipoClase: consumidoDe === 'plan' ? 'plan' : 'individual',
         consumidoDe, asistenciaVerificada: false,
-      });
+      }, true);
       const actualizado = await this.usuarioService.getByIdOnce(alumno.uid);
       this.alumnoSeleccionado.set(actualizado);
       this.slotSeleccionado.set(null);
@@ -555,7 +563,7 @@ export class AgendaAlumnoComponent implements OnInit {
         fechaStr: t.fechaStr, horaInicio: t.horaInicio,
         duracionMinutos: duracion, estado: 'PENDIENTE_CONFIRMACION',
         tipoClase: 'plan', consumidoDe: 'plan', asistenciaVerificada: false,
-      });
+      }, true);
       creados++;
       this.progreso.set(Math.round(creados / total * 100));
     }

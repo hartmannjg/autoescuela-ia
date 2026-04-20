@@ -24,3 +24,60 @@ mat-form-field { min-width: 240px; }
 .loading-center { display: flex; justify-content: center; align-items: center; padding: 80px 0; }
 
 .page-subtitle { margin: -12px 0 4px; color: #888; font-size: 0.9rem; }
+.tab-content { padding: 16px 0; }
+.chip-aligner {
+  align-self: stretch; display: flex; align-items: center;
+  padding-bottom: 1.34375em;
+}
+.alumno-filtro-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #1565c0; border-radius: 20px;
+  padding: 6px 6px 6px 14px; color: #fff; font-size: 0.88rem; font-weight: 500;
+  .chip-icon { font-size: 17px; width: 17px; height: 17px; opacity: 0.9; }
+  button.mat-mdc-icon-button {
+    width: 28px; height: 28px; padding: 0; color: #fff; opacity: 0.85;
+    &:hover { opacity: 1; }
+    .mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  }
+}
+
+// ── Calendario ────────────────────────────────────────────────────────────
+.cal-header { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 12px 0 8px; }
+.cal-mes-label { font-size: 1.1rem; font-weight: 600; color: #37474f; min-width: 220px; text-align: center; text-transform: capitalize; }
+.cal-leyenda { display: flex; gap: 16px; justify-content: center; padding: 4px 0 12px; font-size: 0.82rem; color: #666; align-items: center; }
+.punto { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  &.confirmada { background: #2e7d32; }
+  &.pendiente  { background: #e65100; }
+  &.cancelada  { background: #c62828; }
+}
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-dia-nombre { text-align: center; font-size: 0.78rem; font-weight: 600; color: #888; padding: 4px 0; }
+.cal-celda {
+  min-height: 60px; padding: 6px 4px 4px; border-radius: 8px; display: flex; flex-direction: column;
+  align-items: center; gap: 2px; cursor: default; transition: background 0.12s; border: 1px solid transparent;
+  &.vacia { background: transparent; }
+  &.hoy { border-color: #37474f;
+    .cal-num { background: #37474f; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+  }
+  &.seleccionado { background: #e8eaf6; }
+  &.con-clases { cursor: pointer; &:hover { background: #f5f5f5; } }
+  .cal-num { font-size: 0.85rem; font-weight: 500; color: #333; line-height: 24px; }
+  .cal-puntos { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; }
+  .cal-count { font-size: 0.7rem; font-weight: 700; color: #555; }
+}
+.cal-detalle {
+  margin-top: 16px; background: #f8f9fa; border-radius: 12px; padding: 16px;
+  h4 { margin: 0 0 12px; font-size: 1rem; color: #37474f; font-weight: 600; }
+}
+.cal-turno-row {
+  display: flex; align-items: center; gap: 12px; padding: 10px 0;
+  border-bottom: 1px solid #eee; flex-wrap: wrap;
+  &:last-child { border-bottom: none; }
+}
+.cal-turno-hora { display: flex; flex-direction: column; min-width: 56px; align-items: center; strong { font-size: 0.95rem; } span { font-size: 0.78rem; color: #888; } }
+.cal-turno-personas { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.cal-persona { display: inline-flex; align-items: center; gap: 4px; font-size: 0.87rem;
+  mat-icon { font-size: 15px; width: 15px; height: 15px; }
+  &.alumno { color: #1565c0; font-weight: 600; }
+  &.instructor { color: #e65100; font-weight: 500; }
+}

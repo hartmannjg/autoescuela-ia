@@ -32,9 +32,9 @@
               </div>
               <mat-divider />
               <div class="turno-meta">
-                <span><mat-icon>person</mat-icon>{{ nombreInstructor(turno.instructorUid) }}</span>
+                <span><mat-icon>directions_car</mat-icon>{{ nombreInstructor(turno.instructorUid) }}</span>
                 <span><mat-icon>schedule</mat-icon>{{ turno.duracionMinutos | duracion }}</span>
-                <span><mat-icon>badge</mat-icon>{{ turno.tipoClase | titlecase }}</span>
+                <span><mat-icon>category</mat-icon>{{ turno.tipoClase | titlecase }}</span>
                 @if (turno.motivoRechazo) {
                   <span class="rechazo"><mat-icon>info</mat-icon>{{ turno.motivoRechazo }}</span>
                 }
@@ -81,7 +81,7 @@
               </div>
               <mat-divider />
               <div class="turno-meta">
-                <span><mat-icon>person</mat-icon>{{ nombreInstructor(turno.instructorUid) }}</span>
+                <span><mat-icon>directions_car</mat-icon>{{ nombreInstructor(turno.instructorUid) }}</span>
                 <span><mat-icon>schedule</mat-icon>{{ turno.duracionMinutos | duracion }}</span>
               </div>
               @if (turno.temaClase) {

@@ -24,7 +24,7 @@
         <span class="stat-label">Por confirmar</span>
       </mat-card-content>
     </mat-card>
-    <mat-card class="stat-card" routerLink="/instructor/mis-clases">
+    <mat-card class="stat-card" [routerLink]="['/instructor/mis-clases']" [queryParams]="{tab: 1}">
       <mat-card-content>
         <mat-icon color="accent">event</mat-icon>
         <span class="stat-num">{{ proximasConfirmadas().length }}</span>

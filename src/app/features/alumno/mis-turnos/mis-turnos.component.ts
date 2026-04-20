@@ -13,7 +13,9 @@ import Swal from 'sweetalert2';
 import { AuthService } from '../../../core/services/auth.service';
 import { TurnoService } from '../../../core/services/turno.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
+import { ConfiguracionService } from '../../../core/services/configuracion.service';
 import { Turno } from '../../../shared/models';
+import { dateToStr, getSemanaStr, getSemanaBounds } from '../../../shared/utils/date-utils';
 import { EstadoTurnoPipe } from '../../../shared/pipes/estado-turno.pipe';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 import { DuracionPipe } from '../../../shared/pipes/duracion.pipe';
@@ -33,6 +35,7 @@ export class MisTurnosComponent {
   private authService   = inject(AuthService);
   private turnoService  = inject(TurnoService);
   private usuarioService = inject(UsuarioService);
+  private configService = inject(ConfiguracionService);
   readonly loading = signal(false);
   readonly loadingData = signal(true);
 
@@ -103,16 +106,49 @@ export class MisTurnosComponent {
   );
 
   async cancelar(turno: Turno): Promise<void> {
+    const uid = this.authService.currentUser()!.uid;
+    const sucursalId = this.authService.currentUser()?.sucursalId ?? '';
+    const hoyStr = dateToStr(new Date());
+    const semanaStr = getSemanaStr(hoyStr);
+
+    const [reagendasUsadas, configGlobal, configSuc] = await Promise.all([
+      this.turnoService.contarReagendasAlumnoEnSemana(uid, semanaStr),
+      this.configService.getOnce(),
+      sucursalId ? this.configService.getSucursalOnce(sucursalId) : Promise.resolve(null),
+    ]);
+
+    const maxReagendas: number =
+      configSuc?.maxReagendasPorSemana ??
+      configGlobal?.limites?.maxReagendasPorSemana ??
+      4;
+
+    // Si al cancelar se agota el límite, calcular próximo lunes y advertir
+    const quedaraSinReagendas = reagendasUsadas + 1 >= maxReagendas;
+    let avisoHtml = `<p>Clase del <strong>${turno.fechaStr}</strong> a las <strong>${turno.horaInicio}</strong></p>`;
+
+    if (quedaraSinReagendas) {
+      const { domingo } = getSemanaBounds(semanaStr);
+      const [y, m, d] = domingo.split('-').map(Number);
+      const proximoLunes = new Date(y, m - 1, d + 1);
+      const lunesStr = proximoLunes.toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: 'long' });
+      avisoHtml += `<div style="margin-top:12px;padding:10px 14px;background:#fff3e0;border-left:4px solid #f57c00;border-radius:6px;text-align:left;font-size:0.9rem;color:#e65100">
+        <strong>⚠️ Atención:</strong> Si cancelás esta clase habrás usado todas tus reagendas de esta semana
+        (${maxReagendas} de ${maxReagendas}). No podrás volver a agendar hasta el
+        <strong>${lunesStr}</strong>.
+      </div>`;
+    }
+
     const result = await Swal.fire({
       title: '¿Cancelar clase?',
-      text: `Clase del ${turno.fechaStr} a las ${turno.horaInicio}`,
-      icon: 'warning',
+      html: avisoHtml,
+      icon: quedaraSinReagendas ? 'warning' : 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, cancelar',
-      cancelButtonText: 'No',
+      cancelButtonText: 'No, conservar',
       confirmButtonColor: '#c62828',
     });
     if (!result.isConfirmed) return;
+
     this.loading.set(true);
     try {
       await this.turnoService.cancelarTurno(turno.id!);

@@ -3,11 +3,60 @@
 .tab-content { display: flex; flex-direction: column; gap: 8px; padding: 24px 0; }
 .fecha-grupo { margin-bottom: 16px; }
 .fecha-label { font-size: 0.9rem; font-weight: 600; color: #1b5e20; text-transform: capitalize; margin: 0 0 8px; padding: 4px 0; border-bottom: 2px solid #e8f5e9; }
-.turno-item { display: flex; align-items: center; gap: 16px; padding: 10px 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 6px; flex-wrap: wrap;
-  .turno-hora { display: flex; flex-direction: column; min-width: 70px; strong { font-size: 0.95rem; } span { font-size: 0.8rem; color: #888; } }
-  .turno-info { flex: 1; span { font-size: 0.85rem; color: #666; } }
+.turno-item { display: flex; align-items: center; gap: 16px; padding: 12px 14px; background: #f8f9fa; border-radius: 8px; margin-bottom: 6px; flex-wrap: wrap;
+  .turno-hora { display: flex; flex-direction: column; align-items: flex-end; min-width: 52px;
+    strong { font-size: 1rem; font-weight: 700; }
+    span { font-size: 0.78rem; color: #aaa; }
+  }
+  .turno-info { flex: 1; display: flex; flex-direction: column; gap: 5px;
+    .turno-meta-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      span { display: inline-flex; align-items: center; gap: 3px; font-size: 0.8rem; color: #888;
+        mat-icon { font-size: 14px; width: 14px; height: 14px; line-height: 14px; }
+      }
+    }
+  }
+}
+.alumno-nombre { display: inline-flex; align-items: center; gap: 5px; font-size: 0.92rem; color: #1b5e20; font-weight: 600;
+  mat-icon { font-size: 17px; width: 17px; height: 17px; line-height: 17px; }
 }
 .estado-col { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
 .motivo-cancelacion { font-size: 0.7rem; color: #c62828; max-width: 200px; line-height: 1.3; }
 .empty-state { display: flex; flex-direction: column; align-items: center; padding: 48px; gap: 12px; color: #aaa; mat-icon { font-size: 48px; width: 48px; height: 48px; } }
 .loading-center { display: flex; justify-content: center; align-items: center; padding: 80px 0; }
+
+// ── Calendario ─────────────────────────────────────────────────────────────
+.cal-header {
+  display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 8px;
+  .cal-mes-label { font-size: 1.05rem; font-weight: 600; text-transform: capitalize; min-width: 180px; text-align: center; }
+}
+.cal-leyenda {
+  display: flex; align-items: center; gap: 12px; font-size: 0.8rem; color: #666; margin-bottom: 12px; justify-content: center;
+}
+.punto {
+  display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+  &.confirmada { background: #2e7d32; }
+  &.pendiente  { background: #f57c00; }
+}
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+}
+.cal-dia-nombre {
+  text-align: center; font-size: 0.75rem; font-weight: 600; color: #888; padding: 4px 0;
+}
+.cal-celda {
+  min-height: 52px; border-radius: 8px; display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-start; padding: 6px 4px; gap: 4px;
+  background: #f8f9fa; position: relative;
+  &.vacia { background: transparent; }
+  &.con-clases { cursor: pointer; background: #e8f5e9;
+    &:hover { background: #c8e6c9; }
+  }
+  &.hoy .cal-num { background: #1b5e20; color: #fff; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+  &.seleccionado { background: #1b5e20 !important; .cal-num { color: #fff; } .punto.confirmada { background: #a5d6a7; } .punto.pendiente { background: #ffe082; } }
+  .cal-num { font-size: 0.85rem; font-weight: 500; line-height: 1; }
+  .cal-puntos { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; }
+}
+.cal-detalle {
+  margin-top: 16px; padding: 16px; background: #f1f8e9; border-radius: 10px; border-left: 4px solid #1b5e20;
+  h4 { margin: 0 0 12px; font-size: 0.95rem; font-weight: 600; color: #1b5e20; text-transform: capitalize; }
+}

@@ -39,7 +39,6 @@ export class AdminDashboardComponent {
 
   readonly alumnosActivos = computed(() => this.alumnos().filter(a => a.activo).length);
   readonly alumnosBloqueados = computed(() => this.alumnos().filter(a => a.alumnoData?.bloqueado).length);
-  readonly alumnosSinClases = computed(() => this.alumnos().filter(a => (a.alumnoData?.planContratado?.clasesRestantes ?? 0) + (a.alumnoData?.creditoIndividual?.clasesDisponibles ?? 0) === 0).length);
   readonly clasesHoy = computed(() => this.turnosHoy().length);
   readonly clasesConfirmadasHoy = computed(() => this.turnosHoy().filter(t => t.estado === 'CONFIRMADA').length);
   readonly pendientesConfirmacion = computed(() => this.turnosHoy().filter(t => t.estado === 'PENDIENTE_CONFIRMACION').length);

@@ -89,7 +89,6 @@ export class AdminLayoutComponent implements OnInit {
     { label: 'Turnos', icon: 'calendar_month', route: '/admin/turnos' },
     { label: 'Agendar clase', icon: 'event_available', route: '/admin/agenda-alumno' },
     { label: 'Reportes', icon: 'bar_chart', route: '/admin/reportes' },
-    { label: 'Excepciones', icon: 'warning', route: '/admin/excepciones' },
     { label: 'Ausencias', icon: 'event_busy', route: '/admin/ausencias' },
     { label: 'Feriados', icon: 'beach_access', route: '/admin/feriados' },
     { label: 'Configuración', icon: 'settings', route: '/admin/configuracion' },
