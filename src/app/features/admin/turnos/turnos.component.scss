@@ -1,4 +1,37 @@
 .turnos-page { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+
+// ── Resumen de filtros activos ────────────────────────────────────────────
+.filtros-activos {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 6px 12px; border-radius: 8px;
+  background: #f0f4ff; border: 1px solid #c5cae9;
+  font-size: 0.82rem; color: #37474f;
+  margin-top: -8px; // acercar al card de filtros
+}
+.filtros-icon { font-size: 15px; width: 15px; height: 15px; color: #5c6bc0; }
+.filtros-label { color: #5c6bc0; font-weight: 600; white-space: nowrap; }
+.filtro-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: #e8eaf6; color: #1a237e;
+  border-radius: 12px; padding: 2px 8px 2px 5px;
+  font-weight: 500;
+  mat-icon { font-size: 13px; width: 13px; height: 13px; }
+}
+.filtros-limpiar {
+  margin-left: auto; color: #888; font-size: 0.78rem;
+  min-width: unset; padding: 0 6px; height: 24px; line-height: 24px;
+  mat-icon { font-size: 14px; width: 14px; height: 14px; margin-right: 2px; }
+}
+
+.tab-icon { font-size: 18px; width: 18px; height: 18px; margin-right: 6px; vertical-align: middle; }
+
+.tab-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  background: #1565c0; color: #fff;
+  border-radius: 10px; font-size: 0.7rem; font-weight: 700;
+  margin-left: 6px; line-height: 18px;
+}
 .page-header { h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #37474f; } p { margin: 4px 0 0; color: #666; } }
 .filters-card mat-card-content, .filters-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
 mat-form-field { min-width: 240px; }

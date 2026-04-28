@@ -47,6 +47,13 @@ mat-card-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
 }
 
 // ── Fuente de saldo ───────────────────────────────────────────────────────────
+
+.limite-dia-msg {
+  display: flex; align-items: center; gap: 6px;
+  margin: 4px 0 0; font-size: 0.8rem; color: #c62828;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+}
+
 .fuente-grid { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
 .fuente-card { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; cursor: pointer; transition: all 0.2s; min-width: 200px; flex: 1; position: relative;
   mat-icon:first-child { font-size: 28px; width: 28px; height: 28px; color: #888; margin-top: 2px; flex-shrink: 0; }
@@ -126,9 +133,43 @@ mat-card-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
 // ── Masiva: formulario ────────────────────────────────────────────────────────
 .slot-form { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start;
   mat-form-field { min-width: 160px; flex: 1; }
-  button { margin-top: 4px; height: 56px; }
 }
 .divider { margin: 16px 0; }
+
+.disponibilidad-section { margin-top: 12px; }
+.disponibilidad-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  .disponibilidad-titulo { font-size: 0.85rem; font-weight: 600; color: #444; }
+  mat-spinner { flex-shrink: 0; }
+}
+.slots-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.slot-hora {
+  min-width: 72px; height: 40px; padding: 0 10px;
+  border: 2px solid #e0e0e0; border-radius: 8px;
+  background: #fff; cursor: pointer; font-size: 0.85rem; font-weight: 500;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  transition: all 0.15s; color: #333;
+
+  &:hover:not(:disabled) { border-color: #1a237e; background: #f0f4ff; }
+  &.slot-seleccionado { background: #1a237e; border-color: #1a237e; color: #fff; }
+  &.slot-en-plan {
+    background: #e8f5e9; border-color: #43a047; color: #2e7d32; cursor: default;
+    mat-icon { font-size: 14px; width: 14px; height: 14px; }
+  }
+  &.slot-ocupado { background: #ffebee; border-color: #ef9a9a; color: #b71c1c; opacity: 0.7; cursor: not-allowed; }
+}
+.slots-leyenda {
+  display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px;
+  .ley {
+    display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: #666;
+    &::before { content: ''; display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1.5px solid; }
+    &.ley-libre::before { background: #fff;     border-color: #e0e0e0; }
+    &.ley-sel::before   { background: #1a237e;  border-color: #1a237e; }
+    &.ley-plan::before  { background: #e8f5e9;  border-color: #43a047; }
+    &.ley-ocup::before  { background: #ffebee;  border-color: #ef9a9a; }
+  }
+}
+.btn-agregar { margin-top: 14px; }
 .slots-lista { display: flex; flex-direction: column; gap: 8px; }
 .slot-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: #f5f7fa; border-radius: 8px;
   mat-icon { color: #1a237e; }

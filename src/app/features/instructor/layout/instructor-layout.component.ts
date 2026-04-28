@@ -44,7 +44,7 @@ export class InstructorLayoutComponent {
     { initialValue: 0 }
   );
   readonly notificaciones = toSignal(
-    this.notifService.notificaciones$(this.authService.currentUser()?.uid ?? ''),
+    this.notifService.noLeidasLista$(this.authService.currentUser()?.uid ?? ''),
     { initialValue: [] as Notificacion[] }
   );
 
@@ -62,12 +62,13 @@ export class InstructorLayoutComponent {
       bloqueo_cuenta: 'block',            desbloqueo_cuenta: 'lock_open',
       feedback_recibido: 'star',          clase_completada: 'school',
       saldo_bajo: 'warning',              plan_vencimiento: 'event_busy',
+      cancelacion_turno: 'event_busy',
     };
     return map[tipo] ?? 'notifications';
   }
 
   readonly navItems = [
-    { label: 'Dashboard', icon: 'dashboard', route: '/instructor/dashboard' },
+    { label: 'Mi Cuenta', icon: 'account_circle', route: '/instructor/dashboard' },
     { label: 'Mi Agenda', icon: 'calendar_month', route: '/instructor/mis-clases' },
     { label: 'Marcar Asistencia', icon: 'qr_code_scanner', route: '/instructor/marcar-asistencia' },
     { label: 'Mi Disponibilidad', icon: 'event_busy', route: '/instructor/mi-disponibilidad' },

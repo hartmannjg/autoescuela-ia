@@ -7,18 +7,15 @@ export class EstadoTurnoPipe implements PipeTransform {
     PENDIENTE_CONFIRMACION: 'Pendiente',
     CONFIRMADA:             'Confirmada',
     RECHAZADA:              'Rechazada',
-    REPROGRAMADA:           'Reprogramada',
     COMPLETADA:             'Completada',
     CANCELADA:              'Cancelada',
     AUSENTE:                'Ausente',
   };
 
-  // CSS class suffix for .estado-chip.estado-{color}
   private readonly colors: Record<TurnoEstado, string> = {
     PENDIENTE_CONFIRMACION: 'pendiente',
     CONFIRMADA:             'confirmada',
     RECHAZADA:              'rechazada',
-    REPROGRAMADA:           'reprogramada',
     COMPLETADA:             'completada',
     CANCELADA:              'cancelada',
     AUSENTE:                'ausente',

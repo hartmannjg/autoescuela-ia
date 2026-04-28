@@ -102,6 +102,18 @@ export function getSemanaBounds(semanaStr: string): { lunes: string; domingo: st
   return { lunes: dateToStr(lunes), domingo: dateToStr(domingo) };
 }
 
+/**
+ * Calcula la fechaFin de un plan basándose en las clases totales y el mínimo
+ * de clases por semana requerido, con 2 semanas de buffer.
+ * Ej: 10 clases / 1 por semana = 10 semanas + 2 buffer = 12 semanas.
+ */
+export function calcularFechaFinPlan(clasesTotales: number, minClasesPorSemana: number): Date {
+  const semanasNecesarias = Math.ceil(clasesTotales / minClasesPorSemana);
+  const fin = new Date();
+  fin.setDate(fin.getDate() + (semanasNecesarias + 2) * 7);
+  return fin;
+}
+
 /** Formatea hora "09:00" a "9:00 AM" */
 export function formatHora12(hora24: string): string {
   const [h, m] = hora24.split(':').map(Number);

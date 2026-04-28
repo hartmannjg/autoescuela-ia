@@ -76,10 +76,17 @@
                     <mat-label>Máx. clases/semana</mat-label>
                     <input matInput type="number" formControlName="maxClasesPorSemana" min="1" max="20" />
                   </mat-form-field>
-                  <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
-                  <button mat-icon-button color="warn" type="button" (click)="quitarPlanGlobal(i)">
-                    <mat-icon>delete</mat-icon>
-                  </button>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Mín. clases/semana</mat-label>
+                    <mat-icon matPrefix>trending_up</mat-icon>
+                    <input matInput type="number" formControlName="minClasesPorSemana" min="1" max="20" />
+                  </mat-form-field>
+                  <div class="plan-actions">
+                    <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
+                    <button mat-icon-button color="warn" type="button" (click)="quitarPlanGlobal(i)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
                 </div>
               }
             </div>
@@ -107,12 +114,7 @@
               <mat-form-field appearance="outline" class="field-full-width">
                 <mat-label>Máximo de reagendas por semana (por alumno)</mat-label>
                 <input matInput type="number" formControlName="maxReagendasPorSemana" min="1" />
-                <mat-hint>
-                  Límite de veces que un alumno puede cancelar una clase ya agendada y volver a agendar otra en la misma semana (lunes a domingo).
-                  Si un alumno cancela y reagenda más de este número de veces en una semana, el sistema bloquea nuevas reservas hasta el lunes siguiente.
-                  Esto evita que los alumnos monopolicen horarios reservando y cancelando repetidamente.
-                  Valor recomendado: 4.
-                </mat-hint>
+                <mat-hint>Cancelaciones y reagendas permitidas por semana (lunes a domingo). Al superarlo, se bloquean nuevas reservas hasta el lunes siguiente. Recomendado: 4.</mat-hint>
               </mat-form-field>
             </div>
           </mat-card-content>
@@ -281,10 +283,17 @@
                     <mat-label>Máx. clases/semana</mat-label>
                     <input matInput type="number" formControlName="maxClasesPorSemana" min="1" max="20" />
                   </mat-form-field>
-                  <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
-                  <button mat-icon-button color="warn" type="button" (click)="quitarPlanSucursal(i)">
-                    <mat-icon>delete</mat-icon>
-                  </button>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Mín. clases/semana</mat-label>
+                    <mat-icon matPrefix>trending_up</mat-icon>
+                    <input matInput type="number" formControlName="minClasesPorSemana" min="1" max="20" />
+                  </mat-form-field>
+                  <div class="plan-actions">
+                    <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
+                    <button mat-icon-button color="warn" type="button" (click)="quitarPlanSucursal(i)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
                 </div>
               }
             </div>
@@ -309,12 +318,7 @@
               <mat-form-field appearance="outline" class="field-full-width">
                 <mat-label>Máximo de reagendas por semana (por alumno)</mat-label>
                 <input matInput type="number" formControlName="maxReagendasPorSemana" min="1" placeholder="{{ configGlobal()?.limites?.maxReagendasPorSemana ?? 4 }}" />
-                <mat-hint>
-                  Límite de veces que un alumno puede cancelar y volver a agendar una clase en la misma semana (lunes a domingo).
-                  Si supera este número, el sistema bloquea nuevas reservas hasta el próximo lunes.
-                  Dejá vacío para usar el valor global ({{ configGlobal()?.limites?.maxReagendasPorSemana ?? 4 }}).
-                  Valor recomendado: 4.
-                </mat-hint>
+                <mat-hint>Cancelaciones y reagendas permitidas por semana. Al superarlo se bloquean nuevas reservas hasta el lunes. Vacío = global ({{ configGlobal()?.limites?.maxReagendasPorSemana ?? 4 }}).</mat-hint>
               </mat-form-field>
             </div>
           </mat-card-content>

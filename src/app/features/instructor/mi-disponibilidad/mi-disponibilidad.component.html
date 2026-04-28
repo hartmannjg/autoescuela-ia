@@ -1,7 +1,7 @@
 <div class="disponibilidad-page">
   <div class="page-header">
     <h2>Mi Disponibilidad</h2>
-    <p>Registrá tus ausencias para que el sistema bloquee esos horarios</p>
+    <p>Registrá ausencias y días no disponibles</p>
   </div>
 
   @if (loadingData()) {
@@ -9,18 +9,22 @@
   } @else {
 
   <div class="content-grid">
-    <!-- Formulario nueva ausencia -->
+
+    <!-- ── Formulario ─────────────────────────────────────────────────── -->
     <mat-card class="form-card">
       <mat-card-header>
         <mat-card-title><mat-icon>event_busy</mat-icon> Registrar ausencia</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <form [formGroup]="form" (ngSubmit)="registrarAusencia()">
+
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Tipo de ausencia</mat-label>
             <mat-select formControlName="tipo">
               @for (t of tiposAusencia; track t.value) {
-                <mat-option [value]="t.value">{{ t.label }}</mat-option>
+                <mat-option [value]="t.value">
+                  <mat-icon>{{ t.icon }}</mat-icon> {{ t.label }}
+                </mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -28,13 +32,14 @@
           <div class="fecha-row">
             <mat-form-field appearance="outline">
               <mat-label>Desde</mat-label>
-              <input matInput [matDatepicker]="pickerDesde" formControlName="fechaInicio" />
+              <input matInput [matDatepicker]="pickerDesde" formControlName="fechaInicio" [min]="hoy" />
               <mat-datepicker-toggle matIconSuffix [for]="pickerDesde" />
               <mat-datepicker #pickerDesde />
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Hasta</mat-label>
-              <input matInput [matDatepicker]="pickerHasta" formControlName="fechaFin" />
+              <input matInput [matDatepicker]="pickerHasta" formControlName="fechaFin"
+                [min]="form.value.fechaInicio ?? hoy" />
               <mat-datepicker-toggle matIconSuffix [for]="pickerHasta" />
               <mat-datepicker #pickerHasta />
             </mat-form-field>
@@ -45,41 +50,121 @@
             <textarea matInput formControlName="motivo" rows="2" placeholder="Describí brevemente el motivo..."></textarea>
           </mat-form-field>
 
-          <div class="checkboxes">
-            <mat-checkbox formControlName="diaCompleto">Día completo</mat-checkbox>
-            <mat-checkbox formControlName="notificarAlumnos">Notificar alumnos afectados</mat-checkbox>
+          <div class="toggles-row">
+            <div class="toggle-item">
+              <mat-slide-toggle formControlName="diaCompleto" color="primary">Día completo</mat-slide-toggle>
+              <span class="toggle-hint">
+                @if (form.value.diaCompleto) { Ausente todo el día }
+                @else { Elegí los horarios específicos }
+              </span>
+            </div>
+            <mat-slide-toggle formControlName="notificarAlumnos" color="accent">
+              Notificar alumnos
+            </mat-slide-toggle>
           </div>
 
-          <button mat-raised-button color="primary" type="submit" class="full-width" [disabled]="form.invalid || loading()">
+          <!-- ── Selector de slots ──────────────────────────────────────── -->
+          @if (!form.value.diaCompleto) {
+            @if (diasEnRango().length === 0) {
+              <div class="sin-dias">
+                <mat-icon>info_outline</mat-icon>
+                @if (!form.value.fechaInicio || !form.value.fechaFin) {
+                  Seleccioná el rango de fechas para ver tus horarios.
+                } @else {
+                  No tenés días laborales configurados en ese rango.
+                }
+              </div>
+            } @else {
+              <div class="dias-slots">
+                <p class="slots-instruccion">
+                  <mat-icon>touch_app</mat-icon> Seleccioná los horarios en que vas a estar ausente:
+                </p>
+                @for (dia of diasEnRango(); track dia.fechaStr) {
+                  <div class="dia-bloque">
+                    <div class="dia-header">
+                      <span class="dia-nombre">{{ dia.nombre }}</span>
+                      <button type="button" mat-button class="btn-todo"
+                        [class.activo]="diaCompletoSel(dia.fechaStr, dia.horas)"
+                        (click)="toggleDia(dia.fechaStr, dia.horas)">
+                        {{ diaCompletoSel(dia.fechaStr, dia.horas) ? 'Quitar todo' : 'Todo el día' }}
+                      </button>
+                      @if (cantSel(dia.fechaStr) > 0) {
+                        <span class="cant-badge">{{ cantSel(dia.fechaStr) }}</span>
+                      }
+                    </div>
+                    <div class="slots-grid">
+                      @for (hora of dia.horas; track hora) {
+                        <button type="button" class="slot-btn"
+                          [class.seleccionado]="horaSeleccionada(dia.fechaStr, hora)"
+                          (click)="toggleHora(dia.fechaStr, hora)">
+                          {{ hora }}
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          }
+
+          <mat-divider style="margin: 12px 0" />
+
+          <button mat-flat-button color="primary" type="submit" class="full-width"
+            [disabled]="form.invalid || loading()">
+            @if (loading()) { <mat-spinner diameter="18" /> }
+            @else { <mat-icon>send</mat-icon> }
             Registrar ausencia
           </button>
+
         </form>
       </mat-card-content>
     </mat-card>
 
-    <!-- Listado de ausencias -->
+    <!-- ── Lista ──────────────────────────────────────────────────────── -->
     <mat-card class="list-card">
       <mat-card-header>
-        <mat-card-title><mat-icon>list</mat-icon> Mis ausencias</mat-card-title>
+        <mat-card-title><mat-icon>list</mat-icon> Mis solicitudes</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         @if (ausencias().length === 0) {
-          <div class="empty-state"><mat-icon>event_available</mat-icon><p>Sin ausencias registradas</p></div>
+          <div class="empty-state">
+            <mat-icon>event_available</mat-icon>
+            <p>Sin ausencias registradas</p>
+          </div>
         }
         @for (aus of ausencias(); track aus.id) {
           <div class="ausencia-item" [class]="'estado-' + aus.estado">
+            <mat-icon class="tipo-icon">{{ getTipoIcon(aus.tipo) }}</mat-icon>
             <div class="aus-info">
-              <strong>{{ aus.tipo | titlecase }}</strong>
-              <span>{{ aus.fechaInicio | fechaHora: 'fecha' }} → {{ aus.fechaFin | fechaHora: 'fecha' }}</span>
-              <small>{{ aus.motivo }}</small>
+              <div class="aus-header">
+                <strong>{{ getTipoLabel(aus.tipo) }}</strong>
+                <span class="estado-chip estado-{{ aus.estado }}">
+                  {{ aus.estado === 'aprobado' ? 'Aprobada' : aus.estado === 'rechazado' ? 'Rechazada' : 'Pendiente' }}
+                </span>
+              </div>
+              <span class="aus-fechas">
+                {{ aus.fechaInicio | fechaHora: 'fecha' }}
+                @if ((aus.fechaInicio | fechaHora: 'fecha') !== (aus.fechaFin | fechaHora: 'fecha')) {
+                  → {{ aus.fechaFin | fechaHora: 'fecha' }}
+                }
+                · {{ aus.diaCompleto ? 'Día completo' : 'Horario parcial' }}
+              </span>
+              <small class="aus-motivo">{{ aus.motivo }}</small>
+              @if (!aus.diaCompleto && aus.horarioEspecifico?.length) {
+                <div class="horario-esp">
+                  @for (he of aus.horarioEspecifico; track he.fecha) {
+                    <span class="he-chip">
+                      <mat-icon>schedule</mat-icon> {{ he.fecha }} · {{ he.horas.join(', ') }}
+                    </span>
+                  }
+                </div>
+              }
             </div>
-            <mat-chip [color]="aus.estado === 'aprobado' ? 'primary' : aus.estado === 'rechazado' ? 'warn' : ''">
-              {{ aus.estado | titlecase }}
-            </mat-chip>
           </div>
         }
       </mat-card-content>
     </mat-card>
+
   </div>
 
   }

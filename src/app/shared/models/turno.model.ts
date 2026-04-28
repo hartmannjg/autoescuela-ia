@@ -4,7 +4,6 @@ export type TurnoEstado =
   | 'PENDIENTE_CONFIRMACION'
   | 'CONFIRMADA'
   | 'RECHAZADA'
-  | 'REPROGRAMADA'
   | 'COMPLETADA'
   | 'CANCELADA'
   | 'AUSENTE';

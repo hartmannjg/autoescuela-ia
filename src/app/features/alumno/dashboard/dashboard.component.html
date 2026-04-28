@@ -14,8 +14,17 @@
 
   <!-- Header -->
   <div class="page-header">
-    <h2>Hola, {{ (user()?.nombre?.split(' ') ?? [''])[0] }} 👋</h2>
-    <p>Aquí está el resumen de tu cuenta</p>
+    <div>
+      <h2>Hola, {{ (user()?.nombre?.split(' ') ?? [''])[0] }} 👋</h2>
+      <p>Aquí está el resumen de tu cuenta</p>
+    </div>
+    <div class="nivel-badge" [style.background]="nivelAlumno().color">
+      <span class="nivel-emoji">{{ nivelAlumno().emoji }}</span>
+      <div class="nivel-badge-info">
+        <span class="nivel-titulo">{{ nivelAlumno().titulo }}</span>
+        <span class="nivel-subtitulo">{{ nivelAlumno().subtitulo }}</span>
+      </div>
+    </div>
   </div>
 
   <!-- Tarjetas de saldo -->
@@ -56,10 +65,32 @@
               <span class="stat-lbl">Completadas</span>
             </div>
           </div>
+          @if (plan.maxClasesPorDia) {
+            <div class="plan-limite">
+              <mat-icon>calendar_today</mat-icon>
+              <span>Máx. <strong>{{ plan.maxClasesPorDia }}</strong> clase{{ plan.maxClasesPorDia !== 1 ? 's' : '' }} por día</span>
+            </div>
+          }
+          <div class="plan-limite">
+            <mat-icon>date_range</mat-icon>
+            <span>De <strong>{{ plan.minClasesPorSemana }}</strong> a <strong>{{ plan.maxClasesPorSemana }}</strong> clases por semana</span>
+          </div>
+          <div class="plan-limite">
+            <mat-icon>autorenew</mat-icon>
+            <span>Hasta <strong>{{ maxReagendas() }}</strong> reagenda{{ maxReagendas() !== 1 ? 's' : '' }} por semana</span>
+          </div>
           <div class="vencimiento">
             <mat-icon>schedule</mat-icon>
             Vence: {{ plan.fechaFin | fechaHora: 'fecha' }}
           </div>
+          @if (ritmoSugerido(); as ritmo) {
+            @if (!ritmo.vencido) {
+              <div class="ritmo-info" [class.ritmo-warn]="ritmo.clasesPorSemana > plan.maxClasesPorSemana">
+                <mat-icon>{{ ritmo.clasesPorSemana <= plan.maxClasesPorSemana ? 'trending_up' : 'warning' }}</mat-icon>
+                <span>Necesitás <strong>{{ ritmo.clasesPorSemana }} clase/sem</strong> para terminar a tiempo</span>
+              </div>
+            }
+          }
         </mat-card-content>
       </mat-card>
     }

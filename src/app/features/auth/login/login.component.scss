@@ -1,17 +1,218 @@
+// ── Atardecer urbano ──────────────────────────────────────────────────────
 .login-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
   padding: 16px;
+  position: relative;
+  overflow: hidden;
+
+  // Cielo al atardecer: cenit índigo → granate → rojo carmesí → naranja → dorado
+  background:
+    radial-gradient(ellipse 90% 45% at 50% 100%, rgba(255,220,30,.60) 0%, transparent 62%),
+    linear-gradient(180deg,
+      #0d0525  0%,
+      #1e0840 10%,
+      #3b1020 22%,
+      #6e1515 35%,
+      #c52a18 50%,
+      #e64a19 62%,
+      #ff6d00 73%,
+      #ff9100 83%,
+      #ffc400 92%,
+      #fff176 100%
+    );
+
+  // Corona solar + brillo difuso en el horizonte
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: 32%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 150%;
+    height: 360px;
+    background:
+      radial-gradient(ellipse 32% 65% at 50% 100%,
+        rgba(255,255,160,.70) 0%,
+        rgba(255,200,0,.45)   25%,
+        rgba(220,60,0,.20)    55%,
+        transparent           78%
+      ),
+      radial-gradient(ellipse 95% 55% at 50% 100%,
+        rgba(255,100,0,.22) 0%,
+        transparent          65%
+      );
+    filter: blur(22px);
+    pointer-events: none;
+    animation: sun-pulse 6s ease-in-out infinite alternate;
+  }
+
+  // Bruma atmosférica lateral (calidez ambiental)
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 55% 28% at 12% 68%, rgba(255,70,0,.14) 0%, transparent 60%),
+      radial-gradient(ellipse 55% 28% at 88% 68%, rgba(255,70,0,.14) 0%, transparent 60%);
+    pointer-events: none;
+  }
 }
 
+// ── Skyline negro contra el atardecer ──────────────────────────────────────
+.skyline {
+  position: absolute;
+  bottom: 32%;
+  left: 0; right: 0;
+  height: 200px;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(to top, #060010 0%, rgba(8,2,18,.90) 55%, transparent 100%);
+  clip-path: polygon(
+    0% 100%, 0% 78%,
+    3%  78%,  3%  60%,  5%  60%,  5%  72%,
+    7%  72%,  7%  46%,  9%  46%,
+    9%  36%,  9.4% 36%, 9.4% 24%, 9.8% 24%, 9.8% 36%, 10.2% 36%,
+    10.2% 65%, 12% 65%,
+    12% 44%, 14% 44%, 14% 58%, 16% 58%,
+    16% 26%, 17% 26%, 17% 18%, 17.4% 18%, 17.4% 10%, 17.8% 10%, 17.8% 18%, 18.2% 18%, 18.2% 26%, 20% 26%,
+    20% 52%, 22% 52%,
+    22% 33%, 24% 33%, 24% 50%, 26% 50%,
+    26% 20%, 28% 20%, 28% 30%,
+    28% 12%, 28.4% 12%, 28.4% 4%,  28.8% 4%, 28.8% 0%, 29.2% 0%, 29.2% 4%, 29.6% 4%, 29.6% 12%, 30% 12%,
+    30% 20%, 32% 20%, 32% 48%, 34% 48%,
+    34% 30%, 36% 30%, 36% 52%, 38% 52%,
+    38% 38%, 40% 38%, 40% 55%, 42% 55%,
+    42% 38%,
+    /* TORRE CENTRAL */
+    44% 38%, 44% 8%, 44.5% 8%, 44.5% 2%, 45% 2%, 45% 0%, 45.5% 0%, 45.5% 2%, 46% 2%, 46% 8%, 46.5% 8%,
+    46.5% 38%, 48% 38%, 48% 55%, 50% 55%,
+    50% 38%, 52% 38%, 52% 52%, 54% 52%,
+    54% 30%, 56% 30%, 56% 48%, 58% 48%,
+    58% 20%, 60% 20%, 60% 12%, 60.4% 12%, 60.4% 4%, 60.8% 4%, 60.8% 0%, 61.2% 0%, 61.2% 4%, 61.6% 4%, 61.6% 12%, 62% 12%,
+    62% 20%, 64% 20%, 64% 50%, 66% 50%,
+    66% 33%, 68% 33%, 68% 52%, 70% 52%,
+    70% 26%, 71.8% 26%, 71.8% 18%, 72.2% 18%, 72.2% 10%, 72.6% 10%, 72.6% 18%, 73% 18%, 73% 26%, 74% 26%,
+    74% 58%, 76% 58%, 76% 44%, 78% 44%,
+    78% 65%, 79.8% 65%,
+    79.8% 36%, 80.2% 36%, 80.2% 24%, 80.6% 24%, 80.6% 36%, 81% 36%,
+    81% 46%, 83% 46%, 83% 72%, 85% 72%,
+    85% 60%, 87% 60%, 87% 78%, 89% 78%,
+    89% 65%, 91% 65%, 91% 72%, 93% 72%,
+    93% 58%, 95% 58%, 95% 70%, 97% 70%,
+    97% 78%, 100% 78%,
+    100% 100%
+  );
+}
+
+// ── Luces de ciudad encendiéndose al atardecer ────────────────────────────
+.street-lights {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background-image:
+    radial-gradient(circle 52px at  7% 90%, rgba(255,185,55,.65) 0%, transparent 100%),
+    radial-gradient(circle 35px at 13% 80%, rgba(255,178,48,.48) 0%, transparent 100%),
+    radial-gradient(circle 22px at 20% 70%, rgba(255,170,42,.34) 0%, transparent 100%),
+    radial-gradient(circle 13px at 26% 59%, rgba(255,162,36,.24) 0%, transparent 100%),
+    radial-gradient(circle  8px at 33% 49%, rgba(255,155,30,.17) 0%, transparent 100%),
+    radial-gradient(circle  5px at 39% 40%, rgba(255,148,25,.12) 0%, transparent 100%),
+    radial-gradient(circle 52px at 93% 90%, rgba(255,185,55,.65) 0%, transparent 100%),
+    radial-gradient(circle 35px at 87% 80%, rgba(255,178,48,.48) 0%, transparent 100%),
+    radial-gradient(circle 22px at 80% 70%, rgba(255,170,42,.34) 0%, transparent 100%),
+    radial-gradient(circle 13px at 74% 59%, rgba(255,162,36,.24) 0%, transparent 100%),
+    radial-gradient(circle  8px at 67% 49%, rgba(255,155,30,.17) 0%, transparent 100%),
+    radial-gradient(circle  5px at 61% 40%, rgba(255,148,25,.12) 0%, transparent 100%);
+}
+
+// ── Ruta en perspectiva ────────────────────────────────────────────────────
+.road-scene {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+
+  // Asfalto con tinte cálido del atardecer
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 68vh;
+    background: linear-gradient(0deg, #0e070a 0%, #160c10 35%, #1e1018 65%, #241420 100%);
+    clip-path: polygon(44% 0%, 56% 0%, 100% 100%, 0% 100%);
+  }
+
+  // Reflejo cálido del atardecer en el asfalto
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 68vh;
+    background: radial-gradient(
+      ellipse 30% 55% at 50% 4%,
+      rgba(255,140,30,.22) 0%,
+      rgba(200,60,0,.10)   45%,
+      transparent          72%
+    );
+    clip-path: polygon(44% 0%, 56% 0%, 100% 100%, 0% 100%);
+  }
+}
+
+// Línea central — balizas blancas estáticas
+.lane-center {
+  position: absolute;
+  bottom: 0;
+  left: calc(50% - 3px);
+  width: 6px;
+  height: 68vh;
+  z-index: 4;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent          0px,
+    transparent         36px,
+    rgba(255,255,255,.88) 36px,
+    rgba(255,255,255,.88) 76px
+  );
+}
+
+// ── Card — vidrio oscuro con acento rojo-ámbar ─────────────────────────────
 .login-card {
+  position: relative;
+  z-index: 10;
   width: 100%;
   max-width: 420px;
   border-radius: 16px !important;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3) !important;
+  background: rgba(10, 3, 20, 0.84) !important;
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  box-shadow:
+    0 32px 80px rgba(0,0,0,.78),
+    0 0 0 1px rgba(230,74,25,.35),
+    0 0 70px rgba(180,30,0,.22) !important;
+
+  // Labels de campos
+  .mat-mdc-floating-label,
+  mat-label { color: #ffc400 !important; }
+
+  // Texto ingresado
+  .mat-mdc-input-element,
+  input.mat-mdc-input-element { color: #fff !important; caret-color: #ffc400; }
+
+  // Placeholder
+  input::placeholder { color: rgba(255,200,130,.35) !important; }
+
+  // Borde + label al enfocar (reposo → ver styles.scss global)
+  .mat-mdc-form-field.mat-focused .mat-mdc-floating-label { color: #ffc400 !important; }
+
+  // Íconos del form
+  mat-icon { color: rgba(255,196,0,.80); }
+
+  // Error
+  mat-error { color: #ff8a65 !important; }
 }
 
 .logo-section {
@@ -19,59 +220,49 @@
   width: 100%;
   padding: 24px 0 8px;
 
-  .logo-img {
-    height: 72px;
-    width: auto;
-    border-radius: 12px;
-    object-fit: contain;
-  }
+  .logo-img { height: 96px; width: auto; border-radius: 12px; object-fit: contain; mix-blend-mode: lighten; }
 
   h1 {
-    margin: 8px 0 4px;
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #1a237e;
+    margin: 8px 0 4px; font-size: 1.8rem; font-weight: 700;
+    color: #ffc400;
+    text-shadow: 0 2px 16px rgba(220,60,0,.65), 0 0 40px rgba(255,180,0,.30);
   }
-
-  p {
-    margin: 0;
-    color: #666;
-    font-size: 0.9rem;
-  }
+  p { margin: 0; color: rgba(255,190,100,.72); font-size: 0.9rem; }
 }
 
-mat-card-content {
-  padding: 16px 24px 24px !important;
-}
+mat-card-content { padding: 16px 24px 24px !important; }
 
-.full-width {
-  width: 100%;
-}
+.full-width { width: 100%; }
 
 .submit-btn {
-  height: 48px;
-  font-size: 1rem;
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  height: 48px; font-size: 1rem; font-weight: 600; margin-top: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+
+  // Sobreescribir colores del botón primary para el tema atardecer
+  &.mat-mdc-raised-button {
+    --mdc-protected-button-container-color: #c62828;
+    --mdc-protected-button-label-text-color: #ffc400;
+    background: linear-gradient(135deg, #c62828 0%, #e64a19 55%, #ff6d00 100%) !important;
+    box-shadow: 0 4px 20px rgba(198,40,40,.50) !important;
+
+    .mdc-button__label { color: #ffc400 !important; }
+
+    &:hover:not([disabled]) {
+      background: linear-gradient(135deg, #b71c1c 0%, #d84315 55%, #e65100 100%) !important;
+    }
+    &[disabled] { opacity: .45; }
+  }
 }
 
 .links {
   margin-top: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  color: #666;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  font-size: 0.9rem; color: rgba(255,195,100,.60);
+  button[mat-button] { color: #ffc400 !important; font-weight: 600; }
+}
 
-  a {
-    color: #1a237e;
-    text-decoration: none;
-    font-weight: 600;
-
-    &:hover { text-decoration: underline; }
-  }
+// ── Animaciones ────────────────────────────────────────────────────────────
+@keyframes sun-pulse {
+  0%   { opacity: .78; transform: translateX(-50%) scaleX(.90); }
+  100% { opacity: 1;   transform: translateX(-50%) scaleX(1.10); }
 }

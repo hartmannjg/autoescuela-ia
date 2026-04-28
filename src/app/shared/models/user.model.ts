@@ -14,6 +14,8 @@ export interface PlanContratado {
   valor: number;
   maxClasesPorDia: number | null; // null = sin límite
   maxClasesPorSemana: number;
+  minClasesPorSemana: number; // mínimo semanal para no penalizar y calcular vencimiento
+  semanasInactivas?: number; // semanas consecutivas sin agendar ninguna clase
 }
 
 export interface CreditoIndividual {

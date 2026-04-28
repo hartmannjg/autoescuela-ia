@@ -1,146 +1,438 @@
 <div class="reportes-page">
+
   <div class="page-header">
-    <div>
-      <h2>Reportes</h2>
-      <p>Estadísticas y análisis del período</p>
-    </div>
+    <h2>Reportes</h2>
+    <p>Estadísticas y análisis</p>
   </div>
 
-  <!-- Filtro de período -->
-  <mat-card class="filtro-card">
-    <mat-card-header>
-      <mat-card-title><mat-icon>date_range</mat-icon> Período</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <div class="filtro-row">
-        <mat-form-field appearance="outline">
-          <mat-label>Desde</mat-label>
-          <input matInput [matDatepicker]="pickerDesde" [value]="desde()" (dateChange)="desde.set($event.value)" />
-          <mat-datepicker-toggle matIconSuffix [for]="pickerDesde" />
-          <mat-datepicker #pickerDesde />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Hasta</mat-label>
-          <input matInput [matDatepicker]="pickerHasta" [value]="hasta()" (dateChange)="hasta.set($event.value)" />
-          <mat-datepicker-toggle matIconSuffix [for]="pickerHasta" />
-          <mat-datepicker #pickerHasta />
-        </mat-form-field>
-        <button mat-raised-button color="primary" class="generar-btn" (click)="generarReporte()" [disabled]="cargando()">
-          @if (cargando()) {
-            <mat-spinner diameter="20" />
-          } @else {
-            <ng-container><mat-icon>bar_chart</mat-icon> Generar reporte</ng-container>
-          }
-        </button>
+  <!-- ── Selector de tipo de reporte ── -->
+  <div class="reporte-selector">
+    @for (t of tiposReporte(); track t.id) {
+      <div class="reporte-card" [class.activo]="reporteActivo() === t.id" (click)="reporteActivo.set(t.id)">
+        <mat-icon>{{ t.icon }}</mat-icon>
+        <span class="card-titulo">{{ t.label }}</span>
+        <span class="card-desc">{{ t.desc }}</span>
       </div>
-    </mat-card-content>
-  </mat-card>
+    }
+  </div>
 
-  @if (reporte(); as r) {
-
-    <!-- KPIs -->
-    <div class="kpis-grid">
-      <mat-card class="kpi-card">
-        <mat-card-content>
-          <mat-icon color="primary">school</mat-icon>
-          <span class="num">{{ r.totalClases }}</span>
-          <span class="lbl">Total clases</span>
-        </mat-card-content>
-      </mat-card>
-      <mat-card class="kpi-card success">
-        <mat-card-content>
-          <mat-icon>check_circle</mat-icon>
-          <span class="num">{{ r.clasesCompletadas }}</span>
-          <span class="lbl">Completadas ({{ tasaCompletadas }}%)</span>
-        </mat-card-content>
-      </mat-card>
-      <mat-card class="kpi-card warn">
-        <mat-card-content>
-          <mat-icon>person_off</mat-icon>
-          <span class="num">{{ r.clasesAusentes }}</span>
-          <span class="lbl">Ausencias ({{ tasaAusencia }}%)</span>
-        </mat-card-content>
-      </mat-card>
-      <mat-card class="kpi-card muted">
-        <mat-card-content>
-          <mat-icon>cancel</mat-icon>
-          <span class="num">{{ r.clasesCanceladas }}</span>
-          <span class="lbl">Canceladas</span>
-        </mat-card-content>
-      </mat-card>
-    </div>
-
-    <!-- Barra de estados -->
-    <mat-card class="chart-card">
-      <mat-card-header>
-        <mat-card-title><mat-icon>pie_chart</mat-icon> Distribución de estados</mat-card-title>
-      </mat-card-header>
+  <!-- ── Navegación de mes (instructor / alumno / ocupación) ── -->
+  @if (reporteActivo() !== 'planes') {
+    <mat-card class="filtro-card">
       <mat-card-content>
-        @if (r.totalClases > 0) {
-          <div class="stacked-bar">
-            <div class="bar-segment success" [style.width]="getBarWidth(r.clasesCompletadas, r.totalClases)"
-              [title]="'Completadas: ' + r.clasesCompletadas"></div>
-            <div class="bar-segment warn" [style.width]="getBarWidth(r.clasesAusentes, r.totalClases)"
-              [title]="'Ausentes: ' + r.clasesAusentes"></div>
-            <div class="bar-segment muted" [style.width]="getBarWidth(r.clasesCanceladas, r.totalClases)"
-              [title]="'Canceladas: ' + r.clasesCanceladas"></div>
+        <div class="mes-filtros">
+          <div class="mes-nav">
+            <button mat-icon-button (click)="mesOffset.update(v => v - 1)" matTooltip="Mes anterior">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            <span class="mes-label">{{ mesLabel() }}</span>
+            <button mat-icon-button (click)="mesOffset.update(v => v + 1)" [disabled]="mesOffset() >= 0" matTooltip="Mes siguiente">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
           </div>
-          <div class="bar-legend">
-            <span class="legend-item"><span class="dot success"></span> Completadas {{ tasaCompletadas }}%</span>
-            <span class="legend-item"><span class="dot warn"></span> Ausencias {{ tasaAusencia }}%</span>
-            <span class="legend-item"><span class="dot muted"></span> Canceladas {{ 100 - tasaCompletadas - tasaAusencia }}%</span>
-          </div>
-        } @else {
-          <p class="no-data">Sin datos para el período seleccionado</p>
-        }
+
+          @if (reporteActivo() === 'instructor') {
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field-filtro">
+              <mat-label>Filtrar instructor</mat-label>
+              <mat-select [ngModel]="filtroInstructor()" (ngModelChange)="filtroInstructor.set($event)">
+                <mat-option value="">Todos</mat-option>
+                @for (i of instructores(); track i.uid) {
+                  <mat-option [value]="i.uid">{{ i.nombre }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <div class="export-actions">
+              <button mat-stroked-button (click)="exportarInstructoresExcel()" [disabled]="filasInstVisibles().length === 0"><mat-icon>table_view</mat-icon> Excel</button>
+              <button mat-stroked-button (click)="exportarInstructoresPDF()"   [disabled]="filasInstVisibles().length === 0"><mat-icon>picture_as_pdf</mat-icon> PDF</button>
+            </div>
+          }
+
+          @if (reporteActivo() === 'alumno') {
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field-filtro">
+              <mat-label>Filtrar alumno</mat-label>
+              <mat-select [ngModel]="filtroAlumno()" (ngModelChange)="filtroAlumno.set($event)">
+                <mat-option value="">Todos</mat-option>
+                @for (a of alumnos(); track a.uid) {
+                  <mat-option [value]="a.uid">{{ a.nombre }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <div class="export-actions">
+              <button mat-stroked-button (click)="exportarAlumnosExcel()" [disabled]="filasAlumnoVisibles().length === 0"><mat-icon>table_view</mat-icon> Excel</button>
+            </div>
+          }
+
+          @if (reporteActivo() === 'ocupacion') {
+            <div class="export-actions">
+              <button mat-stroked-button (click)="exportarOcupacionExcel()" [disabled]="filasOcup().length === 0"><mat-icon>table_view</mat-icon> Excel</button>
+            </div>
+          }
+
+          @if (reporteActivo() === 'ingresos') {
+            <div class="agrup-toggle">
+              <button [class.activo]="agrupacionIngresos() === 'dia'"    (click)="agrupacionIngresos.set('dia')">Día</button>
+              <button [class.activo]="agrupacionIngresos() === 'semana'" (click)="agrupacionIngresos.set('semana')">Semana</button>
+              <button [class.activo]="agrupacionIngresos() === 'mes'"    (click)="agrupacionIngresos.set('mes')">Mes</button>
+            </div>
+            <div class="export-actions">
+              <button mat-stroked-button (click)="exportarIngresosExcel()" [disabled]="cobrosRaw().length === 0"><mat-icon>table_view</mat-icon> Excel</button>
+            </div>
+          }
+        </div>
       </mat-card-content>
     </mat-card>
+  }
 
-    <!-- Temas frecuentes -->
-    @if (r.temasFrecuentes.length > 0) {
-      <mat-card class="chart-card">
-        <mat-card-header>
-          <mat-card-title><mat-icon>topic</mat-icon> Temas más dictados</mat-card-title>
-        </mat-card-header>
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- Reporte 1: Clases por instructor                            -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  @if (reporteActivo() === 'instructor') {
+    @if (cargandoInst()) {
+      <div class="loading-center"><mat-spinner diameter="44" /></div>
+    } @else if (filasInstVisibles().length === 0) {
+      <mat-card class="empty-card"><mat-card-content class="empty-state">
+        <mat-icon>event_note</mat-icon><p>Sin clases en {{ mesLabel() }}</p>
+      </mat-card-content></mat-card>
+    } @else {
+      <div class="kpis-grid">
+        <mat-card class="kpi-card success"><mat-card-content><mat-icon>check_circle</mat-icon><span class="num">{{ totalCompletadasInst() }}</span><span class="lbl">Completadas</span></mat-card-content></mat-card>
+        <mat-card class="kpi-card warn"><mat-card-content><mat-icon>person_off</mat-icon><span class="num">{{ totalAusentesInst() }}</span><span class="lbl">Ausencias alumno</span></mat-card-content></mat-card>
+        <mat-card class="kpi-card muted"><mat-card-content><mat-icon>cancel</mat-icon><span class="num">{{ totalCanceladasInst() }}</span><span class="lbl">Canceladas</span></mat-card-content></mat-card>
+        <mat-card class="kpi-card primary"><mat-card-content><mat-icon>schedule</mat-icon><span class="num">{{ formatMinutos(totalMinutosInst()) }}</span><span class="lbl">Horas impartidas</span></mat-card-content></mat-card>
+      </div>
+      <mat-card class="tabla-card">
         <mat-card-content>
-          <div class="temas-list">
-            @for (t of r.temasFrecuentes; track t.tema) {
-              <div class="tema-row">
-                <span class="tema-nombre">{{ t.tema }}</span>
-                <div class="tema-bar-wrap">
-                  <div class="tema-bar" [style.width]="getBarWidth(t.count, r.temasFrecuentes[0].count)"></div>
-                </div>
-                <span class="tema-count">{{ t.count }}</span>
-              </div>
-            }
-          </div>
+          <table class="inst-tabla">
+            <thead><tr>
+              <th>Instructor</th>
+              <th class="num-col">Completadas</th><th class="num-col">Aus. alumno</th>
+              <th class="num-col">Canceladas</th><th class="num-col">Horas</th><th class="num-col"></th>
+            </tr></thead>
+            <tbody>
+              @for (fila of filasInstVisibles(); track fila.instructorUid) {
+                <tr class="inst-row" (click)="toggleDetalleInst(fila.instructorUid)">
+                  <td class="inst-nombre">
+                    <mat-icon class="expand-icon">{{ expandidosInst().has(fila.instructorUid) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                    {{ getNombreInstructor(fila.instructorUid) }}
+                  </td>
+                  <td class="num-col"><span class="badge completada">{{ fila.completadas }}</span></td>
+                  <td class="num-col"><span class="badge ausente">{{ fila.ausentes }}</span></td>
+                  <td class="num-col"><span class="badge cancelada">{{ fila.canceladas }}</span></td>
+                  <td class="num-col"><strong>{{ formatMinutos(fila.totalMinutos) }}</strong></td>
+                  <td class="num-col"><div class="mini-bar-wrap"><div class="mini-bar" [style.width]="getBarWidth(fila.totalMinutos, totalMinutosInst())"></div></div></td>
+                </tr>
+                @if (expandidosInst().has(fila.instructorUid)) {
+                  <tr class="detalle-header"><td colspan="6"><div class="detalle-inner">
+                    <table class="clases-tabla">
+                      <thead><tr><th>Fecha</th><th>Horario</th><th>Duración</th><th>Alumno</th><th>Estado</th><th>Motivo cancelación</th></tr></thead>
+                      <tbody>
+                        @for (c of fila.clases; track c.fechaStr + c.horaInicio) {
+                          <tr>
+                            <td>{{ c.fechaStr }}</td><td>{{ c.horaInicio }} - {{ c.horaFin }}</td>
+                            <td>{{ c.duracionMinutos }} min</td><td>{{ c.alumnoNombre }}</td>
+                            <td><span class="estado-chip {{ c.estado | lowercase }}">{{ c.estado }}</span></td>
+                            <td class="motivo-cell">{{ c.estado === 'CANCELADA' ? (c.motivo || '—') : '' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div></td></tr>
+                }
+              }
+              <tr class="total-row">
+                <td><strong>TOTAL</strong></td>
+                <td class="num-col"><strong>{{ totalCompletadasInst() }}</strong></td>
+                <td class="num-col"><strong>{{ totalAusentesInst() }}</strong></td>
+                <td class="num-col"><strong>{{ totalCanceladasInst() }}</strong></td>
+                <td class="num-col"><strong>{{ formatMinutos(totalMinutosInst()) }}</strong></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
         </mat-card-content>
       </mat-card>
     }
+  }
 
-    <!-- Exportar -->
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title><mat-icon>download</mat-icon> Exportar</mat-card-title>
-      </mat-card-header>
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- Reporte 2: Actividad por alumno                             -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  @if (reporteActivo() === 'alumno') {
+    @if (cargandoAlumno()) {
+      <div class="loading-center"><mat-spinner diameter="44" /></div>
+    } @else if (filasAlumnoVisibles().length === 0) {
+      <mat-card class="empty-card"><mat-card-content class="empty-state">
+        <mat-icon>school</mat-icon><p>Sin actividad en {{ mesLabel() }}</p>
+      </mat-card-content></mat-card>
+    } @else {
+      <div class="kpis-grid">
+        <mat-card class="kpi-card success"><mat-card-content><mat-icon>check_circle</mat-icon><span class="num">{{ totalCompletadasAlumno() }}</span><span class="lbl">Completadas</span></mat-card-content></mat-card>
+        <mat-card class="kpi-card warn"><mat-card-content><mat-icon>person_off</mat-icon><span class="num">{{ totalAusentesAlumno() }}</span><span class="lbl">Ausencias</span></mat-card-content></mat-card>
+        <mat-card class="kpi-card muted"><mat-card-content><mat-icon>cancel</mat-icon><span class="num">{{ totalCanceladasAlumno() }}</span><span class="lbl">Canceladas</span></mat-card-content></mat-card>
+        <mat-card class="kpi-card primary"><mat-card-content><mat-icon>schedule</mat-icon><span class="num">{{ formatMinutos(totalMinutosAlumno()) }}</span><span class="lbl">Horas cursadas</span></mat-card-content></mat-card>
+      </div>
+      <mat-card class="tabla-card">
+        <mat-card-content>
+          <table class="inst-tabla">
+            <thead><tr>
+              <th>Alumno</th>
+              <th class="num-col">Completadas</th><th class="num-col">Ausencias</th>
+              <th class="num-col">Canceladas</th><th class="num-col">Horas</th><th class="num-col"></th>
+            </tr></thead>
+            <tbody>
+              @for (fila of filasAlumnoVisibles(); track fila.alumnoUid) {
+                <tr class="inst-row" (click)="toggleDetalleAlumno(fila.alumnoUid)">
+                  <td class="inst-nombre">
+                    <mat-icon class="expand-icon">{{ expandidosAlumno().has(fila.alumnoUid) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                    {{ fila.alumnoNombre }}
+                  </td>
+                  <td class="num-col"><span class="badge completada">{{ fila.completadas }}</span></td>
+                  <td class="num-col"><span class="badge ausente">{{ fila.ausentes }}</span></td>
+                  <td class="num-col"><span class="badge cancelada">{{ fila.canceladas }}</span></td>
+                  <td class="num-col"><strong>{{ formatMinutos(fila.totalMinutos) }}</strong></td>
+                  <td class="num-col"><div class="mini-bar-wrap"><div class="mini-bar" [style.width]="getBarWidth(fila.totalMinutos, totalMinutosAlumno())"></div></div></td>
+                </tr>
+                @if (expandidosAlumno().has(fila.alumnoUid)) {
+                  <tr class="detalle-header"><td colspan="6"><div class="detalle-inner">
+                    <table class="clases-tabla">
+                      <thead><tr><th>Fecha</th><th>Horario</th><th>Duración</th><th>Instructor</th><th>Estado</th><th>Motivo cancelación</th></tr></thead>
+                      <tbody>
+                        @for (c of fila.clases; track c.fechaStr + c.horaInicio) {
+                          <tr>
+                            <td>{{ c.fechaStr }}</td><td>{{ c.horaInicio }} - {{ c.horaFin }}</td>
+                            <td>{{ c.duracionMinutos }} min</td><td>{{ getNombreInstructor(c.instructorUid ?? '') }}</td>
+                            <td><span class="estado-chip {{ c.estado | lowercase }}">{{ c.estado }}</span></td>
+                            <td class="motivo-cell">{{ c.estado === 'CANCELADA' ? (c.motivo || '—') : '' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div></td></tr>
+                }
+              }
+              <tr class="total-row">
+                <td><strong>TOTAL</strong></td>
+                <td class="num-col"><strong>{{ totalCompletadasAlumno() }}</strong></td>
+                <td class="num-col"><strong>{{ totalAusentesAlumno() }}</strong></td>
+                <td class="num-col"><strong>{{ totalCanceladasAlumno() }}</strong></td>
+                <td class="num-col"><strong>{{ formatMinutos(totalMinutosAlumno()) }}</strong></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </mat-card-content>
+      </mat-card>
+    }
+  }
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- Reporte 3: Ocupación                                        -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  @if (reporteActivo() === 'ocupacion') {
+    @if (cargandoOcup()) {
+      <div class="loading-center"><mat-spinner diameter="44" /></div>
+    } @else if (filasOcup().length === 0) {
+      <mat-card class="empty-card"><mat-card-content class="empty-state">
+        <mat-icon>event_available</mat-icon><p>Sin datos de ocupación en {{ mesLabel() }}</p>
+      </mat-card-content></mat-card>
+    } @else {
+
+      <!-- KPI global -->
+      <mat-card class="ocup-global-card">
+        <mat-card-content>
+          <div class="ocup-global-top">
+            <div class="ocup-global-num">
+              <span class="ocup-big-pct" [class.alta]="pctOcupacionGlobal() >= 75" [class.media]="pctOcupacionGlobal() >= 40 && pctOcupacionGlobal() < 75">{{ pctOcupacionGlobal() }}%</span>
+              <span class="ocup-big-lbl">ocupación global</span>
+            </div>
+            <div class="ocup-global-detalle">
+              <span><strong>{{ totalSlotsOcupados() }}</strong> slots ocupados</span>
+              <span class="sep">/</span>
+              <span><strong>{{ totalSlotsDisp() }}</strong> disponibles</span>
+              <span class="sep">·</span>
+              <span>{{ totalSlotsDisp() - totalSlotsOcupados() }} libres</span>
+            </div>
+          </div>
+          <div class="ocup-global-bar-wrap">
+            <div class="ocup-global-bar" [class.alta]="pctOcupacionGlobal() >= 75" [class.media]="pctOcupacionGlobal() >= 40 && pctOcupacionGlobal() < 75" [style.width]="pctOcupacionGlobal() + '%'"></div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Desglose por instructor -->
+      <mat-card class="tabla-card">
+        <mat-card-header><mat-card-title><mat-icon>badge</mat-icon> Desglose por instructor</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <table class="inst-tabla">
+            <thead><tr>
+              <th>Instructor</th>
+              <th class="num-col">Disponibles</th>
+              <th class="num-col">Ocupados</th>
+              <th class="num-col">Libres</th>
+              <th>Ocupación</th>
+            </tr></thead>
+            <tbody>
+              @for (fila of filasOcup(); track fila.instructorUid) {
+                <tr>
+                  <td class="inst-nombre">{{ getNombreInstructor(fila.instructorUid) }}</td>
+                  <td class="num-col">{{ fila.slotsDisponibles }}</td>
+                  <td class="num-col"><strong>{{ fila.slotsOcupados }}</strong></td>
+                  <td class="num-col">{{ fila.slotsDisponibles - fila.slotsOcupados }}</td>
+                  <td>
+                    <div class="ocup-row">
+                      <div class="ocup-bar-wrap">
+                        <div class="ocup-bar" [class.alta]="fila.pctOcupacion >= 75" [class.media]="fila.pctOcupacion >= 40 && fila.pctOcupacion < 75" [style.width]="fila.pctOcupacion + '%'"></div>
+                      </div>
+                      <span class="ocup-pct">{{ fila.pctOcupacion }}%</span>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </mat-card-content>
+      </mat-card>
+    }
+  }
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- Reporte 4: Saldo y planes                                   -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  @if (reporteActivo() === 'planes') {
+    <mat-card class="filtro-card">
       <mat-card-content>
-        <div class="export-buttons">
-          <button mat-stroked-button color="primary" (click)="exportarExcel()">
-            <mat-icon>table_view</mat-icon> Exportar Excel
-          </button>
-          <button mat-stroked-button color="warn" (click)="exportarPDF()">
-            <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
-          </button>
+        <div class="mes-filtros">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field-filtro">
+            <mat-label>Filtrar por tipo</mat-label>
+            <mat-select [ngModel]="filtroPlan()" (ngModelChange)="filtroPlan.set($event)">
+              <mat-option value="todos">Todos</mat-option>
+              <mat-option value="plan">Con plan de clases</mat-option>
+              <mat-option value="individual">Clases individuales</mat-option>
+              <mat-option value="vencido">Planes vencidos</mat-option>
+              <mat-option value="sin_plan">Sin saldo</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div class="export-actions">
+            <button mat-stroked-button (click)="exportarPlanesExcel()" [disabled]="filasPlanVisibles().length === 0"><mat-icon>table_view</mat-icon> Excel</button>
+          </div>
         </div>
       </mat-card-content>
     </mat-card>
 
-  } @else if (!cargando()) {
-    <mat-card class="empty-card">
-      <mat-card-content class="empty-state">
-        <mat-icon>bar_chart</mat-icon>
-        <p>Seleccioná un período y generá el reporte</p>
-      </mat-card-content>
-    </mat-card>
+    @if (filasPlanVisibles().length === 0) {
+      <mat-card class="empty-card"><mat-card-content class="empty-state">
+        <mat-icon>credit_card</mat-icon><p>No hay alumnos con ese filtro</p>
+      </mat-card-content></mat-card>
+    } @else {
+      <mat-card class="tabla-card">
+        <mat-card-content>
+          <table class="inst-tabla planes-tabla">
+            <thead><tr>
+              <th>Alumno</th>
+              <th>Tipo de contrato</th>
+              <th class="num-col">Cursadas</th>
+              <th class="num-col">Disponibles</th>
+              <th class="num-col">Uso</th>
+              <th class="num-col">Vencimiento</th>
+            </tr></thead>
+            <tbody>
+              @for (row of filasPlanVisibles(); track row.alumnoUid) {
+                <tr [class.vencido-row]="row.vencido">
+                  <td class="inst-nombre">{{ row.alumnoNombre }}</td>
+                  <td>
+                    <span class="plan-chip" [class.chip-plan]="row.tipoPlan === 'plan'" [class.chip-ind]="row.tipoPlan === 'individual'" [class.chip-sin]="row.tipoPlan === 'sin_plan'">
+                      {{ row.tipoPlan === 'plan' ? row.planNombre : row.tipoPlan === 'individual' ? 'Clases individuales' : 'Sin saldo' }}
+                    </span>
+                  </td>
+                  <td class="num-col"><strong>{{ row.clasesTomadas }}</strong></td>
+                  <td class="num-col">
+                    <span [class.badge]="true" [class.completada]="row.clasesRestantes > 2" [class.ausente]="row.clasesRestantes <= 2 && row.clasesRestantes > 0" [class.cancelada]="row.clasesRestantes === 0">{{ row.clasesRestantes }}</span>
+                  </td>
+                  <td class="num-col">
+                    @if (row.clasesTotales > 0) {
+                      <div class="mini-bar-wrap"><div class="mini-bar prog" [style.width]="getBarWidth(row.clasesTomadas, row.clasesTotales)"></div></div>
+                    }
+                  </td>
+                  <td class="num-col fecha-vence" [class.vencido-txt]="row.vencido">{{ formatFecha(row.fechaFin) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </mat-card-content>
+      </mat-card>
+    }
   }
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- Reporte 5: Ingresos                                         -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  @if (reporteActivo() === 'ingresos') {
+    @if (cargandoIngresos()) {
+      <div class="loading-center"><mat-spinner diameter="44" /></div>
+    } @else if (cobrosRaw().length === 0) {
+      <mat-card class="empty-card"><mat-card-content class="empty-state">
+        <mat-icon>payments</mat-icon><p>Sin ingresos registrados en {{ mesLabel() }}</p>
+      </mat-card-content></mat-card>
+    } @else {
+      <div class="kpis-grid">
+        <mat-card class="kpi-card kpi-ingreso"><mat-card-content><mat-icon>payments</mat-icon><span class="num">${{ kpiTotalIngresos() | number:'1.0-0' }}</span><span class="lbl">Total ingresos</span></mat-card-content></mat-card>
+        <mat-card class="kpi-card kpi-plan"><mat-card-content><mat-icon>card_membership</mat-icon><span class="num">${{ kpiTotalPlanes() | number:'1.0-0' }}</span><span class="lbl">Por planes</span></mat-card-content></mat-card>
+        <mat-card class="kpi-card kpi-ind"><mat-card-content><mat-icon>add_circle</mat-icon><span class="num">${{ kpiTotalIndividual() | number:'1.0-0' }}</span><span class="lbl">Clases individuales</span></mat-card-content></mat-card>
+        <mat-card class="kpi-card muted"><mat-card-content><mat-icon>receipt</mat-icon><span class="num">{{ cobrosRaw().length }}</span><span class="lbl">Transacciones</span></mat-card-content></mat-card>
+      </div>
+      <mat-card class="tabla-card">
+        <mat-card-content>
+          <table class="inst-tabla ingresos-tabla">
+            <thead><tr>
+              <th>Período</th>
+              <th class="num-col">Planes $</th>
+              <th class="num-col">Individuales $</th>
+              <th class="num-col">Total $</th>
+              <th class="num-col"></th>
+            </tr></thead>
+            <tbody>
+              @for (grupo of gruposIngresos(); track grupo.periodoKey) {
+                <tr class="inst-row" (click)="toggleDetalleIngreso(grupo.periodoKey)">
+                  <td class="inst-nombre">
+                    <mat-icon class="expand-icon">{{ expandidosIngreso().has(grupo.periodoKey) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                    {{ grupo.periodoLabel }}
+                  </td>
+                  <td class="num-col monto-planes">${{ grupo.totalPlanes | number:'1.0-0' }}</td>
+                  <td class="num-col monto-ind">${{ grupo.totalIndividual | number:'1.0-0' }}</td>
+                  <td class="num-col"><strong>${{ grupo.total | number:'1.0-0' }}</strong></td>
+                  <td class="num-col"><div class="mini-bar-wrap"><div class="mini-bar" [style.width]="getBarWidth(grupo.total, kpiTotalIngresos())"></div></div></td>
+                </tr>
+                @if (expandidosIngreso().has(grupo.periodoKey)) {
+                  <tr class="detalle-header"><td colspan="5"><div class="detalle-inner">
+                    <table class="clases-tabla">
+                      <thead><tr><th>Fecha</th><th>Alumno</th><th>Descripción</th><th>Tipo</th><th class="num-col">Monto $</th></tr></thead>
+                      <tbody>
+                        @for (tx of grupo.cobros; track tx.id ?? tx.fechaStr + tx.alumnoUid) {
+                          <tr>
+                            <td>{{ tx.fechaStr }}</td>
+                            <td>{{ tx.alumnoNombre }}</td>
+                            <td>{{ tx.descripcion }}</td>
+                            <td><span class="tipo-chip" [class.chip-plan]="tx.tipo === 'plan'" [class.chip-ind]="tx.tipo === 'individual'">{{ tx.tipo === 'plan' ? 'Plan' : 'Individual' }}</span></td>
+                            <td class="num-col monto-cell">${{ tx.monto | number:'1.0-0' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div></td></tr>
+                }
+              }
+              <tr class="total-row">
+                <td><strong>TOTAL</strong></td>
+                <td class="num-col"><strong>${{ kpiTotalPlanes() | number:'1.0-0' }}</strong></td>
+                <td class="num-col"><strong>${{ kpiTotalIndividual() | number:'1.0-0' }}</strong></td>
+                <td class="num-col"><strong>${{ kpiTotalIngresos() | number:'1.0-0' }}</strong></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </mat-card-content>
+      </mat-card>
+    }
+  }
+
 </div>

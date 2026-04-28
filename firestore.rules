@@ -47,8 +47,8 @@ service cloud.firestore {
         (isAlumno() && resource.data.rol == 'instructor')  // alumnos ven instructores para agendar
       );
 
-      // Solo el propio usuario puede crear su perfil (al registrarse)
-      allow create: if request.auth.uid == userId;
+      // El propio usuario puede crear su perfil (registro), o un admin puede crear perfiles de otros
+      allow create: if request.auth.uid == userId || isAdmin();
 
       // Actualización propia (datos básicos) o admin
       allow update: if (
@@ -189,6 +189,14 @@ service cloud.firestore {
     match /configuracion/{docId} {
       allow read: if isLoggedIn();
       allow write: if isAdmin();
+    }
+
+    // ─── Colección: cobros ───────────────────────────────────────────────────
+    match /cobros/{cobroId} {
+      allow read: if isSuperAdmin();
+      allow create: if isAdmin();
+      allow delete: if isAdmin();
+      allow update: if false;
     }
 
     // ─── Colección: mail (Trigger Email extension) ────────────────────────────

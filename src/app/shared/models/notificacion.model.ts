@@ -3,6 +3,7 @@ import { Timestamp } from '@angular/fire/firestore';
 export type TipoNotificacion =
   | 'confirmacion_turno'
   | 'rechazo_turno'
+  | 'cancelacion_turno'
   | 'recordatorio_turno'
   | 'bloqueo_cuenta'
   | 'desbloqueo_cuenta'

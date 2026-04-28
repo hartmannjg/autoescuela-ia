@@ -51,7 +51,4 @@ export class AusenciaService {
     await updateDoc(doc(this.firestore, 'ausencias', id), { estado });
   }
 
-  async asignarReemplazo(id: string, instructorReemplazoUid: string): Promise<void> {
-    await updateDoc(doc(this.firestore, 'ausencias', id), { instructorReemplazoUid });
-  }
 }

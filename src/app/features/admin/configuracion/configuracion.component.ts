@@ -120,8 +120,9 @@ export class ConfiguracionComponent implements OnInit {
       duracionClase:      [p?.duracionClase ?? 80, Validators.required],
       cantidadClases:     [p?.cantidadClases ?? 10, [Validators.required, Validators.min(1)]],
       precio:             [p?.precio ?? 0,   [Validators.required, Validators.min(0)]],
-      maxClasesPorDia:    [p?.maxClasesPorDia ?? null], // null = sin límite
+      maxClasesPorDia:    [p?.maxClasesPorDia ?? null],
       maxClasesPorSemana: [p?.maxClasesPorSemana ?? 3, [Validators.required, Validators.min(1)]],
+      minClasesPorSemana: [p?.minClasesPorSemana ?? 1, [Validators.required, Validators.min(1)]],
       activo:             [p?.activo ?? true],
     });
   }

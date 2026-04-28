@@ -15,8 +15,10 @@ import Swal from 'sweetalert2';
 import { AuthService } from '../../../core/services/auth.service';
 import { AusenciaService } from '../../../core/services/ausencia.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
+import { TurnoService } from '../../../core/services/turno.service';
 import { InstructorAusencia, EstadoAusencia, User } from '../../../shared/models';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
+import { slotKey } from '../../../shared/utils/date-utils';
 
 @Component({
   selector: 'app-ausencias',
@@ -33,6 +35,7 @@ export class AusenciasComponent {
   private authService = inject(AuthService);
   private ausenciaService = inject(AusenciaService);
   private usuarioService = inject(UsuarioService);
+  private turnoService = inject(TurnoService);
 
   readonly sucursalId = this.authService.currentUser()?.sucursalId ?? '';
   readonly filtroEstado = signal<EstadoAusencia | 'todos'>('todos');
@@ -73,10 +76,38 @@ export class AusenciasComponent {
       confirmButtonText: 'Aprobar',
       confirmButtonColor: '#2e7d32',
     });
-    if (conf.isConfirmed) {
-      await this.ausenciaService.actualizarEstado(ausencia.id!, 'aprobado');
-      Swal.fire({ icon: 'success', title: 'Ausencia aprobada', timer: 1500, showConfirmButton: false });
+    if (!conf.isConfirmed) return;
+
+    await this.ausenciaService.actualizarEstado(ausencia.id!, 'aprobado');
+
+    const fechas = TurnoService.expandirRango(
+      ausencia.fechaInicio.toDate().toISOString().slice(0, 10),
+      ausencia.fechaFin.toDate().toISOString().slice(0, 10),
+    );
+
+    let slotsEspecificos: Set<string> | undefined;
+    if (!ausencia.diaCompleto && ausencia.horarioEspecifico?.length) {
+      slotsEspecificos = new Set<string>();
+      for (const he of ausencia.horarioEspecifico) {
+        for (const hora of he.horas) {
+          slotsEspecificos.add(slotKey(he.fecha, hora));
+        }
+      }
     }
+
+    const motivo = `Ausencia del instructor: ${ausencia.tipo}${ausencia.motivo ? ' — ' + ausencia.motivo : ''}`;
+    const cancelados = await this.turnoService.cancelarTurnosPorEvento({
+      fechas,
+      sucursalId: ausencia.sucursalId,
+      motivo,
+      instructorUid: ausencia.instructorUid,
+      slotsEspecificos,
+    });
+
+    const msg = cancelados > 0
+      ? `Ausencia aprobada. ${cancelados} clase${cancelados !== 1 ? 's' : ''} cancelada${cancelados !== 1 ? 's' : ''} y crédito devuelto a los alumnos.`
+      : 'Ausencia aprobada. No había clases activas afectadas.';
+    Swal.fire({ icon: 'success', title: 'Aprobada', text: msg, timer: 3000, showConfirmButton: false });
   }
 
   async rechazar(ausencia: InstructorAusencia): Promise<void> {
@@ -90,23 +121,6 @@ export class AusenciasComponent {
     });
     if (conf.isConfirmed) {
       await this.ausenciaService.actualizarEstado(ausencia.id!, 'rechazado');
-    }
-  }
-
-  async asignarReemplazo(ausencia: InstructorAusencia): Promise<void> {
-    const disponibles = this.instructores().filter(i => i.uid !== ausencia.instructorUid && i.activo);
-    const options = disponibles.reduce((acc, i) => ({ ...acc, [i.uid]: i.nombre }), {} as Record<string, string>);
-    const { value: uid } = await Swal.fire({
-      title: 'Asignar instructor reemplazo',
-      input: 'select',
-      inputOptions: options,
-      showCancelButton: true,
-      confirmButtonText: 'Asignar',
-      confirmButtonColor: '#1a237e',
-    });
-    if (uid) {
-      await this.ausenciaService.asignarReemplazo(ausencia.id!, uid);
-      Swal.fire({ icon: 'success', title: 'Reemplazo asignado', timer: 1500, showConfirmButton: false });
     }
   }
 

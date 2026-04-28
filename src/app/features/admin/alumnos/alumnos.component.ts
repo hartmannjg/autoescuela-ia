@@ -17,8 +17,8 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { initializeApp, deleteApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, setPersistence, inMemoryPersistence } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, Timestamp, Firestore } from '@angular/fire/firestore';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, inMemoryPersistence } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp, Timestamp, Firestore } from '@angular/fire/firestore';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../../core/services/auth.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
@@ -28,6 +28,7 @@ import { MonedaPipe } from '../../../shared/pipes/moneda.pipe';
 import { DuracionPipe } from '../../../shared/pipes/duracion.pipe';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 import { environment } from '../../../../environments/environment';
+import { calcularFechaFinPlan } from '../../../shared/utils/date-utils';
 
 @Component({
   selector: 'app-alumnos',
@@ -96,7 +97,7 @@ export class AlumnosComponent implements OnInit {
     nombre:             ['', [Validators.required, Validators.minLength(3)]],
     email:              ['', [Validators.required, Validators.email]],
     password:           ['', [Validators.required, Validators.minLength(6)]],
-    telefono:           [''],
+    telefono:           ['', Validators.required],
     // Crédito individual
     asignarIndividual:  [false],
     clasesIndividuales: [0,  [Validators.min(0)]],
@@ -112,6 +113,18 @@ export class AlumnosComponent implements OnInit {
     ]);
     const precios = this.configService.getPreciosEfectivos(global, override);
     this.planesDisponibles.set(precios.planes.filter(p => p.activo));
+
+    this.form.get('asignarPlan')!.valueChanges.subscribe(val => {
+      const ctrl = this.form.get('planId')!;
+      val ? ctrl.setValidators(Validators.required) : ctrl.clearValidators();
+      ctrl.updateValueAndValidity();
+    });
+
+    this.form.get('asignarIndividual')!.valueChanges.subscribe(val => {
+      const ctrl = this.form.get('clasesIndividuales')!;
+      val ? ctrl.setValidators([Validators.required, Validators.min(1)]) : ctrl.setValidators(Validators.min(0));
+      ctrl.updateValueAndValidity();
+    });
   }
 
   get asignarIndividual() { return this.form.get('asignarIndividual')?.value; }
@@ -132,7 +145,7 @@ export class AlumnosComponent implements OnInit {
   }
 
   async guardar(): Promise<void> {
-    if (this.form.invalid) return;
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     const v = this.form.getRawValue();
     this.guardando.set(true);
 
@@ -140,8 +153,24 @@ export class AlumnosComponent implements OnInit {
     try {
       const secondaryAuth = getAuth(secondaryApp);
       await setPersistence(secondaryAuth, inMemoryPersistence);
-      const cred = await createUserWithEmailAndPassword(secondaryAuth, v.email!, v.password!);
-      const uid = cred.user.uid;
+
+      let uid: string;
+      try {
+        uid = (await createUserWithEmailAndPassword(secondaryAuth, v.email!, v.password!)).user.uid;
+      } catch (authErr: any) {
+        if (authErr.code !== 'auth/email-already-in-use') throw authErr;
+        // El email ya existe en Auth — puede ser cuenta huérfana (borrada de Firestore pero no de Auth).
+        // Intentamos sign-in con las credenciales del form para recuperarla.
+        let recoveredUid: string;
+        try {
+          recoveredUid = (await signInWithEmailAndPassword(secondaryAuth, v.email!, v.password!)).user.uid;
+        } catch {
+          throw new Error('El email ya está registrado en Firebase Authentication con otra contraseña. Para re-agregar este alumno, primero eliminá la cuenta desde la consola de Firebase Auth.');
+        }
+        const existingDoc = await getDoc(doc(this.firestore, 'users', recoveredUid));
+        if (existingDoc.exists()) throw new Error('Ya existe un alumno activo con ese email.');
+        uid = recoveredUid;
+      }
 
       // Determinar tipo de alumno
       const tienePlan = v.asignarPlan && v.planId;
@@ -154,8 +183,8 @@ export class AlumnosComponent implements OnInit {
       if (tienePlan) {
         const plan = this.getPlanSeleccionado()!;
         const hoy = new Date();
-        const fin = new Date(hoy);
-        fin.setMonth(fin.getMonth() + 3);
+        const minSem = plan.minClasesPorSemana ?? 1;
+        const fin = calcularFechaFinPlan(plan.cantidadClases, minSem);
         planContratado = {
           id:               plan.id,
           nombre:           plan.nombre,
@@ -168,6 +197,8 @@ export class AlumnosComponent implements OnInit {
           valor:            plan.precio,
           maxClasesPorDia:  plan.maxClasesPorDia,
           maxClasesPorSemana: plan.maxClasesPorSemana,
+          minClasesPorSemana: minSem,
+          semanasInactivas: 0,
         };
       }
 
@@ -200,10 +231,7 @@ export class AlumnosComponent implements OnInit {
       Swal.fire({ icon: 'success', title: 'Alumno creado', text: `${v.nombre} fue dado de alta correctamente.`, timer: 2000, showConfirmButton: false });
       this.cancelar();
     } catch (e: any) {
-      const msg = e.code === 'auth/email-already-in-use'
-        ? 'Ya existe un usuario con ese email.'
-        : e.message;
-      Swal.fire({ icon: 'error', title: 'Error al crear alumno', text: msg });
+      Swal.fire({ icon: 'error', title: 'Error al crear alumno', text: e.message ?? 'Error inesperado.' });
     } finally {
       await deleteApp(secondaryApp);
       this.guardando.set(false);

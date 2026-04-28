@@ -43,7 +43,10 @@ export class LoginComponent {
         icon: 'error',
         title: 'Error al iniciar sesión',
         text: this.getErrorMessage(error.code ?? error.message),
-        confirmButtonColor: '#1a237e',
+        background: '#1a0a20',
+        color: '#ffc400',
+        confirmButtonColor: '#c62828',
+        iconColor: '#e64a19',
       });
     } finally {
       this.loading.set(false);
@@ -57,13 +60,27 @@ export class LoginComponent {
       inputLabel: 'Tu email',
       inputPlaceholder: 'ejemplo@correo.com',
       confirmButtonText: 'Enviar',
-      confirmButtonColor: '#1a237e',
+      confirmButtonColor: '#c62828',
       showCancelButton: true,
       cancelButtonText: 'Cancelar',
+      background: '#1a0a20',
+      color: '#ffc400',
+      customClass: {
+        input: 'swal-input-sunset',
+        inputLabel: 'swal-label-sunset',
+      },
     });
     if (email) {
       await this.authService.resetPassword(email);
-      Swal.fire({ icon: 'success', title: 'Email enviado', text: 'Revisá tu bandeja de entrada.', confirmButtonColor: '#1a237e' });
+      Swal.fire({
+        icon: 'success',
+        title: 'Email enviado',
+        text: 'Revisá tu bandeja de entrada.',
+        confirmButtonColor: '#c62828',
+        background: '#1a0a20',
+        color: '#ffc400',
+        iconColor: '#ffc400',
+      });
     }
   }
 

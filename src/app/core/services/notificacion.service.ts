@@ -47,6 +47,20 @@ export class NotificacionService {
     });
   }
 
+  noLeidasLista$(userId: string): Observable<Notificacion[]> {
+    return new Observable(observer => {
+      const q = query(
+        this.colRef(),
+        where('userId', '==', userId),
+        where('leida', '==', false),
+        orderBy('creadoEn', 'desc')
+      );
+      return onSnapshot(q, snap => {
+        observer.next(snap.docs.map(d => ({ id: d.id, ...d.data() }) as Notificacion));
+      }, err => observer.error(err));
+    });
+  }
+
   async enviar(
     userId: string,
     tipo: TipoNotificacion,

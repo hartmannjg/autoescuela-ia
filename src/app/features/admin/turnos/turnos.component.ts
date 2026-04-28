@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, effect, untracked } from '@angular/core';
+import { Component, inject, signal, computed, effect, untracked, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,30 +20,37 @@ import { AuthService } from '../../../core/services/auth.service';
 import { TurnoService } from '../../../core/services/turno.service';
 import { NotificacionService } from '../../../core/services/notificacion.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
-import { Turno, User } from '../../../shared/models';
+import { SucursalService } from '../../../core/services/sucursal.service';
+import { Turno, User, Sucursal } from '../../../shared/models';
 import { EstadoTurnoPipe } from '../../../shared/pipes/estado-turno.pipe';
 import { DuracionPipe } from '../../../shared/pipes/duracion.pipe';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 import { dateToStr } from '../../../shared/utils/date-utils';
+import { DisponibilidadGridComponent } from '../../../shared/components/disponibilidad-grid/disponibilidad-grid.component';
 
 @Component({
   selector: 'app-admin-turnos',
   standalone: true,
   imports: [CommonModule, FormsModule, MatCardModule, MatButtonModule, MatIconModule, MatChipsModule,
     MatFormFieldModule, MatSelectModule, MatInputModule, MatProgressSpinnerModule, MatTooltipModule,
-    MatPaginatorModule, MatTabsModule, EstadoTurnoPipe, DuracionPipe, FechaHoraPipe],
+    MatPaginatorModule, MatTabsModule, EstadoTurnoPipe, DuracionPipe, FechaHoraPipe,
+    DisponibilidadGridComponent],
   templateUrl: './turnos.component.html',
   styleUrl: './turnos.component.scss',
 })
 export class AdminTurnosComponent {
-  private authService   = inject(AuthService);
-  private turnoService  = inject(TurnoService);
-  private notifService  = inject(NotificacionService);
+  private authService    = inject(AuthService);
+  private turnoService   = inject(TurnoService);
+  private notifService   = inject(NotificacionService);
   private usuarioService = inject(UsuarioService);
-  private route         = inject(ActivatedRoute);
+  private sucursalService = inject(SucursalService);
+  private route          = inject(ActivatedRoute);
 
-  readonly loadingCancel  = signal<string | null>(null);
-  readonly loadingRestore = signal<string | null>(null);
+  @ViewChild(DisponibilidadGridComponent) private dispGrid?: DisponibilidadGridComponent;
+
+  readonly sucursal = signal<Sucursal | null>(null);
+
+  readonly loadingCancel = signal<string | null>(null);
   readonly pagina   = signal(0);
   readonly pageSize = 25;
 
@@ -140,17 +147,19 @@ export class AdminTurnosComponent {
     const f   = this.filtroInstructor();
     const q   = this.busqueda().toLowerCase().trim();
     const uid = this.filtroAlumnoId();
-    return this.turnos().filter(t => {
-      if (f && t.instructorUid !== f) return false;
-      if (uid && t.alumnoUid !== uid) return false;
-      if (q) {
-        const alumno = this.alumnoMap().get(t.alumnoUid);
-        const nombre = alumno?.nombre?.toLowerCase() ?? '';
-        const email  = alumno?.email?.toLowerCase() ?? '';
-        if (!nombre.includes(q) && !email.includes(q)) return false;
-      }
-      return true;
-    });
+    return this.turnos()
+      .filter(t => {
+        if (f && t.instructorUid !== f) return false;
+        if (uid && t.alumnoUid !== uid) return false;
+        if (q) {
+          const alumno = this.alumnoMap().get(t.alumnoUid);
+          const nombre = alumno?.nombre?.toLowerCase() ?? '';
+          const email  = alumno?.email?.toLowerCase() ?? '';
+          if (!nombre.includes(q) && !email.includes(q)) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => b.fechaStr.localeCompare(a.fechaStr) || a.horaInicio.localeCompare(b.horaInicio));
   });
 
   readonly turnosPaginados = computed(() =>
@@ -174,9 +183,15 @@ export class AdminTurnosComponent {
     return (this.turnosPorFecha().get(dia) ?? []).sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
   });
 
+  readonly instructoresDisponibilidad = computed(() => {
+    const f = this.filtroInstructor();
+    return f ? this.instructores().filter(i => i.uid === f) : this.instructores();
+  });
+
   constructor() {
     const alumnoId = this.route.snapshot.queryParamMap.get('alumnoId');
     if (alumnoId) this.filtroAlumnoId.set(alumnoId);
+    this.sucursalService.getById(this.sucursalId).then(s => this.sucursal.set(s));
 
     effect(() => {
       this.filtroInstructor();
@@ -185,6 +200,13 @@ export class AdminTurnosComponent {
       this.mesOffset();
       untracked(() => { this.pagina.set(0); this.diaSeleccionado.set(null); });
     });
+  }
+
+  limpiarFiltros(): void {
+    this.filtroInstructor.set('');
+    this.busqueda.set('');
+    this.filtroAlumnoId.set('');
+    this.mesOffset.set(0);
   }
 
   get nombreAlumnoFiltro(): string {
@@ -247,6 +269,7 @@ export class AdminTurnosComponent {
         this.notifService.enviar(turno.instructorUid, 'rechazo_turno', 'Clase cancelada',
           `La clase de ${alumnoNombre} del ${fechaLegible} a las ${turno.horaInicio} fue cancelada por el administrador.`, turno.id),
       ]);
+      this.dispGrid?.cargar();
       Swal.fire({ icon: 'success', title: 'Clase cancelada', toast: true, position: 'top-end', showConfirmButton: false, timer: 2500 });
     } catch (e: any) {
       Swal.fire({ icon: 'error', title: 'Error', text: e.message });
@@ -255,27 +278,4 @@ export class AdminTurnosComponent {
     }
   }
 
-  async eliminar(turno: Turno): Promise<void> {
-    const alumnoNombre = this.alumnoMap().get(turno.alumnoUid)?.nombre ?? turno.alumnoUid;
-    const fechaLegible = new Date(turno.fechaStr + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const result = await Swal.fire({
-      title: 'Eliminar turno cancelado',
-      html: `<p>¿Eliminar el turno cancelado de <strong>${alumnoNombre}</strong> del ${fechaLegible} a las ${turno.horaInicio}?</p><p>El saldo ya fue devuelto al alumno cuando se canceló.</p>`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Eliminar',
-      confirmButtonColor: '#c62828',
-      cancelButtonText: 'Volver',
-    });
-    if (!result.isConfirmed) return;
-    this.loadingRestore.set(turno.id!);
-    try {
-      await this.turnoService.eliminarTurnoCancelado(turno.id!);
-      Swal.fire({ icon: 'success', title: 'Turno eliminado', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
-    } catch (e: any) {
-      Swal.fire({ icon: 'error', title: 'Error', text: e.message });
-    } finally {
-      this.loadingRestore.set(null);
-    }
-  }
 }

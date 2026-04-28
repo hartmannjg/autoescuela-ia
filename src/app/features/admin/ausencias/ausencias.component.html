@@ -2,7 +2,7 @@
   <div class="page-header">
     <div>
       <h2>Ausencias de instructores</h2>
-      <p>Gestión de licencias y reemplazos</p>
+      <p>Gestión de licencias y ausencias</p>
     </div>
     @if (pendientesCount() > 0) {
       <span class="badge-pendientes">{{ pendientesCount() }} pendiente{{ pendientesCount() > 1 ? 's' : '' }}</span>
@@ -67,12 +67,6 @@
             <mat-icon>notes</mat-icon>
             <span>{{ a.motivo }}</span>
           </div>
-          @if (a.instructorReemplazoUid) {
-            <div class="detalle-row">
-              <mat-icon color="primary">swap_horiz</mat-icon>
-              <span>Reemplazo: <strong>{{ getNombreInstructor(a.instructorReemplazoUid) }}</strong></span>
-            </div>
-          }
           @if (a.notificarAlumnos) {
             <div class="detalle-row">
               <mat-icon color="accent">notifications</mat-icon>
@@ -83,9 +77,6 @@
 
         @if (a.estado === 'pendiente') {
           <div class="ausencia-actions">
-            <button mat-stroked-button (click)="asignarReemplazo(a)" matTooltip="Asignar reemplazo">
-              <mat-icon>swap_horiz</mat-icon> Reemplazo
-            </button>
             <button mat-stroked-button color="warn" (click)="rechazar(a)">
               <mat-icon>close</mat-icon> Rechazar
             </button>

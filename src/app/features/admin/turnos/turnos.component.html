@@ -42,10 +42,37 @@
     </mat-card-content>
   </mat-card>
 
+  <!-- Resumen de filtros activos ──────────────────────────────────────── -->
+  @if (filtroInstructor() || busqueda() || filtroAlumnoId() || mesOffset() !== 0) {
+    <div class="filtros-activos">
+      <mat-icon class="filtros-icon">filter_list</mat-icon>
+      <span class="filtros-label">Filtrando por:</span>
+      @if (filtroInstructor()) {
+        <span class="filtro-chip"><mat-icon>directions_car</mat-icon>{{ instructorMap().get(filtroInstructor())?.nombre }}</span>
+      }
+      @if (filtroAlumnoId()) {
+        <span class="filtro-chip"><mat-icon>person</mat-icon>{{ nombreAlumnoFiltro }}</span>
+      }
+      @if (busqueda()) {
+        <span class="filtro-chip"><mat-icon>search</mat-icon>{{ busqueda() }}</span>
+      }
+      @if (mesOffset() !== 0) {
+        <span class="filtro-chip"><mat-icon>calendar_month</mat-icon>{{ mesLabel() }}</span>
+      }
+      <button mat-button class="filtros-limpiar" (click)="limpiarFiltros()">
+        <mat-icon>close</mat-icon>Limpiar
+      </button>
+    </div>
+  }
+
   <mat-tab-group>
 
     <!-- ── Tab Calendario ────────────────────────────────────────────── -->
-    <mat-tab label="Calendario">
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">calendar_month</mat-icon>
+        <span>Agendado</span>
+      </ng-template>
       <div class="tab-content">
 
         <div class="cal-header">
@@ -143,8 +170,12 @@
       </div>
     </mat-tab>
 
-    <!-- ── Tab Detalle ────────────────────────────────────────────────── -->
-    <mat-tab label="Detalle ({{ turnosFiltrados().length }})">
+    <!-- ── Tab Actividad ────────────────────────────────────────────── -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">format_list_bulleted</mat-icon>
+        <span>Actividad @if (turnosFiltrados().length) { <span class="tab-badge">{{ turnosFiltrados().length }}</span> }</span>
+      </ng-template>
       <div class="tab-content">
 
         @if (loadingTurnos()) {
@@ -187,13 +218,6 @@
                 @else { <mat-icon>cancel</mat-icon> }
               </button>
             }
-            @if (turno.estado === 'CANCELADA') {
-              <button mat-icon-button color="warn" (click)="eliminar(turno)"
-                [disabled]="loadingRestore() === turno.id" matTooltip="Eliminar turno cancelado">
-                @if (loadingRestore() === turno.id) { <mat-spinner diameter="18" /> }
-                @else { <mat-icon>delete_outline</mat-icon> }
-              </button>
-            }
           </div>
         }
         @if (turnosFiltrados().length === 0) {
@@ -210,6 +234,21 @@
           </mat-paginator>
         }
 
+        }
+      </div>
+    </mat-tab>
+
+    <!-- ── Tab Disponibilidad ───────────────────────────────────────── -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">event_available</mat-icon>
+        <span>Disponibilidad</span>
+      </ng-template>
+      <div class="tab-content">
+        @if (!loadingBase()) {
+          <app-disponibilidad-grid
+            [sucursal]="sucursal()"
+            [instructores]="instructoresDisponibilidad()" />
         }
       </div>
     </mat-tab>

@@ -60,7 +60,7 @@ export class AdminLayoutComponent implements OnInit {
     { initialValue: 0 }
   );
   readonly notificaciones = toSignal(
-    this.notifService.notificaciones$(this.authService.currentUser()?.uid ?? ''),
+    this.notifService.noLeidasLista$(this.authService.currentUser()?.uid ?? ''),
     { initialValue: [] as Notificacion[] }
   );
 
@@ -78,16 +78,17 @@ export class AdminLayoutComponent implements OnInit {
       bloqueo_cuenta: 'block',            desbloqueo_cuenta: 'lock_open',
       feedback_recibido: 'star',          clase_completada: 'school',
       saldo_bajo: 'warning',              plan_vencimiento: 'event_busy',
+      cancelacion_turno: 'event_busy',
     };
     return map[tipo] ?? 'notifications';
   }
 
   readonly navItems = [
-    { label: 'Dashboard', icon: 'dashboard', route: '/admin/dashboard' },
+    { label: 'Principal', icon: 'dashboard', route: '/admin/dashboard' },
     { label: 'Alumnos', icon: 'people', route: '/admin/alumnos' },
     { label: 'Instructores', icon: 'badge', route: '/admin/instructores' },
-    { label: 'Turnos', icon: 'calendar_month', route: '/admin/turnos' },
-    { label: 'Agendar clase', icon: 'event_available', route: '/admin/agenda-alumno' },
+    { label: 'Clases y turnos', icon: 'calendar_month', route: '/admin/turnos' },
+    { label: 'Asignar clases', icon: 'event_available', route: '/admin/agenda-alumno' },
     { label: 'Reportes', icon: 'bar_chart', route: '/admin/reportes' },
     { label: 'Ausencias', icon: 'event_busy', route: '/admin/ausencias' },
     { label: 'Feriados', icon: 'beach_access', route: '/admin/feriados' },

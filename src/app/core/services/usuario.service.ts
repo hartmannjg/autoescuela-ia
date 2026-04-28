@@ -1,9 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
+  Timestamp,
   collection,
   doc,
+  addDoc,
   getDoc,
+  getDocs,
   deleteDoc,
   updateDoc,
   query,
@@ -103,8 +106,8 @@ export class UsuarioService {
     });
   }
 
-  /** Asigna clases individuales de 40 min al alumno */
-  async asignarClasesIndividuales(uid: string, clases: number): Promise<void> {
+  /** Asigna clases individuales de 40 min al alumno y registra la transacción de ingreso */
+  async asignarClasesIndividuales(uid: string, clases: number, precio: number, sucursalId: string, alumnoNombre: string): Promise<void> {
     const snap = await getDoc(doc(this.firestore, 'users', uid));
     if (!snap.exists()) throw new Error('Usuario no encontrado');
     const user = snap.data() as User;
@@ -116,6 +119,15 @@ export class UsuarioService {
       clases40min: (actual?.clases40min ?? 0) + clases,
     };
     await this.actualizarAlumnoData(uid, { creditoIndividual: nuevoCredito });
+    const hoy = new Date();
+    const fechaStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
+    await addDoc(collection(this.firestore, 'cobros'), {
+      sucursalId, alumnoUid: uid, alumnoNombre,
+      tipo: 'individual',
+      descripcion: `${clases} clase${clases !== 1 ? 's' : ''} individual${clases !== 1 ? 'es' : ''} (40 min)`,
+      monto: precio, cantidadClases: clases,
+      fechaStr, creadoEn: serverTimestamp(),
+    });
   }
 
   /** Quita clases individuales de 40 min del saldo del alumno */
@@ -139,9 +151,26 @@ export class UsuarioService {
     await updateDoc(doc(this.firestore, 'users', uid), { activo });
   }
 
-  /** Asigna un plan al alumno. Reemplaza el plan anterior. */
-  async asignarPlan(uid: string, plan: PlanContratado): Promise<void> {
+  /** Asigna un plan al alumno y registra la transacción de ingreso */
+  async asignarPlan(uid: string, plan: PlanContratado, sucursalId: string, alumnoNombre: string): Promise<void> {
     await this.actualizarAlumnoData(uid, { planContratado: plan });
+    const hoy = new Date();
+    const fechaStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
+    await addDoc(collection(this.firestore, 'cobros'), {
+      sucursalId, alumnoUid: uid, alumnoNombre,
+      tipo: 'plan',
+      descripcion: `${plan.nombre} (${plan.clasesTotales} clases)`,
+      monto: plan.valor ?? 0, cantidadClases: plan.clasesTotales,
+      fechaStr, creadoEn: serverTimestamp(),
+    });
+  }
+
+  /** Extiende solo la fechaFin del plan actual sin tocar clases ni historial. */
+  async extenderPlan(uid: string, nuevaFechaFin: Date): Promise<void> {
+    await updateDoc(doc(this.firestore, 'users', uid), {
+      'alumnoData.planContratado.fechaFin': Timestamp.fromDate(nuevaFechaFin),
+      'alumnoData.planContratado.semanasInactivas': 0,
+    });
   }
 
   /**
@@ -164,5 +193,24 @@ export class UsuarioService {
       alumnoData: sinPlan,
       actualizadoEn: serverTimestamp(),
     });
+  }
+
+  /**
+   * Elimina todos los cobros del día actual para este alumno y tipo.
+   * Solo aplica si el cobro fue generado hoy (error de carga).
+   * Devuelve true si se revirtió al menos uno.
+   */
+  async revertirCobroDelDia(alumnoUid: string, tipo: 'plan' | 'individual', sucursalId: string): Promise<boolean> {
+    const hoy = new Date();
+    const fechaStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
+    const snap = await getDocs(query(
+      collection(this.firestore, 'cobros'),
+      where('alumnoUid', '==', alumnoUid),
+      where('fechaStr', '==', fechaStr)
+    ));
+    const aEliminar = snap.docs.filter(d => d.data()['tipo'] === tipo && d.data()['sucursalId'] === sucursalId);
+    if (!aEliminar.length) return false;
+    await Promise.all(aEliminar.map(d => deleteDoc(d.ref)));
+    return true;
   }
 }

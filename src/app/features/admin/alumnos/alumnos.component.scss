@@ -1,6 +1,8 @@
 .alumnos-page { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
 .form-card { border-radius: 12px !important; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-top: 8px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; padding-top: 8px; }
+.field-wrap { display: flex; flex-direction: column; mat-form-field { width: 100%; } }
+.field-err { font-size: 0.75rem; color: #f44336; padding: 2px 14px 8px; min-height: 1.4em; display: block; }
 mat-card-actions { display: flex; gap: 8px; justify-content: flex-end; padding: 8px 16px 16px; }
 .seccion-titulo { font-weight: 600; color: #37474f; margin: 16px 0 4px; font-size: 0.95rem; }
 .seccion-desc { color: #888; font-size: 0.85rem; margin: 0 0 12px; }

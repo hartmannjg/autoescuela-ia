@@ -44,7 +44,7 @@ export class AlumnoLayoutComponent {
     { initialValue: 0 }
   );
   readonly notificaciones = toSignal(
-    this.notifService.notificaciones$(this.authService.currentUser()?.uid ?? ''),
+    this.notifService.noLeidasLista$(this.authService.currentUser()?.uid ?? ''),
     { initialValue: [] as Notificacion[] }
   );
 
@@ -62,12 +62,13 @@ export class AlumnoLayoutComponent {
       bloqueo_cuenta: 'block',            desbloqueo_cuenta: 'lock_open',
       feedback_recibido: 'star',          clase_completada: 'school',
       saldo_bajo: 'warning',              plan_vencimiento: 'event_busy',
+      cancelacion_turno: 'event_busy',
     };
     return map[tipo] ?? 'notifications';
   }
 
   readonly navItems = [
-    { label: 'Dashboard',          icon: 'dashboard',        route: '/alumno/dashboard' },
+    { label: 'Mi Cuenta',          icon: 'account_circle',   route: '/alumno/dashboard' },
     { label: 'Calendario',         icon: 'calendar_month',   route: '/alumno/calendario' },
     { label: 'Asignación masiva',  icon: 'event_repeat',     route: '/alumno/asignacion-masiva' },
     { label: 'Mis Turnos',         icon: 'event_note',       route: '/alumno/mis-turnos' },

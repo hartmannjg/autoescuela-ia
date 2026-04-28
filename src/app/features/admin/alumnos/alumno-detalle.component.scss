@@ -26,6 +26,13 @@
 .acciones-credito { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; }
 .acciones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .acciones-peligro { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.vencido { color: #c62828; font-weight: 600; }
+.ritmo-alerta { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; margin-top: 6px; padding: 5px 8px; border-radius: 6px;
+  mat-icon { font-size: 14px; width: 14px; height: 14px; }
+  &.ritmo-ok   { background: #e8f5e9; color: #2e7d32; }
+  &.ritmo-warn { background: #fff3e0; color: #e65100; }
+  &.ritmo-vencido { background: #ffebee; color: #c62828; }
+}
 .motivo-bloqueo { background: #ffebee; color: #c62828; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; mat-icon { font-size: 16px; width: 16px; height: 16px; } }
 .historial-card { border-radius: 12px !important; }
 .turno-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; div { display: flex; flex-direction: column; gap: 2px; strong { font-size: 0.9rem; } span { font-size: 0.8rem; color: #888; } } }

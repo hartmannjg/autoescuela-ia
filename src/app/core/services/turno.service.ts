@@ -79,8 +79,8 @@ export class TurnoService {
     const [slotsOcupados, slotsAlumno, clasesDia, clasesSemana, reagendasSemana, config] = await Promise.all([
       this.getSlotsOcupados(turno.instructorUid, turno.fechaStr),
       this.getSlotsAlumno(turno.alumnoUid, turno.fechaStr),
-      this.contarClasesAlumnoEnFecha(turno.alumnoUid, turno.fechaStr),
-      this.contarClasesAlumnoEnSemana(turno.alumnoUid, semanaStr),
+      this.contarClasesAlumnoEnFecha(turno.alumnoUid, turno.fechaStr, turno.consumidoDe),
+      this.contarClasesAlumnoEnSemana(turno.alumnoUid, semanaStr, turno.consumidoDe),
       this.contarReagendasAlumnoEnSemana(turno.alumnoUid, semanaStr),
       this.configuracionService.getOnce(),
     ]);
@@ -97,12 +97,15 @@ export class TurnoService {
     }
 
     // ── VALIDACIÓN DE LÍMITES DEL PLAN ──────────────────────────────────────────
-    // Solo aplica cuando se consume del plan; crédito individual no tiene límites de frecuencia
     if (turno.consumidoDe === 'plan') {
-      // Necesitamos leer el plan del alumno para conocer sus límites; lo hacemos via getDocs
       const alumnoSnap0 = await getDoc(doc(this.firestore, 'users', turno.alumnoUid));
       const plan = (alumnoSnap0.data() as User).alumnoData?.planContratado;
       if (plan) {
+        const fechaFin: Date = (plan.fechaFin as any)?.toDate?.() ?? new Date(plan.fechaFin as any);
+        const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+        if (fechaFin < hoy) {
+          throw new Error('Tu plan está vencido. Contactá al administrador para renovarlo o extender la fecha.');
+        }
         if (plan.maxClasesPorDia !== null && clasesDia >= plan.maxClasesPorDia) {
           throw new Error(`Tu plan permite máximo ${plan.maxClasesPorDia} clase${plan.maxClasesPorDia > 1 ? 's' : ''} por día.`);
         }
@@ -228,6 +231,66 @@ export class TurnoService {
     await this.actualizarEstado(turnoId, 'CONFIRMADA');
   }
 
+  /**
+   * Cancela todos los turnos activos (PENDIENTE_CONFIRMACION | CONFIRMADA) en las fechas dadas,
+   * devuelve el crédito al alumno y envía notificación. Usado por feriados, cierres y ausencias.
+   *
+   * @param sucursalId  undefined = aplica a todas las sucursales (cierre global / feriado nacional)
+   * @param instructorUid  si se pasa, solo cancela turnos de ese instructor
+   * @param slotsEspecificos  si se pasa, solo cancela turnos cuyos slots se intersecan con este set
+   */
+  async cancelarTurnosPorEvento(params: {
+    fechas: string[];
+    sucursalId?: string;
+    motivo: string;
+    instructorUid?: string;
+    slotsEspecificos?: Set<string>;
+  }): Promise<number> {
+    if (params.fechas.length === 0) return 0;
+
+    const afectados: Turno[] = [];
+    for (let i = 0; i < params.fechas.length; i += 10) {
+      const lote = params.fechas.slice(i, i + 10);
+      const snap = await getDocs(query(this.colRef(), where('fechaStr', 'in', lote)));
+      for (const d of snap.docs) {
+        const t = { id: d.id, ...d.data() } as Turno;
+        if (!['PENDIENTE_CONFIRMACION', 'CONFIRMADA'].includes(t.estado)) continue;
+        if (params.sucursalId && t.sucursalId !== params.sucursalId) continue;
+        if (params.instructorUid && t.instructorUid !== params.instructorUid) continue;
+        if (params.slotsEspecificos?.size) {
+          const propios = generarSlots(t.fechaStr, t.horaInicio, t.duracionMinutos);
+          if (!propios.some(s => params.slotsEspecificos!.has(s))) continue;
+        }
+        afectados.push(t);
+      }
+    }
+
+    for (const t of afectados) {
+      await this.cancelarTurno(t.id!, params.motivo);
+      await this.notificacionService.enviar(
+        t.alumnoUid,
+        'cancelacion_turno',
+        'Clase cancelada',
+        `Tu clase del ${new Date(t.fechaStr + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })} a las ${t.horaInicio} fue cancelada. Motivo: ${params.motivo}. Tu crédito fue devuelto automáticamente.`,
+        t.id,
+      );
+    }
+
+    return afectados.length;
+  }
+
+  /** Expande un rango de fechas a un arreglo de strings "YYYY-MM-DD". */
+  static expandirRango(inicio: string, fin: string): string[] {
+    const fechas: string[] = [];
+    const d = new Date(inicio + 'T00:00:00');
+    const f = new Date(fin   + 'T00:00:00');
+    while (d <= f) {
+      fechas.push(d.toISOString().slice(0, 10));
+      d.setDate(d.getDate() + 1);
+    }
+    return fechas;
+  }
+
   /** Elimina un turno CANCELADA. El saldo ya fue devuelto al cancelar. */
   async eliminarTurnoCancelado(turnoId: string): Promise<void> {
     const snap = await getDoc(doc(this.firestore, 'turnos', turnoId));
@@ -337,26 +400,28 @@ export class TurnoService {
     return ocupados;
   }
 
-  /** Cuenta clases activas (PENDIENTE/CONFIRMADA) del alumno en un día */
-  private async contarClasesAlumnoEnFecha(alumnoUid: string, fechaStr: string): Promise<number> {
+  /** Cuenta clases activas del alumno en un día, filtrando por fuente (plan o crédito individual) */
+  private async contarClasesAlumnoEnFecha(alumnoUid: string, fechaStr: string, consumidoDe: 'plan' | 'credito_individual'): Promise<number> {
     const q = query(
       this.colRef(),
       where('alumnoUid', '==', alumnoUid),
       where('fechaStr', '==', fechaStr),
+      where('consumidoDe', '==', consumidoDe),
       where('estado', 'in', ['PENDIENTE_CONFIRMACION', 'CONFIRMADA'])
     );
     const snap = await getDocs(q);
     return snap.size;
   }
 
-  /** Cuenta clases activas (PENDIENTE/CONFIRMADA) del alumno en una semana ISO */
-  private async contarClasesAlumnoEnSemana(alumnoUid: string, semanaStr: string): Promise<number> {
+  /** Cuenta clases activas del alumno en una semana ISO, filtrando por fuente */
+  private async contarClasesAlumnoEnSemana(alumnoUid: string, semanaStr: string, consumidoDe: 'plan' | 'credito_individual'): Promise<number> {
     const { lunes, domingo } = getSemanaBounds(semanaStr);
     const q = query(
       this.colRef(),
       where('alumnoUid', '==', alumnoUid),
       where('fechaStr', '>=', lunes),
       where('fechaStr', '<=', domingo),
+      where('consumidoDe', '==', consumidoDe),
       where('estado', 'in', ['PENDIENTE_CONFIRMACION', 'CONFIRMADA'])
     );
     const snap = await getDocs(q);
@@ -442,12 +507,16 @@ export class TurnoService {
    * El instructor NO suma clasesDictadas (no la dictó).
    */
   private async marcarAusente(turnoId: string): Promise<void> {
+    let turnoNotif: Pick<Turno, 'alumnoUid' | 'fechaStr' | 'horaInicio'> | null = null;
+
     await runTransaction(this.firestore, async (tx) => {
       const turnoRef  = doc(this.firestore, 'turnos', turnoId);
       const turnoSnap = await tx.get(turnoRef);
       if (!turnoSnap.exists()) return;
       const turno = turnoSnap.data() as Turno;
       if (turno.saldoDescontado === true) return;
+
+      turnoNotif = { alumnoUid: turno.alumnoUid, fechaStr: turno.fechaStr, horaInicio: turno.horaInicio };
 
       const alumnoRef = doc(this.firestore, 'users', turno.alumnoUid);
       const alumnoSnap = await tx.get(alumnoRef);
@@ -463,6 +532,18 @@ export class TurnoService {
         }
       }
     });
+
+    if (turnoNotif) {
+      const { alumnoUid, fechaStr, horaInicio } = turnoNotif;
+      const fechaLegible = new Date(fechaStr + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      await this.notificacionService.enviar(
+        alumnoUid,
+        'cancelacion_turno',
+        'Clase marcada como ausente',
+        `Tu clase del ${fechaLegible} a las ${horaInicio} fue registrada como ausencia. El saldo fue descontado.`,
+        turnoId,
+      ).catch(() => {});
+    }
   }
 
   /** Genera el patch para descontar 1 clase del crédito individual (siempre 40 min). */

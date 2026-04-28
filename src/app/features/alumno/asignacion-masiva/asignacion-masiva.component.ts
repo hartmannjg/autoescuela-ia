@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
@@ -43,7 +44,7 @@ interface PreviewResult {
   imports: [
     CommonModule, RouterLink, FormsModule,
     MatCardModule, MatButtonModule, MatIconModule, MatSelectModule,
-    MatFormFieldModule, MatProgressBarModule, MatDividerModule,
+    MatFormFieldModule, MatProgressBarModule, MatProgressSpinnerModule, MatDividerModule,
     MatInputModule, MatChipsModule, DuracionPipe,
   ],
   templateUrl: './asignacion-masiva.component.html',
@@ -119,11 +120,46 @@ export class AsignacionMasivaComponent implements OnInit {
     return horas;
   });
 
+  readonly ocupadosDia           = signal<Set<string>>(new Set());
+  readonly cargandoDisponibilidad = signal(false);
+
+  readonly maxSemanaDelPlan = computed(() => this.plan()?.maxClasesPorSemana ?? 99);
+  readonly minSemanaDelPlan = computed(() => this.plan()?.minClasesPorSemana ?? 1);
+
+  readonly limiteDiaAlcanzado = computed(() => {
+    const dia = this.diaTemp();
+    const max = this.plan()?.maxClasesPorDia ?? null;
+    if (dia === null || max === null) return false;
+    return this.slotsRecurrentes().filter(s => s.dia === dia).length >= max;
+  });
+
+  readonly limiteSemanaAlcanzado = computed(() => {
+    const max = this.plan()?.maxClasesPorSemana ?? null;
+    if (max === null) return false;
+    return this.slotsRecurrentes().length >= max;
+  });
+
   readonly puedeAgregar = computed(() =>
     this.instructorTemp() !== null &&
     this.diaTemp() !== null &&
-    this.horaTemp() !== null
+    this.horaTemp() !== null &&
+    !this.limiteDiaAlcanzado() &&
+    !this.limiteSemanaAlcanzado()
   );
+
+  readonly horasConEstado = computed(() => {
+    const horas    = this.horasDisponibles();
+    const ocupados = this.ocupadosDia();
+    const dur      = this.duracion();
+    const dia      = this.diaTemp();
+    const fechaRef = dia !== null ? this.proximaFechaDia(dia) : '';
+    const yaEnPlan = new Set(this.slotsRecurrentes().filter(s => s.dia === dia).map(s => s.horaInicio));
+    return horas.map(hora => ({
+      hora,
+      ocupado:   generarSlots(fechaRef, hora, dur).some(s => ocupados.has(s)),
+      yaEnPlan:  yaEnPlan.has(hora),
+    }));
+  });
 
   // ── Preview (dry-run sin verificar disponibilidad real) ──────────────────
   readonly preview = computed((): PreviewResult | null => {
@@ -132,9 +168,11 @@ export class AsignacionMasivaComponent implements OnInit {
     const plan = this.plan();
     if (!plan || plan.clasesRestantes === 0) return null;
 
-    const maxSemana = Math.min(this.maxPorSemana(), slots.length);
-    const today     = new Date(); today.setHours(0, 0, 0, 0);
-    const monday    = this.mondayOfCurrentWeek();
+    const maxSemana  = Math.min(this.maxPorSemana(), slots.length);
+    const maxPorDia  = plan.maxClasesPorDia ?? null;
+    const today      = new Date(); today.setHours(0, 0, 0, 0);
+    const monday     = this.mondayOfCurrentWeek();
+    const porFecha   = new Map<string, number>();
 
     let remaining = plan.clasesRestantes;
     let week = 0;
@@ -149,6 +187,8 @@ export class AsignacionMasivaComponent implements OnInit {
         const date = this.dateForSlot(monday, week, slot.dia);
         if (date < today) continue;
         const ds = dateToStr(date);
+        if (maxPorDia !== null && (porFecha.get(ds) ?? 0) >= maxPorDia) continue;
+        porFecha.set(ds, (porFecha.get(ds) ?? 0) + 1);
         if (!fechaInicio) fechaInicio = ds;
         fechaFin = ds;
         remaining--;
@@ -172,11 +212,34 @@ export class AsignacionMasivaComponent implements OnInit {
     this.instructorTemp.set(inst);
     this.diaTemp.set(null);
     this.horaTemp.set(null);
+    this.ocupadosDia.set(new Set());
   }
 
   onDiaChange(dia: number | null): void {
     this.diaTemp.set(dia);
     this.horaTemp.set(null);
+    void this.cargarDisponibilidadDia();
+  }
+
+  private async cargarDisponibilidadDia(): Promise<void> {
+    const inst = this.instructorTemp();
+    const dia  = this.diaTemp();
+    if (!inst || dia === null) { this.ocupadosDia.set(new Set()); return; }
+    this.cargandoDisponibilidad.set(true);
+    try {
+      this.ocupadosDia.set(await this.turnoService.getSlotsOcupados(inst.uid, this.proximaFechaDia(dia)));
+    } finally {
+      this.cargandoDisponibilidad.set(false);
+    }
+  }
+
+  private proximaFechaDia(dia: number): string {
+    const today  = new Date(); today.setHours(0, 0, 0, 0);
+    const monday = this.mondayOfCurrentWeek();
+    const d      = new Date(monday);
+    d.setDate(monday.getDate() + (dia === 0 ? 6 : dia - 1));
+    if (d < today) d.setDate(d.getDate() + 7);
+    return dateToStr(d);
   }
 
   agregarSlot(): void {
@@ -184,8 +247,8 @@ export class AsignacionMasivaComponent implements OnInit {
     const dia  = this.diaTemp();
     const hora = this.horaTemp();
     if (!inst || dia === null || !hora) return;
+    if (this.limiteDiaAlcanzado()) return;
 
-    // Evitar duplicado mismo día+hora+instructor
     const existe = this.slotsRecurrentes().some(
       s => s.dia === dia && s.horaInicio === hora && s.instructor.uid === inst.uid
     );
@@ -193,17 +256,21 @@ export class AsignacionMasivaComponent implements OnInit {
 
     const horaFin = calcularHoraFin(hora, this.duracion());
     this.slotsRecurrentes.update(slots => [...slots, { instructor: inst, dia, horaInicio: hora, horaFin }]);
-    this.maxPorSemana.set(this.slotsRecurrentes().length);
-
-    // Reset temps
+    const nuevoLen = this.slotsRecurrentes().length;
+    this.maxPorSemana.set(Math.min(nuevoLen, this.maxSemanaDelPlan()));
     this.diaTemp.set(null);
     this.horaTemp.set(null);
   }
 
+  setMaxPorSemana(val: number): void {
+    this.maxPorSemana.set(Math.min(Math.max(this.minSemanaDelPlan(), val), this.maxSemanaDelPlan()));
+  }
+
   quitarSlot(i: number): void {
     this.slotsRecurrentes.update(s => s.filter((_, idx) => idx !== i));
-    const len = this.slotsRecurrentes().length;
-    if (this.maxPorSemana() > len) this.maxPorSemana.set(Math.max(1, len));
+    const len    = this.slotsRecurrentes().length;
+    const maxPla = this.maxSemanaDelPlan();
+    this.maxPorSemana.set(Math.max(1, Math.min(this.maxPorSemana(), len, maxPla)));
   }
 
   async confirmarMasivo(): Promise<void> {
@@ -239,6 +306,8 @@ export class AsignacionMasivaComponent implements OnInit {
     // ── Construir lista completa de turnos a crear ────────────────────────────
     interface TurnoPlanificado { instructorUid: string; instructorNombre: string; fechaStr: string; fecha: Date; horaInicio: string; }
     const planificados: TurnoPlanificado[] = [];
+    const maxPorDia  = plan.maxClasesPorDia ?? null;
+    const porFecha   = new Map<string, number>();
     let remaining = plan.clasesRestantes;
     let week = 0;
     while (remaining > 0 && week < 104) {
@@ -247,7 +316,10 @@ export class AsignacionMasivaComponent implements OnInit {
         if (remaining <= 0 || thisWeek >= maxSemana) break;
         const date = this.dateForSlot(monday, week, slot.dia);
         if (date < today) continue;
-        planificados.push({ instructorUid: slot.instructor.uid, instructorNombre: slot.instructor.nombre, fechaStr: dateToStr(date), fecha: date, horaInicio: slot.horaInicio });
+        const ds = dateToStr(date);
+        if (maxPorDia !== null && (porFecha.get(ds) ?? 0) >= maxPorDia) continue;
+        porFecha.set(ds, (porFecha.get(ds) ?? 0) + 1);
+        planificados.push({ instructorUid: slot.instructor.uid, instructorNombre: slot.instructor.nombre, fechaStr: ds, fecha: date, horaInicio: slot.horaInicio });
         remaining--;
         thisWeek++;
       }

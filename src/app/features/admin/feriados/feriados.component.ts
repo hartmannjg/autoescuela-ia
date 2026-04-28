@@ -17,9 +17,11 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
+import { Firestore, collection, getDocs, query, where } from '@angular/fire/firestore';
 import { AuthService } from '../../../core/services/auth.service';
 import { FeriadoService } from '../../../core/services/feriado.service';
 import { CierreService } from '../../../core/services/cierre.service';
+import { TurnoService } from '../../../core/services/turno.service';
 import { Feriado, TipoFeriado, Cierre } from '../../../shared/models';
 import { dateToStr } from '../../../shared/utils/date-utils';
 
@@ -36,9 +38,11 @@ import { dateToStr } from '../../../shared/utils/date-utils';
   styleUrl: './feriados.component.scss',
 })
 export class FeriadosComponent {
-  private authService   = inject(AuthService);
+  private authService    = inject(AuthService);
   private feriadoService = inject(FeriadoService);
   private cierreService  = inject(CierreService);
+  private turnoService   = inject(TurnoService);
+  private firestore      = inject(Firestore);
   private fb = inject(FormBuilder);
 
   readonly sucursalId  = this.authService.currentUser()?.sucursalId ?? '';
@@ -99,13 +103,14 @@ export class FeriadosComponent {
     const v = this.formGlobal.value;
     this.guardando.set(true);
     try {
+      const fechaStr = dateToStr(v.fecha!);
       await this.feriadoService.crear({
-        nombre: v.nombre!, fecha: dateToStr(v.fecha!),
+        nombre: v.nombre!, fecha: fechaStr,
         tipo: v.tipo!, recurrente: v.recurrente ?? false, activo: true,
       });
-      Swal.fire({ icon: 'success', title: 'Feriado registrado', timer: 1500, showConfirmButton: false });
       this.formGlobal.reset({ tipo: 'nacional', recurrente: true });
       this.mostrarFormGlobal.set(false);
+      await this.ofrecerCancelarTurnos([fechaStr], v.nombre!, undefined);
     } catch (e: any) {
       Swal.fire({ icon: 'error', title: 'Error', text: e.message });
     } finally { this.guardando.set(false); }
@@ -116,14 +121,15 @@ export class FeriadosComponent {
     const v = this.formSucursal.value;
     this.guardando.set(true);
     try {
+      const fechaStr = dateToStr(v.fecha!);
       await this.feriadoService.crear({
-        nombre: v.nombre!, fecha: dateToStr(v.fecha!),
+        nombre: v.nombre!, fecha: fechaStr,
         tipo: 'sucursal', sucursalId: this.sucursalId,
         recurrente: v.recurrente ?? false, activo: true,
       });
-      Swal.fire({ icon: 'success', title: 'Feriado registrado', timer: 1500, showConfirmButton: false });
       this.formSucursal.reset({ recurrente: false });
       this.mostrarFormSucursal.set(false);
+      await this.ofrecerCancelarTurnos([fechaStr], v.nombre!, this.sucursalId);
     } catch (e: any) {
       Swal.fire({ icon: 'error', title: 'Error', text: e.message });
     } finally { this.guardando.set(false); }
@@ -180,18 +186,15 @@ export class FeriadosComponent {
       Swal.fire({ icon: 'error', title: 'Fechas inválidas', text: 'La fecha de fin debe ser igual o posterior al inicio.' });
       return;
     }
+    const esGlobal   = this.isSuperAdmin() && !!v.esGlobal;
+    const sucursalId = esGlobal ? undefined : this.sucursalId;
     this.guardando.set(true);
     try {
-      await this.cierreService.crear({
-        motivo: v.motivo!,
-        fechaInicio: inicio,
-        fechaFin: fin,
-        sucursalId: (this.isSuperAdmin() && v.esGlobal) ? undefined : this.sucursalId,
-        activo: true,
-      });
-      Swal.fire({ icon: 'success', title: 'Cierre registrado', timer: 1500, showConfirmButton: false });
+      await this.cierreService.crear({ motivo: v.motivo!, fechaInicio: inicio, fechaFin: fin, sucursalId, activo: true });
       this.formCierre.reset({ esGlobal: false });
       this.mostrarFormCierre.set(false);
+      const fechas = TurnoService.expandirRango(inicio, fin);
+      await this.ofrecerCancelarTurnos(fechas, `Cierre: ${v.motivo}`, sucursalId);
     } catch (e: any) {
       Swal.fire({ icon: 'error', title: 'Error', text: e.message });
     } finally { this.guardando.set(false); }
@@ -212,5 +215,43 @@ export class FeriadosComponent {
 
   esCierreGlobal(c: Cierre): boolean {
     return !c.sucursalId;
+  }
+
+  private async ofrecerCancelarTurnos(fechas: string[], motivo: string, sucursalId: string | undefined): Promise<void> {
+    const conteo = await this.contarTurnosAfectados(fechas, sucursalId);
+    if (conteo === 0) {
+      Swal.fire({ icon: 'success', title: 'Registrado', text: 'No había clases activas en esas fechas.', timer: 2000, showConfirmButton: false });
+      return;
+    }
+    const conf = await Swal.fire({
+      icon: 'warning',
+      title: `${conteo} clase${conteo !== 1 ? 's' : ''} activa${conteo !== 1 ? 's' : ''} afectada${conteo !== 1 ? 's' : ''}`,
+      html: `¿Cancelar estas clases y devolver el crédito a los alumnos?<br><small style="color:#888">Motivo que verán los alumnos: <em>${motivo}</em></small>`,
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cancelar y notificar',
+      cancelButtonText: 'No cancelar',
+      confirmButtonColor: '#c62828',
+    });
+    if (!conf.isConfirmed) {
+      Swal.fire({ icon: 'success', title: 'Registrado', text: 'Las clases existentes no fueron modificadas.', timer: 2000, showConfirmButton: false });
+      return;
+    }
+    const cancelados = await this.turnoService.cancelarTurnosPorEvento({ fechas, sucursalId, motivo });
+    Swal.fire({ icon: 'success', title: 'Listo', text: `${cancelados} clase${cancelados !== 1 ? 's' : ''} cancelada${cancelados !== 1 ? 's' : ''} y crédito devuelto a los alumnos.`, timer: 2500, showConfirmButton: false });
+  }
+
+  private async contarTurnosAfectados(fechas: string[], sucursalId: string | undefined): Promise<number> {
+    let count = 0;
+    for (let i = 0; i < fechas.length; i += 10) {
+      const lote = fechas.slice(i, i + 10);
+      const snap = await getDocs(query(collection(this.firestore, 'turnos'), where('fechaStr', 'in', lote)));
+      for (const d of snap.docs) {
+        const t = d.data() as any;
+        if (!['PENDIENTE_CONFIRMACION', 'CONFIRMADA'].includes(t.estado)) continue;
+        if (sucursalId && t.sucursalId !== sucursalId) continue;
+        count++;
+      }
+    }
+    return count;
   }
 }

@@ -7,6 +7,7 @@ export interface PreciosPlan {
   activo: boolean;
   maxClasesPorDia: number | null; // null = sin límite
   maxClasesPorSemana: number;
+  minClasesPorSemana: number; // mínimo requerido para no penalizar y calcular vencimiento
 }
 
 /** Override de precios por sucursal. null = usar el valor global. */

@@ -139,6 +139,19 @@ export const completarClasesVencidas = functions
             await descontarSaldo(tx, alumnoRef, alumnoSnap, t);
           }
         });
+
+        if (!validada) {
+          const fechaLegible = new Date(t['fechaStr'] + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          await db.collection('notificaciones').add({
+            userId: t['alumnoUid'],
+            tipo: 'cancelacion_turno',
+            titulo: 'Clase marcada como ausente',
+            mensaje: `Tu clase del ${fechaLegible} a las ${t['horaInicio']} fue registrada como ausencia. El saldo fue descontado.`,
+            turnoId: d.id,
+            leida: false,
+            creadoEn: admin.firestore.FieldValue.serverTimestamp(),
+          }).catch(() => {});
+        }
         procesados++;
       } catch (err) {
         functions.logger.error(`Error procesando turno ${d.id}:`, err);
@@ -203,3 +216,102 @@ export const cancelarPendientesSinRespuesta = functions
       functions.logger.info(`Pendientes cancelados automáticamente: ${pendientes.size}`);
     }
   });
+
+/**
+ * Penalización progresiva por inactividad semanal.
+ * Corre todos los lunes a las 9:00 AM (una hora después de bloquearAlumnosInactivos).
+ * - Semana 1 sin agendar: aviso — "si no agendás la próxima semana perdés una clase"
+ * - Semana 2+ sin agendar: descuenta 1 clase del plan + notifica
+ * - Si agendó algo en la semana: resetea el contador
+ */
+export const penalizarInactividadSemanal = functions
+  .region('southamerica-east1')
+  .pubsub.schedule('0 9 * * 1')
+  .timeZone('America/Argentina/Buenos_Aires')
+  .onRun(async () => {
+    const hoy = new Date();
+
+    // Rango de la semana pasada (lunes → domingo)
+    const lunesPasado = new Date(hoy);
+    lunesPasado.setDate(hoy.getDate() - 7);
+    lunesPasado.setHours(0, 0, 0, 0);
+    const domingoStr = toDateStr(new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1));
+    const lunesStr   = toDateStr(lunesPasado);
+
+    const alumnosSnap = await db.collection('users')
+      .where('rol', '==', 'alumno')
+      .where('activo', '==', true)
+      .where('alumnoData.bloqueado', '==', false)
+      .get();
+
+    let advertidos = 0;
+    let penalizados = 0;
+
+    for (const userDoc of alumnosSnap.docs) {
+      const alumno = userDoc.data();
+      const plan   = alumno['alumnoData']?.['planContratado'];
+      if (!plan || (plan['clasesRestantes'] ?? 0) <= 0) continue;
+
+      // Ignorar planes vencidos (ya hay otro flujo para eso)
+      const fechaFin: Date = plan['fechaFin']?.toDate?.() ?? new Date(plan['fechaFin']);
+      if (fechaFin < hoy) continue;
+
+      // ¿Agendó alguna clase en la semana pasada?
+      const turnosSnap = await db.collection('turnos')
+        .where('alumnoUid', '==', userDoc.id)
+        .where('fechaStr', '>=', lunesStr)
+        .where('fechaStr', '<=', domingoStr)
+        .where('estado', 'in', ['CONFIRMADA', 'PENDIENTE_CONFIRMACION', 'COMPLETADA'])
+        .get();
+
+      const semanasInactivas: number = plan['semanasInactivas'] ?? 0;
+
+      if (!turnosSnap.empty) {
+        // Agendó — resetear contador si tenía inactividad
+        if (semanasInactivas > 0) {
+          await userDoc.ref.update({ 'alumnoData.planContratado.semanasInactivas': 0 });
+        }
+        continue;
+      }
+
+      // No agendó nada esta semana
+      const nuevasSemanasInactivas = semanasInactivas + 1;
+      const fechaFinStr = fechaFin.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+      if (semanasInactivas === 0) {
+        // Primera semana inactiva: solo advertir
+        await userDoc.ref.update({ 'alumnoData.planContratado.semanasInactivas': nuevasSemanasInactivas });
+        await db.collection('notificaciones').add({
+          userId: userDoc.id,
+          tipo: 'info',
+          titulo: '⚠️ Recordatorio: agendá tu clase',
+          mensaje: `No agendaste ninguna clase esta semana. Tu plan vence el ${fechaFinStr}. Si no agendás la próxima semana, se descontará una clase de tu plan automáticamente.`,
+          leida: false,
+          creadoEn: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        advertidos++;
+      } else {
+        // Segunda semana+ sin agendar: descontar clase
+        const clasesRestantes = Math.max(0, (plan['clasesRestantes'] ?? 0) - 1);
+        await userDoc.ref.update({
+          'alumnoData.planContratado.semanasInactivas': nuevasSemanasInactivas,
+          'alumnoData.planContratado.clasesRestantes': clasesRestantes,
+        });
+        await db.collection('notificaciones').add({
+          userId: userDoc.id,
+          tipo: 'rechazo_turno',
+          titulo: '❌ Clase descontada por inactividad',
+          mensaje: `Llevas ${nuevasSemanasInactivas} semanas sin agendar. Se descontó 1 clase de tu plan automáticamente. Te quedan ${clasesRestantes} clases. Agendá cuanto antes para evitar más descuentos.`,
+          leida: false,
+          creadoEn: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        penalizados++;
+      }
+    }
+
+    functions.logger.info(`Inactividad semanal: ${advertidos} advertidos, ${penalizados} penalizados`);
+  });
+
+function toDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}

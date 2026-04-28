@@ -40,8 +40,18 @@
                 <mat-progress-bar [value]="getProgresoPlan()" />
                 <div class="credito-detalle">
                   <span>{{ plan.clasesRestantes }} restantes de {{ plan.clasesTotales }}</span>
-                  <span>Vence: {{ plan.fechaFin | fechaHora: 'fecha' }}</span>
+                  <span [class.vencido]="ritmoSugerido()?.vencido">Vence: {{ plan.fechaFin | fechaHora: 'fecha' }}</span>
                 </div>
+                @if (ritmoSugerido(); as ritmo) {
+                  @if (ritmo.vencido) {
+                    <div class="ritmo-alerta ritmo-vencido"><mat-icon>error</mat-icon> Plan vencido — extendé la fecha</div>
+                  } @else {
+                    <div class="ritmo-alerta" [class.ritmo-ok]="ritmo.clasesPorSemana <= plan.maxClasesPorSemana" [class.ritmo-warn]="ritmo.clasesPorSemana > plan.maxClasesPorSemana">
+                      <mat-icon>{{ ritmo.clasesPorSemana <= plan.maxClasesPorSemana ? 'check_circle' : 'warning' }}</mat-icon>
+                      {{ ritmo.clasesPorSemana }} clase/sem para terminar a tiempo ({{ ritmo.semanasRestantes }} sem restantes)
+                    </div>
+                  }
+                }
               </div>
             }
 
@@ -88,6 +98,12 @@
             <div class="acciones-credito">
               <button mat-stroked-button color="primary" (click)="asignarPlan()">
                 <mat-icon>card_membership</mat-icon> Asignar plan
+              </button>
+            </div>
+          } @else {
+            <div class="acciones-credito">
+              <button mat-stroked-button color="primary" (click)="extenderPlan()">
+                <mat-icon>event_repeat</mat-icon> Extender plan
               </button>
             </div>
           }

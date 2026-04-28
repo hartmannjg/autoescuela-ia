@@ -52,7 +52,7 @@
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" [class.disabled-field]="!instructorTemp()">
+          <mat-form-field appearance="outline">
             <mat-label>Día</mat-label>
             <mat-select [ngModel]="diaTemp()" (ngModelChange)="onDiaChange($event)" [disabled]="!instructorTemp()">
               @for (d of diasDisponibles(); track d.dia) {
@@ -60,20 +60,55 @@
               }
             </mat-select>
           </mat-form-field>
-
-          <mat-form-field appearance="outline" [class.disabled-field]="diaTemp() === null">
-            <mat-label>Horario</mat-label>
-            <mat-select [ngModel]="horaTemp()" (ngModelChange)="horaTemp.set($event)" [disabled]="diaTemp() === null">
-              @for (h of horasDisponibles(); track h) {
-                <mat-option [value]="h">{{ h }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
-          <button mat-flat-button color="primary" [disabled]="!puedeAgregar()" (click)="agregarSlot()">
-            <mat-icon>add</mat-icon> Agregar
-          </button>
         </div>
+
+        <!-- Grilla de horarios con disponibilidad -->
+        @if (diaTemp() !== null) {
+          <div class="disponibilidad-section">
+            <div class="disponibilidad-header">
+              <span class="disponibilidad-titulo">Horarios del {{ nombreDia(diaTemp()!) }}</span>
+              @if (cargandoDisponibilidad()) {
+                <mat-spinner diameter="16" />
+              }
+            </div>
+            <div class="slots-grid">
+              @for (item of horasConEstado(); track item.hora) {
+                <button
+                  class="slot-hora"
+                  [class.slot-ocupado]="item.ocupado"
+                  [class.slot-en-plan]="item.yaEnPlan"
+                  [class.slot-seleccionado]="horaTemp() === item.hora"
+                  [disabled]="item.ocupado || item.yaEnPlan || limiteDiaAlcanzado() || limiteSemanaAlcanzado()"
+                  (click)="horaTemp.set(item.hora)">
+                  {{ item.hora }}
+                  @if (item.yaEnPlan) { <mat-icon>check</mat-icon> }
+                </button>
+              }
+            </div>
+            <div class="slots-leyenda">
+              <span class="ley ley-libre">Disponible</span>
+              <span class="ley ley-sel">Seleccionado</span>
+              <span class="ley ley-plan">Ya en tu plan</span>
+              <span class="ley ley-ocup">Ocupado</span>
+            </div>
+          </div>
+
+          <button mat-flat-button color="primary" [disabled]="!puedeAgregar()" (click)="agregarSlot()" class="btn-agregar">
+            <mat-icon>add</mat-icon> Agregar {{ horaTemp() }} los {{ nombreDia(diaTemp()!) }}
+          </button>
+        }
+        @if (limiteDiaAlcanzado()) {
+          <p class="limite-dia-msg">
+            <mat-icon>block</mat-icon>
+            Ya alcanzaste el máximo de {{ plan()?.maxClasesPorDia }} clase{{ plan()?.maxClasesPorDia !== 1 ? 's' : '' }} por día para ese día.
+          </p>
+        }
+        @if (limiteSemanaAlcanzado()) {
+          <p class="limite-dia-msg">
+            <mat-icon>block</mat-icon>
+            Ya alcanzaste el máximo de {{ plan()?.maxClasesPorSemana }} horario{{ plan()?.maxClasesPorSemana !== 1 ? 's' : '' }} por semana permitidos por tu plan.
+          </p>
+        }
 
         <!-- Lista de slots agregados -->
         @if (slotsRecurrentes().length > 0) {
@@ -99,22 +134,23 @@
       </mat-card-content>
     </mat-card>
 
-    <!-- Sección 2: Configuración -->
+    <!-- Sección 2: Ritmo semanal -->
     @if (slotsRecurrentes().length > 0) {
       <mat-card class="step-card">
         <mat-card-header>
-          <mat-card-title><span class="step-num">2</span> Configuración</mat-card-title>
+          <mat-card-title><span class="step-num">2</span> Ritmo semanal</mat-card-title>
+          <mat-card-subtitle>¿Cuántas clases por semana querés tomar?</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="config-row">
             <mat-form-field appearance="outline" class="config-field">
-              <mat-label>Máximo de clases por semana</mat-label>
+              <mat-label>Clases por semana</mat-label>
               <input matInput type="number"
                 [ngModel]="maxPorSemana()"
-                (ngModelChange)="maxPorSemana.set(+$event)"
-                [min]="1"
-                [max]="slotsRecurrentes().length" />
-              <mat-hint>Máximo: {{ slotsRecurrentes().length }} (cantidad de horarios seleccionados)</mat-hint>
+                (ngModelChange)="setMaxPorSemana(+$event)"
+                [min]="minSemanaDelPlan()"
+                [max]="maxSemanaDelPlan()" />
+              <mat-hint>Tu plan permite entre {{ minSemanaDelPlan() }} y {{ maxSemanaDelPlan() }} clases por semana</mat-hint>
             </mat-form-field>
           </div>
         </mat-card-content>
