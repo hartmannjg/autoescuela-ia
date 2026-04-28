@@ -1,6 +1,6 @@
 # Flujos de la aplicación — AutoEscuela IA
 
-> Diagramas generados: 2026-04-26  
+> Diagramas generados: 2026-04-26 — Última actualización: 2026-04-28  
 > Renderizar con: VS Code + extensión "Markdown Preview Mermaid Support", GitHub, o Obsidian.
 
 ---
