@@ -20,6 +20,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { User } from '../../../shared/models';
 import { environment } from '../../../../environments/environment';
+import { WhatsappPipe } from '../../../shared/pipes/whatsapp.pipe';
 
 @Component({
   selector: 'app-administradores',
@@ -28,7 +29,7 @@ import { environment } from '../../../../environments/environment';
     CommonModule, FormsModule, ReactiveFormsModule,
     MatCardModule, MatButtonModule, MatIconModule, MatTableModule,
     MatFormFieldModule, MatInputModule, MatTooltipModule,
-    MatProgressSpinnerModule, MatDividerModule,
+    MatProgressSpinnerModule, MatDividerModule, WhatsappPipe,
   ],
   templateUrl: './administradores.component.html',
   styleUrl: './administradores.component.scss',

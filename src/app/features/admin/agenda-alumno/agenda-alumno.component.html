@@ -146,7 +146,10 @@
                 <div class="instructor-card"
                   [class.selected]="instructorSeleccionado()?.uid === instructor.uid"
                   (click)="seleccionarInstructor(instructor)">
-                  <div class="instructor-avatar">{{ instructor.nombre.charAt(0) }}</div>
+                  <div class="instructor-avatar">
+                    @if (instructor.fotoURL) { <img [src]="instructor.fotoURL" [alt]="instructor.nombre" class="avatar-photo" /> }
+                    @else { {{ instructor.nombre.charAt(0) }} }
+                  </div>
                   <div class="instructor-info">
                     <strong>{{ instructor.nombre }}</strong>
                     @if (instructor.instructorData?.valoracionPromedio) {
@@ -303,7 +306,7 @@
         <mat-card class="step-card">
           <mat-card-header>
             <mat-card-title><span class="step-num">3</span> Horarios recurrentes</mat-card-title>
-            <mat-card-subtitle>Elegí los días y horarios que se repetirán cada semana</mat-card-subtitle>
+            <mat-card-subtitle>Sumá los horarios que necesitás — los repetimos cada semana hasta terminar el plan</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
             <div class="slot-form">
@@ -372,6 +375,16 @@
               <button mat-flat-button color="primary" [disabled]="!puedeAgregar()" (click)="agregarSlot()" class="btn-agregar">
                 <mat-icon>add</mat-icon> Agregar {{ horaTemp() }} los {{ nombreDia(diaTemp()!) }}
               </button>
+
+              @if (slotAgregadoFeedback()) {
+                <div class="slot-feedback">
+                  <mat-icon>check_circle</mat-icon>
+                  <div>
+                    <strong>{{ slotAgregadoFeedback() }}</strong> agregado correctamente.
+                    <span class="feedback-hint">Elegí otro día o instructor para seguir agregando.</span>
+                  </div>
+                </div>
+              }
             }
 
             @if (slotsRecurrentes().length > 0) {

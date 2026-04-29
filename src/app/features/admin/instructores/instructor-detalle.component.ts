@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, viewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -9,6 +9,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { toSignal } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
 import { UsuarioService } from '../../../core/services/usuario.service';
@@ -17,6 +18,8 @@ import { AusenciaService } from '../../../core/services/ausencia.service';
 import { User, Turno, InstructorAusencia } from '../../../shared/models';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 import { EstadoTurnoPipe } from '../../../shared/pipes/estado-turno.pipe';
+import { WhatsappPipe } from '../../../shared/pipes/whatsapp.pipe';
+import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 
 interface DiaConfig {
   dia: number;
@@ -43,8 +46,8 @@ const DIAS_BASE: DiaConfig[] = [
     CommonModule, RouterLink, ReactiveFormsModule,
     MatCardModule, MatButtonModule, MatIconModule,
     MatDividerModule, MatProgressSpinnerModule,
-    MatFormFieldModule, MatInputModule,
-    FechaHoraPipe, EstadoTurnoPipe,
+    MatFormFieldModule, MatInputModule, MatTooltipModule,
+    FechaHoraPipe, EstadoTurnoPipe, WhatsappPipe,
   ],
   templateUrl: './instructor-detalle.component.html',
   styleUrl: './instructor-detalle.component.scss',
@@ -54,12 +57,16 @@ export class InstructorDetalleComponent implements OnInit {
   private usuarioService  = inject(UsuarioService);
   private turnoService    = inject(TurnoService);
   private ausenciaService = inject(AusenciaService);
+  private storage         = inject(Storage);
   private fb              = inject(FormBuilder);
+
+  readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
   readonly instructor  = signal<User | null>(null);
   readonly loading     = signal(true);
   readonly guardando   = signal(false);
   readonly guardandoPersonal = signal(false);
+  readonly subiendo    = signal(false);
   readonly uid         = signal('');
 
   readonly dias = signal<DiaConfig[]>(DIAS_BASE.map(d => ({ ...d })));
@@ -192,5 +199,40 @@ export class InstructorDetalleComponent implements OnInit {
 
   async rechazarAusencia(ausencia: InstructorAusencia): Promise<void> {
     await this.ausenciaService.actualizarEstado(ausencia.id!, 'rechazado');
+  }
+
+  triggerUpload(): void {
+    this.fileInput().nativeElement.click();
+  }
+
+  async subirFoto(event: Event): Promise<void> {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      Swal.fire({ icon: 'error', title: 'Archivo inválido', text: 'Solo se permiten imágenes.' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      Swal.fire({ icon: 'error', title: 'Imagen muy grande', text: 'El tamaño máximo es 5 MB.' });
+      return;
+    }
+
+    const uid = this.uid();
+    this.subiendo.set(true);
+    try {
+      const storageRef = ref(this.storage, `profile-photos/${uid}`);
+      await uploadBytes(storageRef, file);
+      const fotoURL = await getDownloadURL(storageRef);
+      await this.usuarioService.actualizar(uid, { fotoURL });
+      const updated = await this.usuarioService.getByIdOnce(uid);
+      this.instructor.set(updated);
+      Swal.fire({ icon: 'success', title: 'Foto actualizada', timer: 1500, showConfirmButton: false });
+    } catch (e: any) {
+      Swal.fire({ icon: 'error', title: 'Error al subir foto', text: e.message });
+    } finally {
+      this.subiendo.set(false);
+      (event.target as HTMLInputElement).value = '';
+    }
   }
 }

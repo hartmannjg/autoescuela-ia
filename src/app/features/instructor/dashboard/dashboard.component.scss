@@ -37,5 +37,21 @@
   50%       { opacity: 0.5; }
 }
 .empty-state { display: flex; flex-direction: column; align-items: center; padding: 32px; gap: 8px; color: #aaa; mat-icon { font-size: 40px; width: 40px; height: 40px; } }
-@media (max-width: 599px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 599px) {
+  .dashboard { gap: 16px; }
+  .page-header {
+    flex-direction: column; align-items: flex-start;
+    h2 { font-size: 1.3rem; }
+  }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .stat-card mat-card-content { padding: 14px !important; .stat-num { font-size: 2rem; } }
+  .turno-item {
+    flex-direction: column; align-items: flex-start; gap: 6px;
+    .turno-actions { margin-left: 0; display: flex; gap: 8px; }
+  }
+  .asistencia-actions {
+    flex-direction: column;
+    button { width: 100%; justify-content: center; }
+  }
+}
 .loading-center { display: flex; justify-content: center; align-items: center; padding: 80px 0; }

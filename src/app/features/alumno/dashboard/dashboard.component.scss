@@ -154,12 +154,18 @@
 .sin-clases-hint { margin: 8px 0 0; font-size: 0.78rem; color: #999; }
 
 @media (max-width: 599px) {
+  .dashboard { gap: 16px; }
   .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    h2 { font-size: 1.4rem; }
+    flex-direction: column; align-items: flex-start;
+    h2 { font-size: 1.3rem; }
   }
   .nivel-badge { align-self: flex-start; }
   .cards-grid { grid-template-columns: 1fr; }
+  .saldo-card .clases-count .number { font-size: 2.2rem; }
+  .turno-item {
+    flex-direction: column; align-items: flex-start; gap: 8px;
+    .turno-actions { margin-left: 0; width: 100%; justify-content: flex-end; }
+  }
+  .action-card .action-content { padding: 12px 6px; .action-icon { font-size: 36px; width: 36px; height: 36px; } }
 }
 .loading-center { display: flex; justify-content: center; align-items: center; padding: 80px 0; }

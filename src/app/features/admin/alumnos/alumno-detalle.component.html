@@ -14,7 +14,9 @@
           <div class="avatar-grande">{{ a.nombre.charAt(0) }}</div>
           <h3>{{ a.nombre }}</h3>
           <p>{{ a.email }}</p>
-          @if (a.telefono) { <p>{{ a.telefono }}</p> }
+          @if (a.telefono) {
+            <p><a [href]="a.telefono | whatsapp" target="_blank" rel="noopener noreferrer" class="wa-link"><mat-icon>whatsapp</mat-icon>{{ a.telefono }}</a></p>
+          }
           <div class="estado-chips">
             @if (a.alumnoData?.bloqueado) {
               <mat-chip color="warn" selected>Bloqueado</mat-chip>

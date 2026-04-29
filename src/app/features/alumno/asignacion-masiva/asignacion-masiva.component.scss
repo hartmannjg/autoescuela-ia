@@ -63,11 +63,14 @@
   display: inline-flex; align-items: center; justify-content: center; gap: 4px;
   transition: all 0.15s; color: #333;
 
-  &:hover:not(:disabled) { border-color: #1a237e; background: #f0f4ff; }
-
   &.slot-seleccionado {
     background: #1a237e; border-color: #1a237e; color: #fff;
   }
+}
+@media (hover: hover) {
+  .slot-hora:hover:not(:disabled) { border-color: #1a237e; background: #f0f4ff; }
+}
+.slot-hora {
   &.slot-en-plan {
     background: #e8f5e9; border-color: #43a047; color: #2e7d32;
     cursor: default;
@@ -90,6 +93,30 @@
   }
 }
 .btn-agregar { margin-top: 14px; }
+
+.slot-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 0.88rem;
+  animation: feedbackSlideIn 0.25s ease;
+
+  mat-icon { font-size: 20px; width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; }
+
+  div { display: flex; flex-direction: column; gap: 2px; }
+
+  .feedback-hint { color: #4caf50; font-size: 0.82rem; }
+}
+
+@keyframes feedbackSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 // Slots list
 .slots-lista { display: flex; flex-direction: column; gap: 8px; }
@@ -135,6 +162,25 @@
 }
 
 @media (max-width: 599px) {
-  .slot-form { flex-direction: column; button { height: auto; } }
-  .preview-stats { gap: 16px; }
+  .masiva-page { gap: 16px; }
+  .page-header h2 { font-size: 1.3rem; }
+
+  .plan-card .plan-info {
+    .plan-saldo { text-align: left; .plan-num { font-size: 1.6rem; } }
+  }
+
+  .slot-form { flex-direction: column; mat-form-field { width: 100%; min-width: 0; } }
+
+  mat-card-subtitle { display: block; width: 100%; }
+  .slot-hora { min-width: 68px; height: 44px; }
+
+  .preview-stats {
+    gap: 16px; justify-content: space-around;
+    .stat .stat-num { font-size: 1.8rem; }
+  }
+
+  .confirm-actions {
+    flex-direction: column;
+    button, a { width: 100%; justify-content: center; }
+  }
 }

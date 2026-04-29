@@ -19,6 +19,7 @@ import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 import { EstadoTurnoPipe } from '../../../shared/pipes/estado-turno.pipe';
 import { DuracionPipe, formatDuracion } from '../../../shared/pipes/duracion.pipe';
 import { calcularFechaFinPlan } from '../../../shared/utils/date-utils';
+import { WhatsappPipe } from '../../../shared/pipes/whatsapp.pipe';
 
 @Component({
   selector: 'app-alumno-detalle',
@@ -26,7 +27,7 @@ import { calcularFechaFinPlan } from '../../../shared/utils/date-utils';
   imports: [
     CommonModule, RouterLink, MatCardModule, MatButtonModule, MatIconModule,
     MatTabsModule, MatProgressBarModule, MatDividerModule,
-    MatProgressSpinnerModule, MatChipsModule, FechaHoraPipe, EstadoTurnoPipe, DuracionPipe,
+    MatProgressSpinnerModule, MatChipsModule, FechaHoraPipe, EstadoTurnoPipe, DuracionPipe, WhatsappPipe,
   ],
   templateUrl: './alumno-detalle.component.html',
   styleUrl: './alumno-detalle.component.scss',

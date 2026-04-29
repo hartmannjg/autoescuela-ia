@@ -7,6 +7,36 @@
     .masiva-btn { align-self: center; }
   }
 }
+.plan-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  background: #e8eaf6;
+  border: 1.5px solid #c5cae9;
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+.plan-banner-texto {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  mat-icon { color: #1a237e; flex-shrink: 0; margin-top: 2px; }
+  div { display: flex; flex-direction: column; gap: 2px; }
+  strong { font-size: 0.9rem; color: #1a237e; }
+  span   { font-size: 0.82rem; color: #5c6bc0; }
+}
+.plan-banner-btn {
+  background: #1a237e !important;
+  color: white !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border-radius: 8px !important;
+}
+
 .page-tabs {
   display: flex;
   gap: 8px;
@@ -80,12 +110,14 @@ mat-card-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   .dia-nombre { font-size: 0.7rem; color: #888; text-transform: capitalize; }
   .dia-num { font-size: 1.2rem; font-weight: 700; color: #333; }
   .dia-tag { font-size: 0.6rem; color: #ccc; }
-  &:hover:not(.disabled) { border-color: #1a237e; background: #f3f4ff; }
   &.today { border-color: #1976d2; .dia-num { color: #1976d2; } }
   &.selected { border-color: #1a237e; background: #1a237e; .dia-nombre, .dia-num { color: white; } }
   &.disabled { opacity: 0.4; cursor: not-allowed; }
   &.dia-feriado { border-color: #f57c00 !important; background: #fff8e1 !important; .dia-nombre, .dia-num { color: #e65100; } cursor: not-allowed; }
   &.dia-cierre  { border-color: #e91e63 !important; background: #fce4ec !important; .dia-nombre, .dia-num { color: #880e4f; } cursor: not-allowed; }
+}
+@media (hover: hover) {
+  .dia-btn:hover:not(.disabled) { border-color: #1a237e; background: #f3f4ff; }
 }
 .dia-tag { font-size: 0.6rem; color: #ccc; }
 .tag-feriado { color: #e65100 !important; font-weight: 600; }
@@ -116,6 +148,22 @@ mat-card-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   }
 }
 @media (max-width: 599px) {
+  .calendario-page { gap: 16px; }
+  .page-header h2 { font-size: 1.3rem; }
+
+  .plan-banner { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .plan-banner-btn { width: 100%; justify-content: center; }
+
+  .page-tabs { gap: 4px; }
+  .page-tab { padding: 8px 12px; font-size: 0.82rem; }
+
+  .fuente-grid { gap: 10px; }
+  .fuente-card { min-width: 0; }
+
+  .confirm-card .confirm-info { gap: 12px; flex-direction: column; align-items: flex-start; }
+
+  .semana-nav { margin-left: 0; width: 100%; justify-content: center; gap: 4px; span { font-size: 0.78rem; } }
+
   .dias-grid { gap: 4px; }
   .dia-btn { padding: 8px 2px; .dia-num { font-size: 1rem; } }
 

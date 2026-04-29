@@ -8,11 +8,26 @@
       <a routerLink="/admin/instructores" mat-button>
         <mat-icon>arrow_back</mat-icon> Instructores
       </a>
+      <input #fileInput type="file" accept="image/*" style="display:none" (change)="subirFoto($event)" />
       <div class="header-info">
-        <div class="avatar">{{ instructor()!.nombre.charAt(0).toUpperCase() }}</div>
+        <div class="avatar upload-avatar" (click)="triggerUpload()" matTooltip="Cambiar foto de perfil">
+          @if (subiendo()) {
+            <mat-spinner diameter="28" />
+          } @else if (instructor()!.fotoURL) {
+            <img [src]="instructor()!.fotoURL!" alt="Foto de perfil" class="avatar-photo" />
+          } @else {
+            {{ instructor()!.nombre.charAt(0).toUpperCase() }}
+          }
+          <div class="avatar-overlay"><mat-icon>photo_camera</mat-icon></div>
+        </div>
         <div>
           <h2>{{ instructor()!.nombre }}</h2>
-          <p>{{ instructor()!.email }} · {{ instructor()!.telefono ?? 'Sin teléfono' }}</p>
+          <p>
+            {{ instructor()!.email }}
+            @if (instructor()!.telefono) {
+              · <a [href]="instructor()!.telefono | whatsapp" target="_blank" rel="noopener noreferrer" class="wa-link"><mat-icon>whatsapp</mat-icon>{{ instructor()!.telefono }}</a>
+            } @else { · Sin teléfono }
+          </p>
         </div>
         <span class="chip" [class.chip-success]="instructor()!.activo" [class.chip-warn]="!instructor()!.activo">
           {{ instructor()!.activo ? 'Activo' : 'Inactivo' }}

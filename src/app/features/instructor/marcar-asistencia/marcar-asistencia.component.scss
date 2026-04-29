@@ -15,3 +15,10 @@
 .empty-state { display: flex; flex-direction: column; align-items: center; padding: 32px; gap: 8px; color: #aaa; mat-icon { font-size: 40px; width: 40px; height: 40px; } }
 
 .loading-center { display: flex; justify-content: center; align-items: center; padding: 80px 0; }
+
+@media (max-width: 599px) {
+  .asistencia-page { gap: 16px; }
+  .page-header h2 { font-size: 1.3rem; }
+  .mode-tabs { gap: 8px; }
+  .turno-item { flex-direction: column; align-items: flex-start; gap: 6px; }
+}

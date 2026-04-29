@@ -23,6 +23,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { User } from '../../../shared/models';
 import { environment } from '../../../../environments/environment';
+import { WhatsappPipe } from '../../../shared/pipes/whatsapp.pipe';
 
 @Component({
   selector: 'app-instructores',
@@ -31,7 +32,7 @@ import { environment } from '../../../../environments/environment';
     CommonModule, RouterLink, FormsModule, ReactiveFormsModule,
     MatCardModule, MatButtonModule, MatIconModule, MatTableModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatTooltipModule,
-    MatSlideToggleModule, MatProgressSpinnerModule, MatDividerModule,
+    MatSlideToggleModule, MatProgressSpinnerModule, MatDividerModule, WhatsappPipe,
   ],
   templateUrl: './instructores.component.html',
   styleUrl: './instructores.component.scss',

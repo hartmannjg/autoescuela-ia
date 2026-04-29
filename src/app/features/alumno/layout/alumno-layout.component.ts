@@ -71,7 +71,6 @@ export class AlumnoLayoutComponent {
   readonly navItems = [
     { label: 'Mi Cuenta',          icon: 'account_circle',   route: '/alumno/dashboard' },
     { label: 'Calendario',         icon: 'calendar_month',   route: '/alumno/calendario' },
-    { label: 'Asignación masiva',  icon: 'event_repeat',     route: '/alumno/asignacion-masiva' },
     { label: 'Mis Turnos',         icon: 'event_note',       route: '/alumno/mis-turnos' },
     { label: 'Escanear QR',        icon: 'qr_code_scanner',  route: '/alumno/escanear-qr' },
     { label: 'Historial',          icon: 'history',          route: '/alumno/historial' },

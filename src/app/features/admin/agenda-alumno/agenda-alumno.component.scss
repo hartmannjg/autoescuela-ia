@@ -150,13 +150,15 @@ mat-card-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   display: inline-flex; align-items: center; justify-content: center; gap: 4px;
   transition: all 0.15s; color: #333;
 
-  &:hover:not(:disabled) { border-color: #1a237e; background: #f0f4ff; }
   &.slot-seleccionado { background: #1a237e; border-color: #1a237e; color: #fff; }
   &.slot-en-plan {
     background: #e8f5e9; border-color: #43a047; color: #2e7d32; cursor: default;
     mat-icon { font-size: 14px; width: 14px; height: 14px; }
   }
   &.slot-ocupado { background: #ffebee; border-color: #ef9a9a; color: #b71c1c; opacity: 0.7; cursor: not-allowed; }
+}
+@media (hover: hover) {
+  .slot-hora:hover:not(:disabled) { border-color: #1a237e; background: #f0f4ff; }
 }
 .slots-leyenda {
   display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px;
@@ -170,6 +172,31 @@ mat-card-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   }
 }
 .btn-agregar { margin-top: 14px; }
+
+.slot-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 0.88rem;
+  animation: feedbackSlideIn 0.25s ease;
+
+  mat-icon { font-size: 20px; width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; }
+
+  div { display: flex; flex-direction: column; gap: 2px; }
+
+  .feedback-hint { color: #4caf50; font-size: 0.82rem; }
+}
+
+@keyframes feedbackSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .slots-lista { display: flex; flex-direction: column; gap: 8px; }
 .slot-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: #f5f7fa; border-radius: 8px;
   mat-icon { color: #1a237e; }

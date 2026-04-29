@@ -74,6 +74,9 @@ export class AsignacionMasivaComponent implements OnInit {
   readonly diaTemp        = signal<number | null>(null);
   readonly horaTemp       = signal<string | null>(null);
 
+  readonly slotAgregadoFeedback  = signal<string | null>(null);
+  private feedbackTimer: ReturnType<typeof setTimeout> | null = null;
+
   // ── Config ───────────────────────────────────────────────────────────────
   readonly maxPorSemana = signal(1);
 
@@ -260,6 +263,10 @@ export class AsignacionMasivaComponent implements OnInit {
     this.maxPorSemana.set(Math.min(nuevoLen, this.maxSemanaDelPlan()));
     this.diaTemp.set(null);
     this.horaTemp.set(null);
+
+    if (this.feedbackTimer) clearTimeout(this.feedbackTimer);
+    this.slotAgregadoFeedback.set(`${DIAS_NOMBRES[dia]} ${hora} · ${inst.nombre}`);
+    this.feedbackTimer = setTimeout(() => this.slotAgregadoFeedback.set(null), 3500);
   }
 
   setMaxPorSemana(val: number): void {

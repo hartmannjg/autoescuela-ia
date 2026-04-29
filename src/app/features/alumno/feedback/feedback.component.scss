@@ -13,3 +13,10 @@
 }
 .full-width { width: 100%; }
 .actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
+
+@media (max-width: 599px) {
+  .feedback-page { gap: 16px; }
+  .page-header h2 { font-size: 1.3rem; }
+  .estrellas-section .estrella { font-size: 34px; width: 34px; height: 34px; }
+  .actions { flex-direction: column; button { width: 100%; justify-content: center; } }
+}

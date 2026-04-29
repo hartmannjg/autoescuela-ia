@@ -29,6 +29,7 @@ import { DuracionPipe } from '../../../shared/pipes/duracion.pipe';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 import { environment } from '../../../../environments/environment';
 import { calcularFechaFinPlan } from '../../../shared/utils/date-utils';
+import { WhatsappPipe } from '../../../shared/pipes/whatsapp.pipe';
 
 @Component({
   selector: 'app-alumnos',
@@ -38,7 +39,7 @@ import { calcularFechaFinPlan } from '../../../shared/utils/date-utils';
     MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule,
     MatInputModule, MatSelectModule, MatTableModule,
     MatTooltipModule, MatProgressSpinnerModule, MatDividerModule, MatSlideToggleModule,
-    MonedaPipe, DuracionPipe, FechaHoraPipe, MatPaginatorModule,
+    MonedaPipe, DuracionPipe, FechaHoraPipe, MatPaginatorModule, WhatsappPipe,
   ],
   templateUrl: './alumnos.component.html',
   styleUrl: './alumnos.component.scss',

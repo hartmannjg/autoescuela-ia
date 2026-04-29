@@ -50,7 +50,10 @@
         @for (inst of instructores(); track inst.uid) {
 
           <div class="disp-inst-label">
-            <div class="inst-avatar">{{ inst.nombre.charAt(0) }}</div>
+            <div class="inst-avatar">
+              @if (inst.fotoURL) { <img [src]="inst.fotoURL" [alt]="inst.nombre" class="avatar-photo" /> }
+              @else { {{ inst.nombre.charAt(0) }} }
+            </div>
             <div class="inst-datos">
               <strong>{{ inst.nombre }}</strong>
               @if (inst.instructorData?.especialidad) {

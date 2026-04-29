@@ -90,3 +90,10 @@ form { display: flex; flex-direction: column; gap: 14px; padding-top: 8px; }
 }
 
 @media (max-width: 768px) { .content-grid { grid-template-columns: 1fr; } }
+
+@media (max-width: 599px) {
+  .disponibilidad-page { gap: 16px; }
+  .page-header h2 { font-size: 1.3rem; }
+  .fecha-row { grid-template-columns: 1fr; }
+  .slot-btn { min-width: 56px; height: 38px; font-size: 0.78rem; }
+}

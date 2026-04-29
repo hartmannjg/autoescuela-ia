@@ -5,13 +5,22 @@
         <h2>{{ pagModo() === 'disponibilidad' ? 'Disponibilidad' : 'Agendar clase' }}</h2>
         <p>{{ pagModo() === 'disponibilidad' ? 'Horarios libres de todos los instructores esta semana' : 'Seleccioná un instructor, luego elegí día y horario' }}</p>
       </div>
-      @if (usaPlan() && pagModo() === 'agendar') {
-        <a mat-stroked-button routerLink="/alumno/asignacion-masiva" class="masiva-btn">
-          <mat-icon>event_repeat</mat-icon>
-          Agendar plan completo
-        </a>
-      }
     </div>
+
+    @if (usaPlan() && pagModo() === 'agendar') {
+      <div class="plan-banner">
+        <div class="plan-banner-texto">
+          <mat-icon>event_repeat</mat-icon>
+          <div>
+            <strong>¿Querés agendar todo tu plan de una vez?</strong>
+            <span>Configurá un horario fijo semanal y agendamos todas tus clases automáticamente.</span>
+          </div>
+        </div>
+        <a mat-flat-button routerLink="/alumno/asignacion-masiva" class="plan-banner-btn">
+          Configurar horario fijo
+        </a>
+      </div>
+    }
 
     <!-- Saldo disponible -->
     <div class="saldo-row">
@@ -133,7 +142,10 @@
           <div class="instructor-card"
             [class.selected]="instructorSeleccionado()?.uid === instructor.uid"
             (click)="seleccionarInstructor(instructor)">
-            <div class="instructor-avatar">{{ instructor.nombre.charAt(0) }}</div>
+            <div class="instructor-avatar">
+              @if (instructor.fotoURL) { <img [src]="instructor.fotoURL" [alt]="instructor.nombre" class="avatar-photo" /> }
+              @else { {{ instructor.nombre.charAt(0) }} }
+            </div>
             <div class="instructor-info">
               <strong>{{ instructor.nombre }}</strong>
               @if (instructor.instructorData?.valoracionPromedio) {
@@ -156,21 +168,21 @@
   </mat-card>
 
   @if (instructorSeleccionado()) {
-    <mat-card class="step-card">
+    <mat-card id="step-dia" class="step-card">
       <mat-card-header>
         <mat-card-title>
           <span class="step-num">{{ stepNumDia() }}</span>
           Elegí un día
+          <div class="semana-nav">
+            <button mat-icon-button (click)="semanaOffset.update(v => v - 1)" [disabled]="semanaOffset() === 0">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            <span>{{ semanaLabel() }}</span>
+            <button mat-icon-button (click)="semanaOffset.update(v => v + 1)">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
         </mat-card-title>
-        <div class="semana-nav">
-          <button mat-icon-button (click)="semanaOffset.update(v => v - 1)" [disabled]="semanaOffset() === 0">
-            <mat-icon>chevron_left</mat-icon>
-          </button>
-          <span>{{ semanaLabel() }}</span>
-          <button mat-icon-button (click)="semanaOffset.update(v => v + 1)">
-            <mat-icon>chevron_right</mat-icon>
-          </button>
-        </div>
       </mat-card-header>
       <mat-card-content>
         <div class="dias-grid">
@@ -198,7 +210,7 @@
   }
 
   @if (fechaSeleccionada()) {
-    <mat-card class="step-card">
+    <mat-card id="step-horario" class="step-card">
       <mat-card-header>
         <mat-card-title>
           <span class="step-num">{{ stepNumHorario() }}</span>
@@ -236,7 +248,7 @@
   }
 
   @if (slotSeleccionado()) {
-    <mat-card class="confirm-card">
+    <mat-card id="step-confirm" class="confirm-card">
       <mat-card-content>
         <div class="confirm-info">
           <mat-icon>event</mat-icon>

@@ -315,3 +315,33 @@ html, body {
     [class^='swal2-success-line'] { background: #ffc400 !important; }
   }
 }
+
+// ─── Avatar photo ────────────────────────────────────────────────────────────
+.avatar-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+// ─── WhatsApp link ────────────────────────────────────────────────────────────
+.wa-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #25d366;
+  text-decoration: none;
+  font-weight: 500;
+  mat-icon { font-size: 16px; height: 16px; width: 16px; line-height: 16px; }
+  &:hover { text-decoration: underline; }
+}
+
+// ─── Mobile globals ───────────────────────────────────────────────────────────
+@media (max-width: 599px) {
+  .mat-mdc-card-content  { padding: 12px !important; }
+  .mat-mdc-card-header   { padding: 12px 12px 0 !important; }
+  .mat-mdc-card-actions  { padding: 8px 12px !important; }
+  .mat-mdc-raised-button,
+  .mat-mdc-outlined-button { font-size: 0.88rem !important; }
+}

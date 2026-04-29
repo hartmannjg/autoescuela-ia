@@ -196,11 +196,40 @@ export class AlumnoCalendarioComponent implements OnInit {
     return this.cierres().find(c => c.activo && fechaStr >= c.fechaInicio && fechaStr <= c.fechaFin)?.motivo ?? null;
   }
 
+  private scrollRafId: number | null = null;
+  private scrollTimerId: ReturnType<typeof setTimeout> | null = null;
+
+  private scrollTo(id: string): void {
+    if (this.scrollTimerId !== null) clearTimeout(this.scrollTimerId);
+    if (this.scrollRafId !== null) { cancelAnimationFrame(this.scrollRafId); this.scrollRafId = null; }
+
+    this.scrollTimerId = setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const container = document.querySelector('mat-sidenav-content') as HTMLElement | null;
+      if (!container) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      const from = container.scrollTop;
+      const to = Math.max(0, el.getBoundingClientRect().top + container.scrollTop - 80);
+      if (Math.abs(to - from) < 8) return;
+      const duration = 1000;
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min((now - start) / duration, 1);
+        const ease = Math.sin((t * Math.PI) / 2); // ease-out sine: glide suave sin aceleración
+        container.scrollTop = from + (to - from) * ease;
+        if (t < 1) { this.scrollRafId = requestAnimationFrame(step); }
+        else { this.scrollRafId = null; }
+      };
+      this.scrollRafId = requestAnimationFrame(step);
+    }, 100);
+  }
+
   async seleccionarDia(dia: DiaCalendario): Promise<void> {
     if (dia.esPasado || !dia.esLaborable || !this.instructorSeleccionado()) return;
     this.fechaSeleccionada.set(dia.fechaStr);
     this.slotSeleccionado.set(null);
     await this.cargarSlots(dia.fechaStr);
+    this.scrollTo('step-horario');
   }
 
   clasesIndividualesPorDuracion(_dur: 40): number {
@@ -231,6 +260,7 @@ export class AlumnoCalendarioComponent implements OnInit {
     this.slotsDelDia.set([]);
     const fecha = this.fechaSeleccionada();
     if (fecha) await this.cargarSlots(fecha);
+    this.scrollTo('step-dia');
   }
 
   private async cargarSlots(fechaStr: string): Promise<void> {
@@ -315,6 +345,7 @@ export class AlumnoCalendarioComponent implements OnInit {
       return;
     }
     this.slotSeleccionado.set(slot);
+    this.scrollTo('step-confirm');
   }
 
   async confirmarTurno(): Promise<void> {
