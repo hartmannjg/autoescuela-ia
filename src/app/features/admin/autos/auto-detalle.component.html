@@ -1,0 +1,321 @@
+<div class="detalle-page">
+
+  @if (!auto()) {
+    <div class="loading-center"><mat-spinner diameter="48" /></div>
+  } @else {
+
+  <!-- Header -->
+  <div class="page-header">
+    <button mat-icon-button routerLink="/admin/autos" matTooltip="Volver a la lista">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="header-info">
+      <span class="patente-lg">{{ auto()!.patente }}</span>
+      <span class="header-nombre">{{ auto()!.marca }} {{ auto()!.modelo }} · {{ auto()!.anio }}</span>
+      @if (!auto()!.activo) { <span class="baja-chip">DADO DE BAJA</span> }
+    </div>
+    <div class="header-actions">
+      @if (resumenAlertas().vencidas > 0) {
+        <span class="resumen-badge danger">
+          <mat-icon>warning</mat-icon>{{ resumenAlertas().vencidas }} vencido(s)
+        </span>
+      }
+      @if (resumenAlertas().proximas > 0) {
+        <span class="resumen-badge warn">
+          <mat-icon>schedule</mat-icon>{{ resumenAlertas().proximas }} próximo(s)
+        </span>
+      }
+      <button mat-icon-button matTooltip="Editar datos del auto" (click)="abrirEdicion()">
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button mat-icon-button color="warn" matTooltip="Eliminar auto" (click)="eliminarAuto()">
+        <mat-icon>delete_forever</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Formulario edición datos -->
+  @if (editandoDatos()) {
+    <mat-card class="form-auto-card">
+      <mat-card-header><mat-card-title><mat-icon>edit</mat-icon> Editar datos del auto</mat-card-title></mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="formAuto" class="form-grid">
+          <mat-form-field appearance="outline"><mat-label>Patente</mat-label><input matInput formControlName="patente" style="text-transform:uppercase" /></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Marca</mat-label><input matInput formControlName="marca" /></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Modelo</mat-label><input matInput formControlName="modelo" /></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Año</mat-label><input matInput type="number" formControlName="anio" /></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Color</mat-label><input matInput formControlName="color" /></mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Transmisión</mat-label>
+            <mat-select formControlName="transmision">
+              <mat-option value="manual">Manual</mat-option>
+              <mat-option value="automatico">Automático</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Combustible</mat-label>
+            <mat-select formControlName="combustible">
+              <mat-option value="nafta">Nafta</mat-option>
+              <mat-option value="diesel">Diesel</mat-option>
+              <mat-option value="gnc">GNC</mat-option>
+              <mat-option value="electrico">Eléctrico</mat-option>
+              <mat-option value="hibrido">Híbrido</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Motor</mat-label>
+            <mat-select formControlName="tipoMotor">
+              <mat-option value="cadena">A cadena</mat-option>
+              <mat-option value="correa">A correa</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Vencimiento VTV (anual)</mat-label>
+            <input matInput [matDatepicker]="pickerVtv" formControlName="vtvFecha" />
+            <mat-datepicker-toggle matSuffix [for]="pickerVtv" />
+            <mat-datepicker #pickerVtv />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Vencimiento seguro (anual)</mat-label>
+            <input matInput [matDatepicker]="pickerSeguro" formControlName="seguroFecha" />
+            <mat-datepicker-toggle matSuffix [for]="pickerSeguro" />
+            <mat-datepicker #pickerSeguro />
+          </mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>N° póliza</mat-label><input matInput formControlName="seguroPoliza" /></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Aseguradora</mat-label><input matInput formControlName="seguroAseguradora" /></mat-form-field>
+        </form>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button (click)="editandoDatos.set(false)">Cancelar</button>
+        <button mat-raised-button color="primary" (click)="guardarDatos()" [disabled]="formAuto.invalid || guardandoDatos()">
+          @if (guardandoDatos()) { <mat-spinner diameter="18" /> } @else { Guardar cambios }
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  }
+
+  <!-- Info row -->
+  <div class="info-row">
+
+    <!-- KM card -->
+    <mat-card class="km-card">
+      <mat-card-content>
+        <div class="card-icon-header"><mat-icon>speed</mat-icon><span>Kilometraje</span></div>
+        @if (!editandoKm()) {
+          <div class="km-value">{{ formatKm(auto()!.kmActuales) }}</div>
+          @if (auto()!.fechaKmActualizacion) {
+            <div class="km-fecha">Actualizado {{ auto()!.fechaKmActualizacion!.toDate() | date:'dd/MM/yyyy' }}</div>
+          } @else {
+            <div class="km-fecha">Sin fecha de actualización</div>
+          }
+          <button mat-stroked-button class="km-btn" (click)="abrirKm()">
+            <mat-icon>edit</mat-icon> Actualizar KM
+          </button>
+        } @else {
+          <mat-form-field appearance="outline" class="km-input">
+            <mat-label>Nuevo KM</mat-label>
+            <input matInput type="number" [ngModel]="nuevoKm()" (ngModelChange)="nuevoKm.set($event)" min="0" />
+            <span matSuffix>km</span>
+          </mat-form-field>
+          <div class="km-edit-actions">
+            <button mat-button (click)="editandoKm.set(false)">Cancelar</button>
+            <button mat-raised-button color="primary" (click)="guardarKm()" [disabled]="guardandoKm()">
+              @if (guardandoKm()) { <mat-spinner diameter="18" /> } @else { Guardar }
+            </button>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <!-- VTV card -->
+    <mat-card class="doc-card" [ngClass]="docEstadoClass(vtvDias())">
+      <mat-card-content>
+        <div class="card-icon-header"><mat-icon>fact_check</mat-icon><span>VTV</span></div>
+        @if (auto()!.vtvVencimiento) {
+          <div class="doc-fecha">{{ auto()!.vtvVencimiento!.toDate() | date:'dd/MM/yyyy' }}</div>
+          <div class="doc-estado">{{ docLabel(vtvDias()) }}</div>
+        } @else {
+          <div class="doc-sin-registro">Sin registro</div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Seguro card -->
+    <mat-card class="doc-card" [ngClass]="docEstadoClass(seguroDias())">
+      <mat-card-content>
+        <div class="card-icon-header"><mat-icon>verified_user</mat-icon><span>Seguro</span></div>
+        @if (auto()!.seguroVencimiento) {
+          <div class="doc-fecha">{{ auto()!.seguroVencimiento!.toDate() | date:'dd/MM/yyyy' }}</div>
+          <div class="doc-estado">{{ docLabel(seguroDias()) }}</div>
+          @if (auto()!.seguroAseguradora) { <div class="doc-sub">{{ auto()!.seguroAseguradora }}</div> }
+        } @else {
+          <div class="doc-sin-registro">Sin registro</div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Specs card -->
+    <mat-card class="specs-card">
+      <mat-card-content>
+        <div class="card-icon-header"><mat-icon>info</mat-icon><span>Ficha técnica</span></div>
+        <div class="spec-list">
+          <div class="spec-item"><mat-icon>settings</mat-icon>{{ auto()!.transmision === 'manual' ? 'Manual' : 'Automático' }}</div>
+          <div class="spec-item"><mat-icon>local_gas_station</mat-icon>{{ combustibleLabel(auto()!.combustible) }}</div>
+          <div class="spec-item"><mat-icon>build</mat-icon>Motor a {{ auto()!.tipoMotor }}</div>
+          @if (auto()!.color) { <div class="spec-item"><mat-icon>palette</mat-icon>{{ auto()!.color }}</div> }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+
+  <!-- Alertas de mantenimiento -->
+  <h3 class="section-heading">
+    <mat-icon>build_circle</mat-icon> Estado de mantenimientos
+  </h3>
+  <div class="alertas-grid">
+    @for (alerta of alertas(); track alerta.tipo) {
+      <div class="alerta-card"
+        [class.estado-ok]="alerta.estado === 'ok'"
+        [class.estado-proximo]="alerta.estado === 'proximo'"
+        [class.estado-vencido]="alerta.estado === 'vencido' || alerta.estado === 'sin_registro'">
+        <div class="alerta-header">
+          <mat-icon>{{ alerta.icon }}</mat-icon>
+          <div class="alerta-label">{{ alerta.label }}</div>
+        </div>
+        @if (alerta.detalle) { <div class="alerta-detalle">{{ alerta.detalle }}</div> }
+        <div class="alerta-estado-badge">
+          @switch (alerta.estado) {
+            @case ('ok') { <span>✓ Al día</span> }
+            @case ('proximo') { <span>⚠ Próximo</span> }
+            @case ('vencido') { <span>⛔ Vencido</span> }
+            @case ('sin_registro') { <span>Sin registro</span> }
+          }
+        </div>
+        @if (alerta.kmRestantes !== undefined) {
+          <div class="alerta-sub">
+            @if (alerta.kmRestantes > 0) { Faltan {{ alerta.kmRestantes | number:'1.0-0' }} km }
+            @else { Vencido hace {{ (-alerta.kmRestantes) | number:'1.0-0' }} km }
+          </div>
+        }
+        @if (alerta.diasRestantes !== undefined) {
+          <div class="alerta-sub">
+            @if (alerta.diasRestantes > 0) { En {{ alerta.diasRestantes }} día(s) }
+            @else { Hace {{ -alerta.diasRestantes }} día(s) }
+          </div>
+        }
+        @if (alerta.ultimaFecha) {
+          <div class="alerta-ultima">Último: {{ alerta.ultimaFecha | date:'dd/MM/yy' }}
+            @if (alerta.ultimoKm) { — {{ formatKm(alerta.ultimoKm) }} }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Registrar mantenimiento -->
+  <h3 class="section-heading"><mat-icon>add_task</mat-icon> Registrar mantenimiento</h3>
+  <mat-card class="form-card">
+    <mat-card-content>
+      <form [formGroup]="formMant" class="form-grid-mant">
+
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de mantenimiento</mat-label>
+          <mat-select formControlName="tipo" (selectionChange)="onTipoMantChange()">
+            @for (opt of tiposOptions(); track opt.value) {
+              <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha</mat-label>
+          <input matInput [matDatepicker]="pickerMant" formControlName="fecha" />
+          <mat-datepicker-toggle matSuffix [for]="pickerMant" />
+          <mat-datepicker #pickerMant />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>KM al momento</mat-label>
+          <input matInput type="number" formControlName="kmAlMomento" />
+          <span matSuffix>km</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Costo (opcional)</mat-label>
+          <span matPrefix>$&nbsp;</span>
+          <input matInput type="number" formControlName="costo" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Descripción (opcional)</mat-label>
+          <textarea matInput formControlName="descripcion" rows="2" placeholder="ej: Aceite 5W40 sintético, marca Mobil"></textarea>
+        </mat-form-field>
+
+      </form>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="registrarMantenimiento()" [disabled]="formMant.invalid || guardandoMant()">
+        @if (guardandoMant()) { <mat-spinner diameter="18" /> } @else { <ng-container><mat-icon>save</mat-icon> Registrar</ng-container> }
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- Historial -->
+  <h3 class="section-heading"><mat-icon>history</mat-icon> Historial de mantenimientos</h3>
+  <mat-card class="table-card">
+    <table mat-table [dataSource]="mantenimientos()" class="hist-table">
+
+      <ng-container matColumnDef="fecha">
+        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <td mat-cell *matCellDef="let m">{{ m.fecha.toDate() | date:'dd/MM/yyyy' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="tipo">
+        <th mat-header-cell *matHeaderCellDef>Tipo</th>
+        <td mat-cell *matCellDef="let m">
+          <div class="tipo-cell">
+            <mat-icon class="tipo-icon">{{ getIcon(m.tipo) }}</mat-icon>
+            {{ getLabel(m.tipo) }}
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="km">
+        <th mat-header-cell *matHeaderCellDef>KM</th>
+        <td mat-cell *matCellDef="let m">{{ m.kmAlMomento | number:'1.0-0' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="descripcion">
+        <th mat-header-cell *matHeaderCellDef>Descripción</th>
+        <td mat-cell *matCellDef="let m">{{ m.descripcion || '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="costo">
+        <th mat-header-cell *matHeaderCellDef>Costo</th>
+        <td mat-cell *matCellDef="let m">{{ m.costo ? ('$' + (m.costo | number:'1.0-0')) : '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let m">
+          <button mat-icon-button color="warn" (click)="eliminarMantenimiento(m)" matTooltip="Eliminar registro">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnasMant"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnasMant;"></tr>
+    </table>
+
+    @if (mantenimientos().length === 0) {
+      <div class="empty-state">
+        <mat-icon>history</mat-icon>
+        <p>No hay registros de mantenimiento todavía</p>
+      </div>
+    }
+  </mat-card>
+
+  }
+</div>

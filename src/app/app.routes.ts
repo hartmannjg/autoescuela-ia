@@ -73,6 +73,8 @@ export const routes: Routes = [
       { path: 'administradores', loadComponent: () => import('./features/admin/administradores/administradores.component').then(m => m.AdministradoresComponent) },
       { path: 'feriados', loadComponent: () => import('./features/admin/feriados/feriados.component').then(m => m.FeriadosComponent) },
       { path: 'ausencias', loadComponent: () => import('./features/admin/ausencias/ausencias.component').then(m => m.AusenciasComponent) },
+      { path: 'autos', loadComponent: () => import('./features/admin/autos/autos.component').then(m => m.AutosComponent) },
+      { path: 'autos/:id', loadComponent: () => import('./features/admin/autos/auto-detalle.component').then(m => m.AutoDetalleComponent) },
       { path: 'configuracion', loadComponent: () => import('./features/admin/configuracion/configuracion.component').then(m => m.ConfiguracionComponent) },
     ],
   },

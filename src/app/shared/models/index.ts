@@ -8,3 +8,4 @@ export * from './feriado.model';
 export * from './cierre.model';
 export * from './configuracion.model';
 export * from './cobro.model';
+export * from './auto.model';

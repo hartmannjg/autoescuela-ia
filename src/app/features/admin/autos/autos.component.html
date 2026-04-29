@@ -1,0 +1,223 @@
+<div class="autos-page">
+
+  <div class="page-header">
+    <div>
+      <h2>Flota de vehículos</h2>
+      <p>Gestión y mantenimiento de los autos de la sucursal</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="abrirNuevo()">
+      <mat-icon>directions_car</mat-icon> Agregar auto
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-center"><mat-spinner diameter="48" /></div>
+  } @else {
+
+  <!-- Formulario alta/edición -->
+  @if (mostrarFormulario()) {
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>{{ modoEdicion() ? 'edit' : 'directions_car' }}</mat-icon>
+          {{ modoEdicion() ? 'Editar auto' : 'Nuevo auto' }}
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="form" class="form-grid">
+
+          <mat-form-field appearance="outline">
+            <mat-label>Patente</mat-label>
+            <mat-icon matPrefix>pin</mat-icon>
+            <input matInput formControlName="patente" placeholder="AB123CD" style="text-transform:uppercase" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Marca</mat-label>
+            <input matInput formControlName="marca" placeholder="ej: Volkswagen" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Modelo</mat-label>
+            <input matInput formControlName="modelo" placeholder="ej: Gol Trend" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Año</mat-label>
+            <input matInput type="number" formControlName="anio" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Color</mat-label>
+            <input matInput formControlName="color" placeholder="ej: Blanco" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Transmisión</mat-label>
+            <mat-select formControlName="transmision">
+              <mat-option value="manual">Manual</mat-option>
+              <mat-option value="automatico">Automático</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Combustible</mat-label>
+            <mat-select formControlName="combustible">
+              <mat-option value="nafta">Nafta</mat-option>
+              <mat-option value="diesel">Diesel</mat-option>
+              <mat-option value="gnc">GNC</mat-option>
+              <mat-option value="electrico">Eléctrico</mat-option>
+              <mat-option value="hibrido">Híbrido</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Motor</mat-label>
+            <mat-select formControlName="tipoMotor">
+              <mat-option value="cadena">A cadena (sin revisión periódica)</mat-option>
+              <mat-option value="correa">A correa (revisar c/ 50.000 km)</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Kilometraje actual</mat-label>
+            <mat-icon matPrefix>speed</mat-icon>
+            <input matInput type="number" formControlName="kmActuales" />
+            <span matSuffix>km</span>
+          </mat-form-field>
+
+          <div class="section-title full-width">Documentación</div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Vencimiento VTV (anual)</mat-label>
+            <mat-icon matPrefix>fact_check</mat-icon>
+            <input matInput [matDatepicker]="pickerVtv" formControlName="vtvFecha" />
+            <mat-datepicker-toggle matSuffix [for]="pickerVtv" />
+            <mat-datepicker #pickerVtv />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Vencimiento seguro (anual)</mat-label>
+            <mat-icon matPrefix>verified_user</mat-icon>
+            <input matInput [matDatepicker]="pickerSeguro" formControlName="seguroFecha" />
+            <mat-datepicker-toggle matSuffix [for]="pickerSeguro" />
+            <mat-datepicker #pickerSeguro />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>N° de póliza</mat-label>
+            <input matInput formControlName="seguroPoliza" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Aseguradora</mat-label>
+            <input matInput formControlName="seguroAseguradora" />
+          </mat-form-field>
+
+        </form>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button (click)="cancelar()">Cancelar</button>
+        <button mat-raised-button color="primary" (click)="guardar()" [disabled]="form.invalid || guardando()">
+          @if (guardando()) { <mat-spinner diameter="18" /> } @else { {{ modoEdicion() ? 'Guardar cambios' : 'Agregar auto' }} }
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  }
+
+  <!-- Filtros -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <mat-form-field appearance="outline">
+        <mat-label>Buscar</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [ngModel]="filtro()" (ngModelChange)="filtro.set($event)" placeholder="Patente, marca o modelo..." />
+      </mat-form-field>
+      <mat-slide-toggle [checked]="mostrarInactivos()" (change)="mostrarInactivos.set($event.checked)">
+        Mostrar dados de baja
+      </mat-slide-toggle>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Grid de autos -->
+  @if (autosFiltrados().length === 0) {
+    <div class="empty-state">
+      <mat-icon>directions_car</mat-icon>
+      <p>No hay autos registrados</p>
+      <button mat-stroked-button color="primary" (click)="abrirNuevo()">Agregar el primero</button>
+    </div>
+  } @else {
+    <div class="autos-grid">
+      @for (auto of autosFiltrados(); track auto.id) {
+        <mat-card class="auto-card" [class.inactivo]="!auto.activo" [routerLink]="['/admin/autos', auto.id]">
+
+          <div class="auto-card-header">
+            <div class="patente">{{ auto.patente }}</div>
+            <div class="alert-badges">
+              @if (auto.vencidas > 0) {
+                <span class="badge badge-danger" matTooltip="{{ auto.vencidas }} mantenimiento(s) vencido(s)">
+                  <mat-icon>warning</mat-icon>{{ auto.vencidas }}
+                </span>
+              }
+              @if (auto.proximas > 0) {
+                <span class="badge badge-warn" matTooltip="{{ auto.proximas }} mantenimiento(s) próximo(s)">
+                  <mat-icon>schedule</mat-icon>{{ auto.proximas }}
+                </span>
+              }
+              @if (auto.vencidas === 0 && auto.proximas === 0) {
+                <span class="badge badge-ok" matTooltip="Todo al día">
+                  <mat-icon>check_circle</mat-icon>
+                </span>
+              }
+            </div>
+          </div>
+
+          <div class="auto-info">
+            <div class="auto-nombre">{{ auto.marca }} {{ auto.modelo }}</div>
+            <div class="auto-sub">{{ auto.anio }} · {{ auto.color || 'Sin color' }}</div>
+          </div>
+
+          <div class="auto-specs">
+            <span class="spec-chip">
+              <mat-icon>settings</mat-icon>
+              {{ auto.transmision === 'manual' ? 'Manual' : 'Auto' }}
+            </span>
+            <span class="spec-chip">
+              <mat-icon>local_gas_station</mat-icon>
+              {{ auto.combustible | titlecase }}
+            </span>
+            <span class="spec-chip km-chip">
+              <mat-icon>speed</mat-icon>
+              {{ formatKm(auto.kmActuales) }}
+            </span>
+          </div>
+
+          @if (!auto.activo) {
+            <div class="baja-banner">DADO DE BAJA</div>
+          }
+
+          <mat-divider />
+
+          <div class="auto-actions" (click)="$event.stopPropagation()">
+            <button mat-icon-button [routerLink]="['/admin/autos', auto.id]" matTooltip="Ver detalle">
+              <mat-icon>open_in_new</mat-icon>
+            </button>
+            <button mat-icon-button (click)="abrirEdicion(auto, $event)" matTooltip="Editar datos">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button [color]="auto.activo ? 'warn' : 'accent'" (click)="toggleActivo(auto, $event)"
+              [matTooltip]="auto.activo ? 'Dar de baja' : 'Reactivar'">
+              <mat-icon>{{ auto.activo ? 'remove_circle_outline' : 'check_circle_outline' }}</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="eliminar(auto, $event)" matTooltip="Eliminar permanentemente">
+              <mat-icon>delete_forever</mat-icon>
+            </button>
+          </div>
+
+        </mat-card>
+      }
+    </div>
+  }
+
+  }
+</div>

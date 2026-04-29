@@ -162,7 +162,37 @@ garantizando devolución atómica y auditoría server-side.
 
 ---
 
-### 4.3 `auditLog` — Firestore trigger (BAJA PRIORIDAD)
+### 4.3 `verificarAlertasFlotaDiaria` — Scheduled function (MEDIA PRIORIDAD)
+
+**Problema actual:** `admin-layout.component.ts:verificarAlertasFlota()` corre client-side en cada login,
+con deduplicación por `localStorage` (clave `flota_check_${sucursalId}`, valor = fecha del día).
+Solo se ejecuta si un admin abre el panel; si nadie entra, no se generan notificaciones.
+
+**Solución:** reemplazar con una Cloud Function scheduled que corra a las 8:00 AM diariamente.
+
+```typescript
+// functions/src/scheduler.ts — agregar:
+export const verificarAlertasFlotaDiaria = functions
+  .region('southamerica-east1')
+  .pubsub.schedule('every day 08:00')
+  .timeZone('America/Argentina/Buenos_Aires')
+  .onRun(async () => {
+    // 1. Para cada sucursal: obtener todos los autos activos + sus mantenimientos
+    // 2. Para cada auto, replicar calcularAlertas() (misma lógica que auto.service.ts)
+    // 3. Por cada alerta vencida/próxima: crear notificación al admin de la sucursal
+    // 4. VTV y seguro: alertar si vencen en <= 30 días
+    // 5. Evitar duplicados: verificar si ya existe notificación del día (mismo autoId + tipo)
+  });
+```
+
+**Al hacer deploy:**
+- Eliminar el método `verificarAlertasFlota()` de `admin-layout.component.ts`
+- Eliminar `getAutosOnce()` y `getMantenimientosPorSucursalOnce()` de `auto.service.ts` si no tienen otro uso
+- Eliminar el `localStorage.setItem/getItem` asociado a `flota_check_${sucursalId}`
+
+---
+
+### 4.4 `auditLog` — Firestore trigger (BAJA PRIORIDAD)
 
 Para operaciones administrativas sensibles (asignar plan, dar créditos, bloquear alumno),
 agregar una Cloud Function que registre cada cambio en una colección `auditLog`:

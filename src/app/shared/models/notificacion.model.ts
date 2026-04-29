@@ -11,7 +11,8 @@ export type TipoNotificacion =
   | 'feedback_recibido'
   | 'clase_completada'
   | 'saldo_bajo'
-  | 'plan_vencimiento';
+  | 'plan_vencimiento'
+  | 'mantenimiento_auto';
 
 export interface Notificacion {
   id?: string;

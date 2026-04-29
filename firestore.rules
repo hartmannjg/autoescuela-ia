@@ -191,6 +191,17 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ─── Colección: autos ────────────────────────────────────────────────────
+    match /autos/{autoId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    // ─── Colección: mantenimientos ────────────────────────────────────────────
+    match /mantenimientos/{mantId} {
+      allow read, create, delete: if isAdmin();
+      allow update: if false;
+    }
+
     // ─── Colección: cobros ───────────────────────────────────────────────────
     match /cobros/{cobroId} {
       allow read: if isSuperAdmin();

@@ -63,6 +63,7 @@ export class InstructorLayoutComponent {
       feedback_recibido: 'star',          clase_completada: 'school',
       saldo_bajo: 'warning',              plan_vencimiento: 'event_busy',
       cancelacion_turno: 'event_busy',
+      mantenimiento_auto: 'directions_car',
     };
     return map[tipo] ?? 'notifications';
   }

@@ -17,6 +17,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { NotificacionService } from '../../../core/services/notificacion.service';
 import { SucursalService } from '../../../core/services/sucursal.service';
 import { TurnoService } from '../../../core/services/turno.service';
+import { AutoService } from '../../../core/services/auto.service';
 import { Notificacion, TipoNotificacion, Sucursal } from '../../../shared/models';
 
 @Component({
@@ -35,6 +36,7 @@ export class AdminLayoutComponent implements OnInit {
   private notifService = inject(NotificacionService);
   private sucursalService = inject(SucursalService);
   private turnoService = inject(TurnoService);
+  private autoService = inject(AutoService);
   private breakpointObserver = inject(BreakpointObserver);
 
   readonly user = this.authService.currentUser;
@@ -46,9 +48,67 @@ export class AdminLayoutComponent implements OnInit {
     if (id) {
       const s = await this.sucursalService.getById(id);
       this.sucursalActual.set(s);
-      // Procesa en background clases confirmadas que ya vencieron el plazo de validación
       this.turnoService.procesarClasesVencidas(id).catch(err => console.error('[procesarClasesVencidas]', err));
+      this.verificarAlertasFlota(id).catch(err => console.error('[verificarAlertasFlota]', err));
     }
+  }
+
+  private async verificarAlertasFlota(sucursalId: string): Promise<void> {
+    const uid = this.user()?.uid;
+    if (!uid) return;
+    const KEY = `flota_check_${sucursalId}`;
+    if (localStorage.getItem(KEY) === new Date().toDateString()) return;
+
+    const [autos, mantenimientos] = await Promise.all([
+      this.autoService.getAutosOnce(sucursalId),
+      this.autoService.getMantenimientosPorSucursalOnce(sucursalId),
+    ]);
+
+    const notifs: Promise<void>[] = [];
+
+    for (const auto of autos.filter(a => a.activo)) {
+      const mantAuto = mantenimientos.filter(m => m.autoId === auto.id);
+      const alertas = this.autoService.calcularAlertas(auto, mantAuto);
+
+      const vencidas = alertas.filter(a => a.estado === 'vencido' || a.estado === 'sin_registro');
+      const proximas = alertas.filter(a => a.estado === 'proximo');
+
+      if (vencidas.length) {
+        notifs.push(this.notifService.enviar(uid, 'mantenimiento_auto',
+          `${auto.patente} — Mantenimiento vencido`,
+          `${vencidas.length} ítem(s) requieren atención: ${vencidas.map(a => a.label).join(', ')}`,
+        ));
+      }
+      if (proximas.length) {
+        notifs.push(this.notifService.enviar(uid, 'mantenimiento_auto',
+          `${auto.patente} — Mantenimiento próximo`,
+          `${proximas.length} ítem(s) próximos: ${proximas.map(a => a.label).join(', ')}`,
+        ));
+      }
+
+      const vtvDias = this.autoService.diasHastaVencimiento(auto.vtvVencimiento);
+      if (vtvDias !== null && vtvDias <= 30) {
+        notifs.push(this.notifService.enviar(uid, 'mantenimiento_auto',
+          `${auto.patente} — VTV ${vtvDias <= 0 ? 'vencida' : 'próxima a vencer'}`,
+          vtvDias <= 0
+            ? `La VTV está vencida hace ${Math.abs(vtvDias)} día(s). Renovar para circular.`
+            : `La VTV vence en ${vtvDias} día(s).`,
+        ));
+      }
+
+      const seguroDias = this.autoService.diasHastaVencimiento(auto.seguroVencimiento);
+      if (seguroDias !== null && seguroDias <= 30) {
+        notifs.push(this.notifService.enviar(uid, 'mantenimiento_auto',
+          `${auto.patente} — Seguro ${seguroDias <= 0 ? 'vencido' : 'próximo a vencer'}`,
+          seguroDias <= 0
+            ? `El seguro está vencido hace ${Math.abs(seguroDias)} día(s). Renovar la póliza.`
+            : `El seguro vence en ${seguroDias} día(s).`,
+        ));
+      }
+    }
+
+    await Promise.all(notifs);
+    localStorage.setItem(KEY, new Date().toDateString());
   }
   readonly isMobile = toSignal(
     this.breakpointObserver.observe(Breakpoints.Handset).pipe(map(r => r.matches)),
@@ -79,6 +139,7 @@ export class AdminLayoutComponent implements OnInit {
       feedback_recibido: 'star',          clase_completada: 'school',
       saldo_bajo: 'warning',              plan_vencimiento: 'event_busy',
       cancelacion_turno: 'event_busy',
+      mantenimiento_auto: 'directions_car',
     };
     return map[tipo] ?? 'notifications';
   }
@@ -90,6 +151,7 @@ export class AdminLayoutComponent implements OnInit {
     { label: 'Clases y turnos', icon: 'calendar_month', route: '/admin/turnos' },
     { label: 'Asignar clases', icon: 'event_available', route: '/admin/agenda-alumno' },
     { label: 'Reportes', icon: 'bar_chart', route: '/admin/reportes' },
+    { label: 'Flota de autos', icon: 'directions_car', route: '/admin/autos' },
     { label: 'Ausencias', icon: 'event_busy', route: '/admin/ausencias' },
     { label: 'Feriados', icon: 'beach_access', route: '/admin/feriados' },
     { label: 'Configuración', icon: 'settings', route: '/admin/configuracion' },
