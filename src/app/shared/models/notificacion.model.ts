@@ -12,7 +12,8 @@ export type TipoNotificacion =
   | 'clase_completada'
   | 'saldo_bajo'
   | 'plan_vencimiento'
-  | 'mantenimiento_auto';
+  | 'mantenimiento_auto'
+  | 'ausencia_pendiente';
 
 export interface Notificacion {
   id?: string;

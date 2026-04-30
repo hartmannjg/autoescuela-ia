@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed, effect, untracked } from '@angular/core';
-import { tap } from 'rxjs';
+import { tap, firstValueFrom } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -19,6 +19,8 @@ import Swal from 'sweetalert2';
 import { Timestamp } from '@angular/fire/firestore';
 import { AuthService } from '../../../core/services/auth.service';
 import { AusenciaService } from '../../../core/services/ausencia.service';
+import { UsuarioService } from '../../../core/services/usuario.service';
+import { NotificacionService } from '../../../core/services/notificacion.service';
 import { InstructorAusencia, TipoAusencia, HorarioDisponible, HorarioEspecifico } from '../../../shared/models';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 import { dateToStr, SLOT_INTERVAL } from '../../../shared/utils/date-utils';
@@ -42,8 +44,10 @@ interface DiaConSlots {
   styleUrl: './mi-disponibilidad.component.scss',
 })
 export class MiDisponibilidadComponent {
-  private authService    = inject(AuthService);
-  private ausenciaService = inject(AusenciaService);
+  private authService      = inject(AuthService);
+  private ausenciaService  = inject(AusenciaService);
+  private usuarioService   = inject(UsuarioService);
+  private notifService     = inject(NotificacionService);
   private fb = inject(FormBuilder);
 
   readonly loading     = signal(false);
@@ -205,6 +209,17 @@ export class MiDisponibilidadComponent {
         estado:           'pendiente',
         notificarAlumnos: v.notificarAlumnos ?? true,
       });
+
+      // Notificar a los admins de la sucursal
+      const sucursalId = this.user()!.sucursalId ?? '';
+      const admins = await firstValueFrom(this.usuarioService.adminsPorSucursal$(sucursalId));
+      const nombre = this.user()!.nombre;
+      const tipoLabel = this.getTipoLabel(v.tipo!);
+      await Promise.all(admins.map(a =>
+        this.notifService.enviar(a.uid, 'ausencia_pendiente',
+          'Solicitud de ausencia',
+          `${nombre} solicitó ${tipoLabel.toLowerCase()} — pendiente de aprobación.`)
+      ));
 
       this.form.reset({ tipo: 'vacaciones', diaCompleto: true, notificarAlumnos: true });
       this.horasAusentes.set(new Map());

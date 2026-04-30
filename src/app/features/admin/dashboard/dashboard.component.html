@@ -62,6 +62,17 @@
         <a routerLink="/admin/turnos" mat-stroked-button color="primary">Ver turnos</a>
       </div>
     }
+
+    @if (ausenciasPendientes() > 0) {
+      <div class="alerta warn">
+        <mat-icon>event_busy</mat-icon>
+        <div>
+          <strong>{{ ausenciasPendientes() }} solicitud(es) de ausencia pendiente(s)</strong>
+          <span>Instructores esperan aprobación</span>
+        </div>
+        <a routerLink="/admin/ausencias" mat-stroked-button color="warn">Revisar</a>
+      </div>
+    }
   </div>
 
   <!-- Accesos rápidos -->

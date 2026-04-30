@@ -74,7 +74,7 @@ export class NotificacionService {
       titulo,
       mensaje,
       leida: false,
-      turnoId,
+      ...(turnoId ? { turnoId } : {}),
       creadoEn: serverTimestamp() as any,
     };
     await addDoc(this.colRef(), notif);

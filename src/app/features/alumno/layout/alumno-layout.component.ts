@@ -64,6 +64,7 @@ export class AlumnoLayoutComponent {
       saldo_bajo: 'warning',              plan_vencimiento: 'event_busy',
       cancelacion_turno: 'event_busy',
       mantenimiento_auto: 'directions_car',
+      ausencia_pendiente: 'event_busy',
     };
     return map[tipo] ?? 'notifications';
   }
