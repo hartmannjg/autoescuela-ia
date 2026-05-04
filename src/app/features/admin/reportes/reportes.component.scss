@@ -26,8 +26,8 @@
 .filtro-card { border-radius: 12px !important; }
 .mes-filtros {
   display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-  .mes-nav { display: flex; align-items: center; gap: 4px;
-    .mes-label { font-size: 1rem; font-weight: 600; color: #37474f; min-width: 140px; text-align: center; }
+  .rango-nav { display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    .field-mes { width: 175px; margin: 0; }
   }
   .field-filtro { width: 220px; margin: 0; }
   .export-actions { display: flex; gap: 8px; margin-left: auto; }
@@ -176,7 +176,7 @@
 @media (max-width: 767px) {
   .reporte-selector { grid-template-columns: 1fr 1fr; }
   .kpis-grid { grid-template-columns: 1fr 1fr; }
-  .mes-filtros { .export-actions { margin-left: 0; } }
+  .mes-filtros { .export-actions { margin-left: 0; } .rango-nav { .field-mes { width: 140px; } } }
   .inst-tabla .num-col { width: 70px; }
   .ocup-bar-wrap { max-width: 100px; }
 }

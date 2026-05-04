@@ -53,9 +53,9 @@ export class ReportesComponent {
   readonly reporteActivo = signal<TipoReporte>('instructor');
 
   private readonly todosLosReportes: { id: TipoReporte; label: string; icon: string; desc: string; soloSuperAdmin?: boolean }[] = [
-    { id: 'instructor', label: 'Clases por instructor', icon: 'badge',          desc: 'Actividad mensual por instructor'      },
-    { id: 'alumno',     label: 'Actividad por alumno',  icon: 'school',         desc: 'Clases del mes por estudiante'         },
-    { id: 'ocupacion',  label: 'Ocupación',             icon: 'event_available',desc: '% slots ocupados por instructor'       },
+    { id: 'instructor', label: 'Clases por instructor', icon: 'badge',          desc: 'Actividad por instructor en el período' },
+    { id: 'alumno',     label: 'Actividad por alumno',  icon: 'school',         desc: 'Clases por estudiante en el período'    },
+    { id: 'ocupacion',  label: 'Ocupación',             icon: 'event_available',desc: '% slots ocupados por instructor'        },
     { id: 'planes',     label: 'Saldo de clases',       icon: 'credit_card',    desc: 'Estado de saldo y contrato por alumno' },
     { id: 'ingresos',   label: 'Ingresos',              icon: 'payments',       desc: 'Ganancias por planes y clases',        soloSuperAdmin: true },
   ];
@@ -64,12 +64,50 @@ export class ReportesComponent {
     this.todosLosReportes.filter(r => !r.soloSuperAdmin || this.isSuperAdmin())
   );
 
-  // ── Navegación de mes (compartida para instructor / alumno / ocupación) ───
-  readonly mesOffset  = signal(0);
-  readonly mesActual  = computed(() => { const h = new Date(); return new Date(h.getFullYear(), h.getMonth() + this.mesOffset(), 1); });
-  readonly mesLabel   = computed(() => { const s = this.mesActual().toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }); return s.charAt(0).toUpperCase() + s.slice(1); });
-  readonly mesInicio  = computed(() => { const m = this.mesActual(); return `${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}-01`; });
-  readonly mesFin     = computed(() => { const m = this.mesActual(); return `${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}-31`; });
+  // ── Navegación de rango de meses ─────────────────────────────────────────
+  private static mesKey(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+  private static mesKeyLabel(key: string): string {
+    const [y, m] = key.split('-').map(Number);
+    const s = new Date(y, m - 1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  readonly mesesDisponibles: { key: string; label: string }[] = (() => {
+    const result: { key: string; label: string }[] = [];
+    const hoy = new Date();
+    for (let i = 0; i < 24; i++) {
+      const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+      result.push({ key: ReportesComponent.mesKey(d), label: ReportesComponent.mesKeyLabel(ReportesComponent.mesKey(d)) });
+    }
+    return result;
+  })();
+
+  private readonly mesHoy = ReportesComponent.mesKey(new Date());
+  readonly mesDesdeKey = signal(this.mesHoy);
+  readonly mesHastaKey = signal(this.mesHoy);
+  readonly mesLabel    = computed(() => {
+    const desde = ReportesComponent.mesKeyLabel(this.mesDesdeKey());
+    if (this.mesDesdeKey() === this.mesHastaKey()) return desde;
+    return `${desde} — ${ReportesComponent.mesKeyLabel(this.mesHastaKey())}`;
+  });
+  readonly mesInicio   = computed(() => this.mesDesdeKey() + '-01');
+  readonly mesFin      = computed(() => this.mesHastaKey() + '-31');
+  readonly rangoFilename = computed(() =>
+    this.mesDesdeKey() === this.mesHastaKey()
+      ? this.mesLabel().replace(' ', '_')
+      : `${this.mesDesdeKey()}_${this.mesHastaKey()}`
+  );
+
+  onMesDesdeChange(key: string): void {
+    this.mesDesdeKey.set(key);
+    if (key > this.mesHastaKey()) this.mesHastaKey.set(key);
+  }
+  onMesHastaChange(key: string): void {
+    this.mesHastaKey.set(key);
+    if (key < this.mesDesdeKey()) this.mesDesdeKey.set(key);
+  }
 
   // ── Listas base (reactivas) ───────────────────────────────────────────────
   readonly instructores = toSignal(
@@ -223,7 +261,8 @@ export class ReportesComponent {
   constructor() {
     effect(() => {
       const tipo = this.reporteActivo();
-      this.mesOffset();
+      this.mesDesdeKey();
+      this.mesHastaKey();
       untracked(() => {
         if (tipo === 'instructor') this.cargarInstructores();
         else if (tipo === 'alumno') this.cargarAlumnos();
@@ -269,7 +308,7 @@ export class ReportesComponent {
     }
     this.reporteService.exportarExcelMultiHoja(
       [{ nombre: 'Resumen', datos: resumen }, { nombre: 'Detalle', datos: detalle }],
-      `instructores_${this.mesLabel().replace(' ', '_')}`
+      `instructores_${this.rangoFilename()}`
     );
   }
 
@@ -278,7 +317,7 @@ export class ReportesComponent {
       `Clases por instructor — ${this.mesLabel()}`,
       this.filasInstVisibles().map(f => ({ nombre: this.getNombreInstructor(f.instructorUid), completadas: f.completadas, ausentes: f.ausentes, canceladas: f.canceladas, horas: this.formatMinutos(f.totalMinutos), clases: f.clases.map(c => ({ fecha: c.fechaStr, horario: `${c.horaInicio} - ${c.horaFin}`, duracion: `${c.duracionMinutos} min`, alumno: c.alumnoNombre, estado: c.estado, motivo: c.estado === 'CANCELADA' ? (c.motivo ?? '—') : '' })) })),
       { completadas: this.totalCompletadasInst(), ausentes: this.totalAusentesInst(), canceladas: this.totalCanceladasInst(), horas: this.formatMinutos(this.totalMinutosInst()) },
-      `instructores_${this.mesLabel().replace(' ', '_')}`
+      `instructores_${this.rangoFilename()}`
     );
   }
 
@@ -298,7 +337,7 @@ export class ReportesComponent {
     }
     this.reporteService.exportarExcelMultiHoja(
       [{ nombre: 'Resumen', datos: resumen }, { nombre: 'Detalle', datos: detalle }],
-      `alumnos_${this.mesLabel().replace(' ', '_')}`
+      `alumnos_${this.rangoFilename()}`
     );
   }
 
@@ -310,7 +349,7 @@ export class ReportesComponent {
       'Slots ocupados': f.slotsOcupados,
       'Ocupación %': f.pctOcupacion,
     }));
-    this.reporteService.exportarExcel(datos, `ocupacion_${this.mesLabel().replace(' ', '_')}`);
+    this.reporteService.exportarExcel(datos, `ocupacion_${this.rangoFilename()}`);
   }
 
   // ── Exportar planes ───────────────────────────────────────────────────────
@@ -387,7 +426,7 @@ export class ReportesComponent {
     }
     rows.push(sep('TOTAL GENERAL', this.kpiTotalIngresos()));
 
-    this.reporteService.exportarExcel(rows, `ingresos_${this.mesLabel().replace(' ', '_')}`);
+    this.reporteService.exportarExcel(rows, `ingresos_${this.rangoFilename()}`);
   }
 
   private agruparTxs(txs: FilaIngreso[], keyFn: (tx: FilaIngreso) => string): [string, FilaIngreso[]][] {

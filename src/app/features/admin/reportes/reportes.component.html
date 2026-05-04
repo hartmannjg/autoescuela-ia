@@ -21,14 +21,23 @@
     <mat-card class="filtro-card">
       <mat-card-content>
         <div class="mes-filtros">
-          <div class="mes-nav">
-            <button mat-icon-button (click)="mesOffset.update(v => v - 1)" matTooltip="Mes anterior">
-              <mat-icon>chevron_left</mat-icon>
-            </button>
-            <span class="mes-label">{{ mesLabel() }}</span>
-            <button mat-icon-button (click)="mesOffset.update(v => v + 1)" [disabled]="mesOffset() >= 0" matTooltip="Mes siguiente">
-              <mat-icon>chevron_right</mat-icon>
-            </button>
+          <div class="rango-nav">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field-mes">
+              <mat-label>Desde</mat-label>
+              <mat-select [ngModel]="mesDesdeKey()" (ngModelChange)="onMesDesdeChange($event)">
+                @for (m of mesesDisponibles; track m.key) {
+                  <mat-option [value]="m.key">{{ m.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field-mes">
+              <mat-label>Hasta</mat-label>
+              <mat-select [ngModel]="mesHastaKey()" (ngModelChange)="onMesHastaChange($event)">
+                @for (m of mesesDisponibles; track m.key) {
+                  <mat-option [value]="m.key">{{ m.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
           </div>
 
           @if (reporteActivo() === 'instructor') {
