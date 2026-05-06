@@ -15,6 +15,7 @@ import Swal from 'sweetalert2';
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { TurnoService } from '../../../core/services/turno.service';
 import { AusenciaService } from '../../../core/services/ausencia.service';
+import { NotificacionService } from '../../../core/services/notificacion.service';
 import { User, Turno, InstructorAusencia } from '../../../shared/models';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 import { EstadoTurnoPipe } from '../../../shared/pipes/estado-turno.pipe';
@@ -57,6 +58,7 @@ export class InstructorDetalleComponent implements OnInit {
   private usuarioService  = inject(UsuarioService);
   private turnoService    = inject(TurnoService);
   private ausenciaService = inject(AusenciaService);
+  private notifService    = inject(NotificacionService);
   private storage         = inject(Storage);
   private fb              = inject(FormBuilder);
 
@@ -195,6 +197,13 @@ export class InstructorDetalleComponent implements OnInit {
 
   async aprobarAusencia(ausencia: InstructorAusencia): Promise<void> {
     await this.ausenciaService.actualizarEstado(ausencia.id!, 'aprobado');
+    const fmtFecha = (ts: any) => ts.toDate().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' });
+    await this.notifService.enviar(
+      ausencia.instructorUid,
+      'ausencia_pendiente',
+      'Ausencia aprobada',
+      `Tu solicitud de ${ausencia.tipo} del ${fmtFecha(ausencia.fechaInicio)} al ${fmtFecha(ausencia.fechaFin)} fue aprobada.`,
+    );
   }
 
   async rechazarAusencia(ausencia: InstructorAusencia): Promise<void> {

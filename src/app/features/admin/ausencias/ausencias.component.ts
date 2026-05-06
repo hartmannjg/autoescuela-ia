@@ -16,6 +16,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { AusenciaService } from '../../../core/services/ausencia.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { TurnoService } from '../../../core/services/turno.service';
+import { NotificacionService } from '../../../core/services/notificacion.service';
 import { InstructorAusencia, EstadoAusencia, User } from '../../../shared/models';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
 import { slotKey } from '../../../shared/utils/date-utils';
@@ -32,10 +33,11 @@ import { slotKey } from '../../../shared/utils/date-utils';
   styleUrl: './ausencias.component.scss',
 })
 export class AusenciasComponent {
-  private authService = inject(AuthService);
+  private authService    = inject(AuthService);
   private ausenciaService = inject(AusenciaService);
   private usuarioService = inject(UsuarioService);
-  private turnoService = inject(TurnoService);
+  private turnoService   = inject(TurnoService);
+  private notifService   = inject(NotificacionService);
 
   readonly sucursalId = this.authService.currentUser()?.sucursalId ?? '';
   readonly filtroEstado = signal<EstadoAusencia | 'todos'>('todos');
@@ -95,7 +97,8 @@ export class AusenciasComponent {
       }
     }
 
-    const motivo = `Ausencia del instructor: ${ausencia.tipo}${ausencia.motivo ? ' — ' + ausencia.motivo : ''}`;
+    const tipoLabel: Record<string, string> = { licencia: 'licencia', enfermedad: 'enfermedad', tramite: 'trámite', vacaciones: 'vacaciones', otro: 'ausencia' };
+    const motivo = `Ausencia aprobada (${tipoLabel[ausencia.tipo] ?? ausencia.tipo})${ausencia.motivo ? ': ' + ausencia.motivo : ''}. Crédito devuelto al alumno.`;
     const cancelados = await this.turnoService.cancelarTurnosPorEvento({
       fechas,
       sucursalId: ausencia.sucursalId,
@@ -103,6 +106,14 @@ export class AusenciasComponent {
       instructorUid: ausencia.instructorUid,
       slotsEspecificos,
     });
+
+    const fmtFecha = (ts: any) => ts.toDate().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' });
+    await this.notifService.enviar(
+      ausencia.instructorUid,
+      'ausencia_pendiente',
+      'Ausencia aprobada',
+      `Tu solicitud de ${ausencia.tipo} del ${fmtFecha(ausencia.fechaInicio)} al ${fmtFecha(ausencia.fechaFin)} fue aprobada.`,
+    );
 
     const msg = cancelados > 0
       ? `Ausencia aprobada. ${cancelados} clase${cancelados !== 1 ? 's' : ''} cancelada${cancelados !== 1 ? 's' : ''} y crédito devuelto a los alumnos.`

@@ -14,6 +14,7 @@ import Swal from 'sweetalert2';
 import { AuthService } from '../../../core/services/auth.service';
 import { TurnoService } from '../../../core/services/turno.service';
 import { UsuarioService } from '../../../core/services/usuario.service';
+import { NotificacionService } from '../../../core/services/notificacion.service';
 import { Turno } from '../../../shared/models';
 import { EstadoTurnoPipe } from '../../../shared/pipes/estado-turno.pipe';
 import { FechaHoraPipe } from '../../../shared/pipes/fecha-hora.pipe';
@@ -28,9 +29,10 @@ import { dateToStr } from '../../../shared/utils/date-utils';
   styleUrl: './dashboard.component.scss',
 })
 export class InstructorDashboardComponent {
-  private authService   = inject(AuthService);
-  private turnoService  = inject(TurnoService);
+  private authService    = inject(AuthService);
+  private turnoService   = inject(TurnoService);
   private usuarioService = inject(UsuarioService);
+  private notifService   = inject(NotificacionService);
 
   readonly user = this.authService.currentUser;
   readonly loading = signal(false);
@@ -116,6 +118,13 @@ export class InstructorDashboardComponent {
     this.loading.set(true);
     try {
       await this.turnoService.confirmarTurno(turno.id!);
+      await this.notifService.enviar(
+        turno.alumnoUid,
+        'confirmacion_turno',
+        'Clase confirmada',
+        `Tu clase del ${turno.fechaStr} de ${turno.horaInicio} a ${turno.horaFin} fue confirmada.`,
+        turno.id,
+      );
       Swal.fire({ icon: 'success', title: 'Clase confirmada', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
     } finally { this.loading.set(false); }
   }
