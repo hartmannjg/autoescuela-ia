@@ -8,13 +8,10 @@ mat-card-actions { display: flex; gap: 8px; justify-content: flex-end; padding: 
 .table-card { border-radius: 12px !important; overflow: hidden; }
 .instructores-table { width: 100%; }
 .nombre-cell { display: flex; align-items: center; gap: 12px; }
+.nombre-link { text-decoration: none; color: inherit; cursor: pointer; border-radius: 8px; padding: 4px 6px; margin: -4px -6px; transition: background 0.15s; &:hover { background: rgba(55, 71, 79, 0.08); } }
 .avatar { width: 36px; height: 36px; border-radius: 50%; background: #37474f; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; flex-shrink: 0; }
 .nombre { font-weight: 600; font-size: 0.95rem; }
 .email { font-size: 0.8rem; color: #888; }
-.estrellas { color: #f57c00; font-size: 1rem; letter-spacing: 1px; }
-.chip { display: inline-flex; padding: 4px 12px; border-radius: 16px; font-size: 0.78rem; font-weight: 600; }
-.chip-success { background: #e8f5e9; color: #2e7d32; }
-.chip-warn { background: #fff3e0; color: #e65100; }
-.empty-state { text-align: center; padding: 48px; color: #999; mat-icon { font-size: 48px; width: 48px; height: 48px; display: block; margin: 0 auto 12px; } }
+.estrellas { color: #f57c00; font-size: 1rem; letter-spacing: 1px; }.empty-state { text-align: center; padding: 48px; color: #999; mat-icon { font-size: 48px; width: 48px; height: 48px; display: block; margin: 0 auto 12px; } }
 @media (max-width: 599px) { .form-grid { grid-template-columns: 1fr; } .page-header { flex-direction: column; gap: 12px; } }
 .loading-center { display: flex; justify-content: center; align-items: center; padding: 80px 0; }

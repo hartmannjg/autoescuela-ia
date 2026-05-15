@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -69,6 +69,7 @@ export class AgendaAlumnoComponent implements OnInit {
   private feriadoService  = inject(FeriadoService);
   private cierreService   = inject(CierreService);
   private route           = inject(ActivatedRoute);
+  private router          = inject(Router);
 
   private readonly admin = this.authService.currentUser;
 
@@ -305,14 +306,71 @@ export class AgendaAlumnoComponent implements OnInit {
     const sucId = this.admin()?.sucursalId;
     if (sucId) this.sucursal.set(await this.sucursalService.getById(sucId));
 
-    const alumnoId = this.route.snapshot.queryParamMap.get('alumnoId');
-    if (alumnoId) {
-      const alumno = await this.usuarioService.getByIdOnce(alumnoId);
-      if (alumno) this.seleccionarAlumno(alumno);
-    }
+    const alumnoId     = this.route.snapshot.queryParamMap.get('alumnoId');
+    const instructorId = this.route.snapshot.queryParamMap.get('instructorId');
+
+    const [alumno, instructor] = await Promise.all([
+      alumnoId     ? this.usuarioService.getByIdOnce(alumnoId)     : Promise.resolve(null),
+      instructorId ? this.usuarioService.getByIdOnce(instructorId) : Promise.resolve(null),
+    ]);
+
+    if (alumno)     this.seleccionarAlumno(alumno);
+    if (instructor) this.instructorSeleccionado.set(instructor);
   }
 
   // ── Selección de alumno ────────────────────────────────────────────────────
+
+  abrirSelectorAlumno(instructor: User): void {
+    const alumnos = this.alumnos()
+      .filter(a => !a.alumnoData?.bloqueado)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+    if (alumnos.length === 0) {
+      Swal.fire({ icon: 'info', title: 'Sin alumnos activos' });
+      return;
+    }
+
+    const render = (q: string, list: HTMLElement) => {
+      const f = q.toLowerCase();
+      const filtrados = f ? alumnos.filter(a => a.nombre.toLowerCase().includes(f) || a.email.toLowerCase().includes(f)) : alumnos;
+      list.innerHTML = filtrados.map(a => `
+        <button data-uid="${a.uid}" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;background:#fafafa;cursor:pointer;text-align:left;width:100%;box-sizing:border-box;font-family:inherit;">
+          <div style="width:32px;height:32px;border-radius:50%;background:#37474f;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">${a.nombre.charAt(0)}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:0.9rem;">${a.nombre}</div>
+            <div style="font-size:0.75rem;color:#888;">${a.email}</div>
+          </div>
+        </button>
+      `).join('');
+      list.querySelectorAll<HTMLButtonElement>('button[data-uid]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const alumno = this.alumnos().find(a => a.uid === btn.dataset['uid']);
+          Swal.close();
+          if (alumno) this.seleccionarAlumno(alumno);
+          this.instructorSeleccionado.set(instructor);
+          this.pagModo.set('agendar');
+        });
+      });
+    };
+
+    Swal.fire({
+      title: `Agendar con ${instructor.nombre}`,
+      html: `
+        <input id="swal-search" class="swal2-input" placeholder="Buscar alumno..." style="margin-bottom:10px;" />
+        <div id="swal-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:2px;"></div>
+      `,
+      showConfirmButton: false,
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar',
+      didOpen: () => {
+        const search = document.getElementById('swal-search') as HTMLInputElement;
+        const list   = document.getElementById('swal-list') as HTMLElement;
+        render('', list);
+        search.addEventListener('input', () => render(search.value, list));
+        search.focus();
+      },
+    });
+  }
 
   seleccionarAlumno(alumno: User): void {
     if (this.alumnoSeleccionado()?.uid === alumno.uid) return;

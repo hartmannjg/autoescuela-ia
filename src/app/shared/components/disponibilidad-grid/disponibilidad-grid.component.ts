@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, input, effect, untracked } from '@angular/core';
+import { Component, inject, signal, computed, input, Output, EventEmitter, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -49,6 +49,7 @@ export class DisponibilidadGridComponent {
 
   readonly sucursal     = input<Sucursal | null>(null);
   readonly instructores = input<User[]>([]);
+  @Output() instructorClick = new EventEmitter<User>();
 
   readonly semanaOffset   = signal(0);
   readonly loadingDisp    = signal(false);

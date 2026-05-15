@@ -106,6 +106,14 @@
   padding: 8px 4px;
   min-height: 64px;
 
+  &.inst-clickable {
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.15s;
+    .inst-click-icon { opacity: 0; font-size: 18px; width: 18px; height: 18px; color: #1a237e; transition: opacity 0.15s; margin-left: auto; }
+    &:hover { background: rgba(26, 35, 126, 0.07); .inst-click-icon { opacity: 1; } }
+  }
+
   .inst-avatar {
     width: 36px;
     height: 36px;

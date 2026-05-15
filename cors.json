@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["http://localhost:4200", "https://autoescuela-18d83.web.app", "https://autoescuela-18d83.firebaseapp.com"],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": ["Content-Type", "Authorization", "Content-Length", "User-Agent", "x-goog-resumable"]
+  }
+]

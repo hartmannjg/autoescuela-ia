@@ -492,7 +492,7 @@
         <mat-card-title>Disponibilidad semanal</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <app-disponibilidad-grid [sucursal]="sucursal()" [instructores]="instructores()" />
+        <app-disponibilidad-grid [sucursal]="sucursal()" [instructores]="instructores()" (instructorClick)="abrirSelectorAlumno($event)" />
       </mat-card-content>
     </mat-card>
   } <!-- /disponibilidad -->

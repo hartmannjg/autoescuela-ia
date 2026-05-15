@@ -248,7 +248,8 @@
         @if (!loadingBase()) {
           <app-disponibilidad-grid
             [sucursal]="sucursal()"
-            [instructores]="instructoresDisponibilidad()" />
+            [instructores]="instructoresDisponibilidad()"
+            (instructorClick)="abrirSelectorAlumno($event)" />
         }
       </div>
     </mat-tab>

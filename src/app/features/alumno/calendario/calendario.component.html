@@ -60,7 +60,7 @@
   </div>
 
   @if (pagModo() === 'disponibilidad') {
-    <app-disponibilidad-grid [sucursal]="sucursal()" [instructores]="instructores()" />
+    <app-disponibilidad-grid [sucursal]="sucursal()" [instructores]="instructores()" (instructorClick)="seleccionarDesdeDisponibilidad($event)" />
   }
 
   @if (pagModo() === 'agendar') {

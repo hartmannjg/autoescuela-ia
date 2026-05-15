@@ -69,6 +69,19 @@ html, body {
   }
 }
 
+// ─── Chips de estado (globales) ──────────────────────────────────────────────
+.chip {
+  display: inline-flex;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.chip-success { background: #e8f5e9; color: #2e7d32; }
+.chip-warn    { background: #fff3e0; color: #e65100; }
+.chip-primary { background: #e3f2fd; color: #1565c0; }
+.chip-error   { background: #ffebee; color: #c62828; }
+
 // ─── Estado chips (turnos) ────────────────────────────────────────────────────
 .estado-chip {
   display: inline-flex;
@@ -329,12 +342,16 @@ html, body {
 .wa-link {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  color: #25d366;
+  gap: 6px;
+  color: #43a047;
   text-decoration: none;
   font-weight: 500;
-  mat-icon { font-size: 16px; height: 16px; width: 16px; line-height: 16px; }
-  &:hover { text-decoration: underline; }
+  border-radius: 20px;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  transition: background 0.15s, color 0.15s;
+  .wa-icon { width: 16px; height: 16px; flex-shrink: 0; }
+  &:hover { color: #2e7d32; background: rgba(67, 160, 71, 0.1); }
 }
 
 // ─── Mobile globals ───────────────────────────────────────────────────────────

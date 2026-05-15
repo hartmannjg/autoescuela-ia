@@ -254,6 +254,11 @@ export class AlumnoCalendarioComponent implements OnInit {
     if (fecha && this.instructorSeleccionado()) this.cargarSlots(fecha);
   }
 
+  async seleccionarDesdeDisponibilidad(inst: User): Promise<void> {
+    this.pagModo.set('agendar');
+    await this.seleccionarInstructor(inst);
+  }
+
   async seleccionarInstructor(instructor: User): Promise<void> {
     this.instructorSeleccionado.set(instructor);
     this.slotSeleccionado.set(null);

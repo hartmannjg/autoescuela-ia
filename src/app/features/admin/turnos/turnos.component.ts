@@ -14,7 +14,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { FormsModule } from '@angular/forms';
 import { tap, switchMap } from 'rxjs';
 import { toSignal, toObservable } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../../core/services/auth.service';
 import { TurnoService } from '../../../core/services/turno.service';
@@ -45,6 +45,7 @@ export class AdminTurnosComponent {
   private usuarioService = inject(UsuarioService);
   private sucursalService = inject(SucursalService);
   private route          = inject(ActivatedRoute);
+  private router         = inject(Router);
 
   @ViewChild(DisponibilidadGridComponent) private dispGrid?: DisponibilidadGridComponent;
 
@@ -243,6 +244,58 @@ export class AdminTurnosComponent {
     if (turno.fechaStr !== this.hoyStr) return false;
     const ahora = this.horaActual;
     return ahora >= turno.horaInicio && ahora < turno.horaFin;
+  }
+
+  abrirSelectorAlumno(instructor: User): void {
+    const alumnos = this.alumnos()
+      .filter(a => !a.alumnoData?.bloqueado)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+    if (alumnos.length === 0) {
+      Swal.fire({ icon: 'info', title: 'Sin alumnos activos', text: 'No hay alumnos activos en esta sucursal.' });
+      return;
+    }
+
+    const render = (q: string, list: HTMLElement) => {
+      const f = q.toLowerCase();
+      const filtrados = f ? alumnos.filter(a => a.nombre.toLowerCase().includes(f) || a.email.toLowerCase().includes(f)) : alumnos;
+      list.innerHTML = filtrados.map(a => `
+        <button data-uid="${a.uid}" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;background:#fafafa;cursor:pointer;text-align:left;width:100%;box-sizing:border-box;font-family:inherit;">
+          <div style="width:32px;height:32px;border-radius:50%;background:#37474f;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">${a.nombre.charAt(0)}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:0.9rem;">${a.nombre}</div>
+            <div style="font-size:0.75rem;color:#888;">${a.email}</div>
+          </div>
+        </button>
+      `).join('');
+
+      list.querySelectorAll<HTMLButtonElement>('button[data-uid]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          Swal.close();
+          this.router.navigate(['/admin/agenda-alumno'], {
+            queryParams: { alumnoId: btn.dataset['uid'], instructorId: instructor.uid },
+          });
+        });
+      });
+    };
+
+    Swal.fire({
+      title: `Agendar con ${instructor.nombre}`,
+      html: `
+        <input id="swal-search" class="swal2-input" placeholder="Buscar alumno..." style="margin-bottom:10px;" />
+        <div id="swal-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:2px;"></div>
+      `,
+      showConfirmButton: false,
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar',
+      didOpen: () => {
+        const search = document.getElementById('swal-search') as HTMLInputElement;
+        const list   = document.getElementById('swal-list') as HTMLElement;
+        render('', list);
+        search.addEventListener('input', () => render(search.value, list));
+        search.focus();
+      },
+    });
   }
 
   async cancelar(turno: Turno): Promise<void> {

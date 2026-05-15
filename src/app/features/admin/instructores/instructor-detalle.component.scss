@@ -5,7 +5,17 @@
 .header-info {
   display: flex; align-items: center; gap: 16px;
   h2 { margin: 0; font-size: 1.6rem; font-weight: 700; color: #37474f; }
-  p  { margin: 2px 0 0; color: #666; font-size: 0.9rem; }
+}
+.contact-info { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.contact-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.88rem; color: #546e7a; text-decoration: none;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; flex-shrink: 0; }
+  &.wa-link { color: #2e7d32;
+    mat-icon { color: #2e7d32; }
+    &:hover { color: #1b5e20; }
+  }
+  &.muted { color: #aaa; mat-icon { color: #aaa; } }
 }
 .avatar {
   width: 56px; height: 56px; border-radius: 50%;
